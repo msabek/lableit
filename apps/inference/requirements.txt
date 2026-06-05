@@ -1,0 +1,36 @@
+# Core dependencies
+fastapi==0.136.1
+uvicorn[standard]==0.46.0
+pydantic==2.13.3
+python-multipart==0.0.27
+
+# PyTorch - run.bat handles this, but for reference:
+# torch>=2.11.0
+# torchvision matching the installed torch build
+# torchaudio matching the installed torch build
+
+# Image processing
+Pillow==12.2.0
+opencv-python==4.13.0.92
+numpy==2.2.6
+
+# HTTP requests
+requests==2.33.1
+
+# Model downloads - ModelScope (primary) and HuggingFace (fallback)
+modelscope==1.36.3
+huggingface-hub==1.12.0
+
+# SAM3 (Segment Anything Model 3) - Install from GitHub (PyPI 0.1.2 has broken package structure)
+# PyPI package is missing sam3.sam submodule: https://github.com/facebookresearch/sam3/issues/225
+sam3 @ git+https://github.com/facebookresearch/sam3.git@c97c893969003d3e6803fd5d679f21e515aef5ce
+
+# SAM3 missing declared dependencies (Windows: use triton-windows instead of triton)
+einops==0.8.2
+decord==0.6.0
+
+# For RLE encoding (COCO format)
+pycocotools==2.0.11
+
+# Logging and monitoring
+python-json-logger==4.1.0

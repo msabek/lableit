@@ -1,0 +1,42 @@
+# Root .dockerignore — applies to all image builds that use the repo root as
+# build context (apps/api and apps/web in docker-compose.prod.yml).
+#
+# Purpose: keep secrets, dev state, and multi-GB model weights OUT of the image
+# layers. Without this, `COPY . .` would bake the local .env (real credentials)
+# and apps/inference/models (3GB+ checkpoints) into the published image.
+
+# --- Secrets / environment ---
+.env
+.env.*
+**/.env
+
+# --- Dependencies (reinstalled inside the image) ---
+node_modules
+**/node_modules
+bun.lockb
+
+# --- Build output (regenerated inside the image) ---
+dist
+**/dist
+build
+
+# --- Model weights & inference runtime state (downloaded at runtime) ---
+models
+apps/inference/models
+
+# --- API runtime scratch dirs (generated at runtime) ---
+apps/api/exports
+apps/api/temp
+
+# --- Python caches ---
+__pycache__
+**/__pycache__
+
+# --- VCS / tooling / local agent artifacts ---
+.git
+.remember
+.claude
+
+# --- Logs / OS cruft ---
+*.log
+.DS_Store

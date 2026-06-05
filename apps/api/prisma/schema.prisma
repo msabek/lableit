@@ -1,0 +1,160 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id         String    @id @default(cuid())
+  email      String    @unique
+  password   String    @default("")
+  externalId String?   @unique // Clerk user ID
+  createdAt  DateTime  @default(now())
+  projects   Project[]
+
+  @@map("users")
+}
+
+model Project {
+  id        String     @id @default(cuid())
+  name      String
+  createdAt DateTime   @default(now())
+  owner     User       @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  ownerId   String
+  assets    Asset[]
+  classes   ClassDef[]
+  tags      Tag[]
+
+  @@index([ownerId])
+  @@map("projects")
+}
+
+enum AssetSourceType {
+  image
+  video_frame
+}
+
+model Asset {
+  id          String          @id @default(cuid())
+  project     Project         @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId   String
+  uri         String          @unique
+  width       Int
+  height      Int
+  frameTimeMs Int?
+  sourceType  AssetSourceType
+  createdAt   DateTime        @default(now())
+  annotations Annotation[]
+  tags        AssetTag[]
+
+  @@index([projectId])
+  @@index([sourceType])
+  @@map("assets")
+}
+
+model Tag {
+  id        String     @id @default(cuid())
+  project   Project    @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId String
+  name      String
+  color     String     @default("#6366f1")
+  createdAt DateTime   @default(now())
+  assets    AssetTag[]
+
+  @@unique([projectId, name]) // Prevent duplicate tag names in same project
+  @@index([projectId])
+  @@map("tags")
+}
+
+model AssetTag {
+  id        String   @id @default(cuid())
+  asset     Asset    @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  assetId   String
+  tag       Tag      @relation(fields: [tagId], references: [id], onDelete: Cascade)
+  tagId     String
+  createdAt DateTime @default(now())
+
+  @@unique([assetId, tagId]) // Prevent duplicate asset-tag pairs
+  @@index([assetId])
+  @@index([tagId])
+  @@map("asset_tags")
+}
+
+model ClassDef {
+  id          String       @id @default(cuid())
+  project     Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId   String
+  name        String
+  color       String
+  threshold   Float        @default(0.5)
+  annotations Annotation[]
+
+  @@unique([projectId, name]) // Prevent duplicate class names in same project
+  @@index([projectId])
+  @@map("class_defs")
+}
+
+enum AnnotationSource {
+  auto
+  manual
+}
+
+enum AnnotationType {
+  mask
+  box
+}
+
+model Annotation {
+  id              String           @id @default(cuid())
+  asset           Asset            @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  assetId         String
+  class           ClassDef         @relation(fields: [classId], references: [id], onDelete: Cascade)
+  classId         String
+  confidence      Float
+  geometryRle     String?
+  geometryPolygon Json?            // Polygon points [[x1,y1], [x2,y2], ...] for mask visualization
+  box             Json?
+  type            AnnotationType
+  source          AnnotationSource
+  createdAt       DateTime         @default(now())
+
+  @@index([assetId])
+  @@index([classId])
+  @@index([type])
+  @@index([source])
+  @@index([assetId, classId]) // Composite for querying by both
+  @@map("annotations")
+}
+
+enum JobKind {
+  slice_video
+  infer_preview
+  infer_batch
+  export
+}
+
+enum JobStatus {
+  queued
+  running
+  succeeded
+  failed
+}
+
+model Job {
+  id        String    @id @default(cuid())
+  kind      JobKind
+  status    JobStatus @default(queued)
+  params    Json
+  result    Json?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@index([status])
+  @@index([kind])
+  @@index([createdAt])
+  @@index([status, kind]) // Composite for filtering by both
+  @@map("jobs")
+}

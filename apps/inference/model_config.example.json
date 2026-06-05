@@ -1,0 +1,7 @@
+{
+  "model_path": "models/facebook/sam3/sam3.pt",
+  "source": "modelscope",
+  "base_dir": "models/facebook/sam3",
+  "local": true,
+  "download_date": ""
+}

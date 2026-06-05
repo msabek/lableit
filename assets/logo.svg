@@ -1,0 +1,72 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="660" height="180" viewBox="0 0 660 180" fill="none" role="img" aria-label="Lableit — SAM3 vision annotation">
+  <title>Lableit</title>
+  <defs>
+    <linearGradient id="brand" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#22d3ee">
+        <animate attributeName="stop-color" values="#22d3ee;#6366f1;#8b5cf6;#22d3ee" dur="6s" repeatCount="indefinite"/>
+      </stop>
+      <stop offset="55%" stop-color="#6366f1">
+        <animate attributeName="stop-color" values="#6366f1;#8b5cf6;#22d3ee;#6366f1" dur="6s" repeatCount="indefinite"/>
+      </stop>
+      <stop offset="100%" stop-color="#8b5cf6">
+        <animate attributeName="stop-color" values="#8b5cf6;#22d3ee;#6366f1;#8b5cf6" dur="6s" repeatCount="indefinite"/>
+      </stop>
+    </linearGradient>
+    <linearGradient id="brandText" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#818cf8"/>
+      <stop offset="60%" stop-color="#a78bfa"/>
+      <stop offset="100%" stop-color="#22d3ee"/>
+    </linearGradient>
+    <filter id="glow" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur stdDeviation="3.2" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <clipPath id="frameClip"><rect x="26" y="26" width="128" height="128" rx="22"/></clipPath>
+  </defs>
+
+  <!-- ===== Icon: detection frame + scan ===== -->
+  <g transform="translate(0,0)">
+    <!-- rounded card -->
+    <rect x="26" y="26" width="128" height="128" rx="26" fill="#0b1020"/>
+    <rect x="26" y="26" width="128" height="128" rx="26" fill="none" stroke="url(#brand)" stroke-width="2" opacity="0.6"/>
+
+    <!-- sweeping scan line (clipped to card) -->
+    <g clip-path="url(#frameClip)">
+      <rect x="30" y="0" width="120" height="3" fill="url(#brand)" filter="url(#glow)" opacity="0.9">
+        <animate attributeName="y" values="34;146;34" dur="2.6s" repeatCount="indefinite" keyTimes="0;0.5;1" calcMode="spline" keySplines="0.45 0 0.55 1;0.45 0 0.55 1"/>
+        <animate attributeName="opacity" values="0;0.95;0.95;0" dur="2.6s" repeatCount="indefinite" keyTimes="0;0.1;0.9;1"/>
+      </rect>
+    </g>
+
+    <!-- detection corner brackets (draw-on) -->
+    <g stroke="url(#brand)" stroke-width="6" stroke-linecap="round" fill="none" filter="url(#glow)">
+      <path d="M58 50 H50 V58" stroke-dasharray="32" stroke-dashoffset="32">
+        <animate attributeName="stroke-dashoffset" values="32;0" dur="0.9s" begin="0s" fill="freeze"/>
+        <animate attributeName="stroke-dashoffset" values="32;0;0;32" dur="5.2s" begin="0.9s" repeatCount="indefinite" keyTimes="0;0.18;0.82;1"/>
+      </path>
+      <path d="M122 50 H130 V58" stroke-dasharray="32" stroke-dashoffset="32">
+        <animate attributeName="stroke-dashoffset" values="32;0" dur="0.9s" begin="0.15s" fill="freeze"/>
+        <animate attributeName="stroke-dashoffset" values="32;0;0;32" dur="5.2s" begin="1.05s" repeatCount="indefinite" keyTimes="0;0.18;0.82;1"/>
+      </path>
+      <path d="M50 122 V130 H58" stroke-dasharray="32" stroke-dashoffset="32">
+        <animate attributeName="stroke-dashoffset" values="32;0" dur="0.9s" begin="0.3s" fill="freeze"/>
+        <animate attributeName="stroke-dashoffset" values="32;0;0;32" dur="5.2s" begin="1.2s" repeatCount="indefinite" keyTimes="0;0.18;0.82;1"/>
+      </path>
+      <path d="M130 122 V130 H122" stroke-dasharray="32" stroke-dashoffset="32">
+        <animate attributeName="stroke-dashoffset" values="32;0" dur="0.9s" begin="0.45s" fill="freeze"/>
+        <animate attributeName="stroke-dashoffset" values="32;0;0;32" dur="5.2s" begin="1.35s" repeatCount="indefinite" keyTimes="0;0.18;0.82;1"/>
+      </path>
+    </g>
+
+    <!-- pulsing detection dots -->
+    <g fill="#e0e7ff">
+      <circle cx="72" cy="90" r="4"><animate attributeName="r" values="3;5;3" dur="2.6s" begin="0.2s" repeatCount="indefinite"/><animate attributeName="opacity" values="0.5;1;0.5" dur="2.6s" begin="0.2s" repeatCount="indefinite"/></circle>
+      <circle cx="90" cy="78" r="4"><animate attributeName="r" values="3;5;3" dur="2.6s" begin="0.7s" repeatCount="indefinite"/><animate attributeName="opacity" values="0.5;1;0.5" dur="2.6s" begin="0.7s" repeatCount="indefinite"/></circle>
+      <circle cx="108" cy="96" r="4"><animate attributeName="r" values="3;5;3" dur="2.6s" begin="1.1s" repeatCount="indefinite"/><animate attributeName="opacity" values="0.5;1;0.5" dur="2.6s" begin="1.1s" repeatCount="indefinite"/></circle>
+    </g>
+  </g>
+
+  <!-- ===== Wordmark ===== -->
+  <text x="188" y="98" font-family="'Segoe UI',system-ui,-apple-system,'Helvetica Neue',Arial,sans-serif" font-size="62" font-weight="800" letter-spacing="-1.5" fill="url(#brandText)">Lableit</text>
+  <text x="190" y="132" font-family="'Segoe UI',system-ui,-apple-system,'Helvetica Neue',Arial,sans-serif" font-size="20" font-weight="600" letter-spacing="3.5" fill="#94a3b8">SAM3 · VISION ANNOTATION</text>
+</svg>

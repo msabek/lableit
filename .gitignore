@@ -57,6 +57,7 @@ apps/api/temp/*
 # Dev tooling / local agent artifacts (not part of the published project)
 .claude/
 .remember/
+.playwright-mcp/
 
 # Temporary files
 *.tmp

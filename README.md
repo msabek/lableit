@@ -1,9 +1,21 @@
-# Lableit
+<p align="center">
+  <img src="assets/logo.svg" alt="Lableit" width="540" />
+</p>
 
-**SAM3-powered vision annotation platform for images and videos.** Upload media,
-describe objects with natural-language text prompts, review the detections on an
-interactive canvas, and export annotations in 8 dataset formats (COCO, YOLO
-detect/segment, Pascal VOC, PNG masks, CreateML, TFRecord, LabelMe).
+<p align="center"><strong>SAM3-powered vision annotation platform for images and videos.</strong></p>
+
+<p align="center">
+  Upload media, describe objects with natural-language text prompts, review the
+  detections on an interactive canvas, and export annotations in 8 dataset
+  formats (COCO, YOLO detect/segment, Pascal VOC, PNG masks, CreateML, TFRecord, LabelMe).
+</p>
+
+<p align="center">
+  <a href="./LICENSE"><img alt="License: PolyForm Noncommercial 1.0.0" src="https://img.shields.io/badge/license-PolyForm%20Noncommercial%201.0.0-6366f1"></a>
+  <img alt="Runtime: Bun 1.3" src="https://img.shields.io/badge/runtime-Bun%201.3-14151a">
+  <img alt="Model: SAM3" src="https://img.shields.io/badge/model-SAM3-8b5cf6">
+  <img alt="Python 3.11" src="https://img.shields.io/badge/python-3.11-22d3ee">
+</p>
 
 > **License at a glance.** Lableit is **free for noncommercial use** (research,
 > teaching, evaluation, personal projects) under the
@@ -16,6 +28,7 @@ detect/segment, Pascal VOC, PNG masks, CreateML, TFRecord, LabelMe).
 
 ## Table of contents
 
+- [Screenshots](#screenshots)
 - [Features](#features)
 - [Architecture](#architecture)
 - [Prerequisites](#prerequisites)
@@ -33,6 +46,19 @@ detect/segment, Pascal VOC, PNG masks, CreateML, TFRecord, LabelMe).
 - [Acknowledgements](#acknowledgements)
 
 ---
+
+## Screenshots
+
+> The annotation workspace requires sign-in (Clerk) and a running backend; the
+> public landing page is shown below.
+
+<p align="center">
+  <img src="assets/screenshots/lableit-landing-hero.png" alt="Lableit landing — AI-powered image labeling" width="900" />
+</p>
+
+| Features | Try-it demo | Export formats |
+|:---:|:---:|:---:|
+| <img src="assets/screenshots/lableit-landing-features.png" alt="Features" width="280"> | <img src="assets/screenshots/lableit-landing-demo.png" alt="Interactive demo" width="280"> | <img src="assets/screenshots/lableit-landing-exports.png" alt="Export formats" width="280"> |
 
 ## Features
 

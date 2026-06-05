@@ -23,6 +23,11 @@
 - **ADDED**: Initial Prisma migration (`prisma/migrations`) — previously missing despite docs claiming auto-migrate.
 - **ADDED**: `docs/USER_GUIDE.md`, `docs/API.md`, `docs/EXPORT_FORMATS.md`, `docs/TROUBLESHOOTING.md`, `CONTRIBUTING.md`, `SECURITY.md`; rewrote the README for cross-platform setup; reconciled ports, Python version (3.11), and `docker compose` usage.
 
+### Branding
+- **ADDED**: Animated SVG logo (`assets/logo.svg` banner + `assets/logo-mark.svg` icon) that animates in the README; wired as the app favicon.
+- **FIXED**: Brand wordmark typo in the `Logo` component — rendered "Labelit" instead of "Lableit".
+- **ADDED**: README logo banner, license/runtime badges, and a Screenshots section (landing-page captures).
+
 ### Cleanup
 - **REMOVED**: Stray files (`0.1.2`, `.DS_Store`, duplicate `package-lock.json`), stale build output, dev cruft (`debug_load.py`, `__pycache__`), ~1,500 lines of unused web components, and unused Python deps (`sse-starlette`, `psutil`).
 

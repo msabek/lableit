@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64" fill="none" role="img" aria-label="Lableit">
+  <title>Lableit</title>
+  <defs>
+    <linearGradient id="m" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#22d3ee">
+        <animate attributeName="stop-color" values="#22d3ee;#6366f1;#8b5cf6;#22d3ee" dur="6s" repeatCount="indefinite"/>
+      </stop>
+      <stop offset="55%" stop-color="#6366f1">
+        <animate attributeName="stop-color" values="#6366f1;#8b5cf6;#22d3ee;#6366f1" dur="6s" repeatCount="indefinite"/>
+      </stop>
+      <stop offset="100%" stop-color="#8b5cf6">
+        <animate attributeName="stop-color" values="#8b5cf6;#22d3ee;#6366f1;#8b5cf6" dur="6s" repeatCount="indefinite"/>
+      </stop>
+    </linearGradient>
+    <filter id="g" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur stdDeviation="1.4" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <clipPath id="c"><rect x="4" y="4" width="56" height="56" rx="13"/></clipPath>
+  </defs>
+
+  <rect x="4" y="4" width="56" height="56" rx="14" fill="#0b1020"/>
+  <rect x="4" y="4" width="56" height="56" rx="14" fill="none" stroke="url(#m)" stroke-width="1.5" opacity="0.6"/>
+
+  <g clip-path="url(#c)">
+    <rect x="6" y="0" width="52" height="2" fill="url(#m)" filter="url(#g)">
+      <animate attributeName="y" values="14;50;14" dur="2.6s" repeatCount="indefinite" calcMode="spline" keyTimes="0;0.5;1" keySplines="0.45 0 0.55 1;0.45 0 0.55 1"/>
+      <animate attributeName="opacity" values="0;0.95;0.95;0" dur="2.6s" repeatCount="indefinite" keyTimes="0;0.1;0.9;1"/>
+    </rect>
+  </g>
+
+  <g stroke="url(#m)" stroke-width="3.4" stroke-linecap="round" fill="none" filter="url(#g)">
+    <path d="M24 20 H20 V24" stroke-dasharray="16" stroke-dashoffset="16"><animate attributeName="stroke-dashoffset" values="16;0;0;16" dur="5.2s" begin="0s" repeatCount="indefinite" keyTimes="0;0.18;0.82;1"/></path>
+    <path d="M40 20 H44 V24" stroke-dasharray="16" stroke-dashoffset="16"><animate attributeName="stroke-dashoffset" values="16;0;0;16" dur="5.2s" begin="0.15s" repeatCount="indefinite" keyTimes="0;0.18;0.82;1"/></path>
+    <path d="M20 40 V44 H24" stroke-dasharray="16" stroke-dashoffset="16"><animate attributeName="stroke-dashoffset" values="16;0;0;16" dur="5.2s" begin="0.3s" repeatCount="indefinite" keyTimes="0;0.18;0.82;1"/></path>
+    <path d="M44 40 V44 H40" stroke-dasharray="16" stroke-dashoffset="16"><animate attributeName="stroke-dashoffset" values="16;0;0;16" dur="5.2s" begin="0.45s" repeatCount="indefinite" keyTimes="0;0.18;0.82;1"/></path>
+  </g>
+
+  <g fill="#e0e7ff">
+    <circle cx="28" cy="36" r="2.2"><animate attributeName="opacity" values="0.5;1;0.5" dur="2.6s" begin="0.2s" repeatCount="indefinite"/></circle>
+    <circle cx="36" cy="30" r="2.2"><animate attributeName="opacity" values="0.5;1;0.5" dur="2.6s" begin="0.7s" repeatCount="indefinite"/></circle>
+  </g>
+</svg>

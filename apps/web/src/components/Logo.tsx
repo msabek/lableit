@@ -98,7 +98,7 @@ export default function Logo({ size = 'md', showText = true, className = '' }: L
 
       {showText && (
         <span className={`font-bold ${text} tracking-tight`}>
-          <span className="text-slate-800 dark:text-white">Label</span>
+          <span className="text-slate-800 dark:text-white">Lable</span>
           <span className="bg-gradient-to-r from-blue-500 to-indigo-600 bg-clip-text text-transparent">it</span>
         </span>
       )}
@@ -197,7 +197,7 @@ export function AnimatedLogo({ size = 'xl', className = '' }: Omit<LogoProps, 's
       </svg>
 
       <span className={`font-bold ${text} tracking-tight`}>
-        <span className="text-slate-800 dark:text-white">Label</span>
+        <span className="text-slate-800 dark:text-white">Lable</span>
         <span className="bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500 bg-clip-text text-transparent animate-gradient">it</span>
       </span>
     </div>

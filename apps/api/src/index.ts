@@ -998,9 +998,20 @@ app.addHook('preHandler', async (request, reply) => {
     if (!tokenData) {
       return reply.status(401).send({ error: 'Invalid or expired export token' });
     }
-    // Consume the token (single-use)
+    // Scope the token to its own archive: a valid token must not be usable to
+    // download a different file under /exports/ (prevents IDOR / path traversal).
+    let requestedName: string;
+    try {
+      requestedName = decodeURIComponent(actualUrl.replace(/^\/exports\//, ''));
+    } catch {
+      return reply.status(400).send({ error: 'Invalid export path' });
+    }
+    if (requestedName !== tokenData.archiveName) {
+      return reply.status(403).send({ error: 'Export token does not match the requested file' });
+    }
+    // Consume the token (single-use) only after the file matches
     await deleteExportToken(token);
-    // Token is valid, allow the request
+    // Token is valid and scoped to this archive, allow the request
     return;
   }
 

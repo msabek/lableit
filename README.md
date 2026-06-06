@@ -35,7 +35,7 @@
 - [Quickstart (local development)](#quickstart-local-development)
 - [Configuration (environment variables)](#configuration-environment-variables)
 - [Downloading the SAM3 model](#downloading-the-sam3-model)
-- [Running without a GPU](#running-without-a-gpu)
+- [Devices (CUDA / Apple Silicon / CPU)](#devices-cuda--apple-silicon--cpu)
 - [Deployment](#deployment)
 - [Documentation](#documentation)
 - [Export formats](#export-formats)
@@ -49,16 +49,25 @@
 
 ## Screenshots
 
-> The annotation workspace requires sign-in (Clerk) and a running backend; the
-> public landing page is shown below.
+The application running locally end-to-end (captured on Apple Silicon, SAM3 on CPU):
+
+| Projects dashboard | SAM3 detection on the canvas | Export (8 formats) |
+|:---:|:---:|:---:|
+| <img src="assets/screenshots/app-projects.png" alt="Projects dashboard" width="280"> | <img src="assets/screenshots/app-labeling-detection.png" alt="SAM3 text-prompt detection" width="280"> | <img src="assets/screenshots/app-export.png" alt="Export formats" width="280"> |
 
 <p align="center">
-  <img src="assets/screenshots/lableit-landing-hero.png" alt="Lableit landing — AI-powered image labeling" width="900" />
+  <img src="assets/screenshots/app-labeling-grid.png" alt="Labeling workspace — Device: cpu, SAM3 Ready" width="760" />
 </p>
 
-| Features | Try-it demo | Export formats |
+Landing page:
+
+<p align="center">
+  <img src="assets/screenshots/lableit-landing-hero.png" alt="Lableit landing — AI-powered image labeling" width="820" />
+</p>
+
+| Features | Try-it demo | Export showcase |
 |:---:|:---:|:---:|
-| <img src="assets/screenshots/lableit-landing-features.png" alt="Features" width="280"> | <img src="assets/screenshots/lableit-landing-demo.png" alt="Interactive demo" width="280"> | <img src="assets/screenshots/lableit-landing-exports.png" alt="Export formats" width="280"> |
+| <img src="assets/screenshots/lableit-landing-features.png" alt="Features" width="260"> | <img src="assets/screenshots/lableit-landing-demo.png" alt="Interactive demo" width="260"> | <img src="assets/screenshots/lableit-landing-exports.png" alt="Export showcase" width="260"> |
 
 ## Features
 
@@ -111,7 +120,7 @@ the inference service is **not** meant to be exposed directly (see [Security](#s
 | **uv** | latest | Python dependency installer |
 | **Docker** | Compose v2 | local Postgres/Redis/MinIO (and full self-host) |
 | **ffmpeg** | any recent | slicing videos into frames |
-| **NVIDIA GPU + CUDA** | — | **required for SAM3 inference** (see [Running without a GPU](#running-without-a-gpu)) |
+| **NVIDIA GPU + CUDA** | — | Recommended for fast SAM3 inference. **Not required on Apple Silicon** — SAM3 runs on CPU there (see below). |
 
 Install ffmpeg: `brew install ffmpeg` (macOS) · `sudo apt install ffmpeg` (Debian/Ubuntu) ·
 `winget install Gyan.FFmpeg` (Windows).
@@ -156,19 +165,32 @@ cd ..
 
 ### 5. Install Python / SAM3 dependencies
 
+SAM3 is written for CUDA, so install differs slightly per platform. SAM3 is always
+installed with `--no-deps` (its pinned `numpy<2` conflicts with the stack, and
+`triton` has no macOS build); the launchers handle this for you.
+
+**macOS / Apple Silicon (or Linux CPU):**
+
+```bash
+cd apps/inference
+bash setup_mac.sh     # creates .venv (3.12), installs torch+deps+SAM3, patches triton
+cd ../..
+```
+
+SAM3 runs on **CPU** by default on Apple Silicon (no CUDA needed). Metal/MPS is
+available as an experimental opt-in via `LABLEIT_DEVICE=mps`.
+
+**Windows / Linux with an NVIDIA GPU:** use the `run.bat` launcher (Windows), or:
+
 ```bash
 cd apps/inference
 python3.11 -m venv .venv
-
-# Activate the virtualenv:
-source .venv/bin/activate        # macOS / Linux
-# .venv\Scripts\activate         # Windows (PowerShell/cmd)
-
-# Install PyTorch (pick the CUDA build matching your GPU/driver):
-uv pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
-
-# Install the rest (includes the pinned SAM3 package):
+.venv\Scripts\activate                  # Windows (PowerShell/cmd)   — or: source .venv/bin/activate
+uv pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu128
 uv pip install -r requirements.txt
+# triton (Windows wheel) + SAM3 with --no-deps:
+uv pip install triton-windows
+uv pip install --no-deps "sam3 @ git+https://github.com/facebookresearch/sam3.git@c97c893969003d3e6803fd5d679f21e515aef5ce"
 cd ../..
 ```
 
@@ -245,17 +267,19 @@ python apps/inference/download_models.py
 A `model_config.json` is generated locally on first download (it is gitignored;
 see [`model_config.example.json`](./apps/inference/model_config.example.json)).
 
-## Running without a GPU
+## Devices (CUDA / Apple Silicon / CPU)
 
-SAM3 requires an **NVIDIA GPU with CUDA**. With no GPU detected:
+The inference service auto-selects a device; override with `LABLEIT_DEVICE=cuda|mps|cpu`.
 
-- AI inference is unavailable.
-- **Manual annotation (boxes/polygons) still works.**
-- Projects, assets, and all 8 exports remain fully functional.
-- The UI shows a clear "limited mode" message.
+| Host | Default device | Notes |
+|------|----------------|-------|
+| NVIDIA GPU | `cuda` | Fastest. bf16 autocast enabled. |
+| Apple Silicon (Mac) | `cpu` | **Works out of the box** (~6 s/image for SAM3 text-prompt detection). A compatibility shim adapts SAM3's CUDA-only code to run in float32. |
+| Apple Silicon, experimental | `mps` | Set `LABLEIT_DEVICE=mps`. Functional but not faster than CPU here (many SAM3 ops fall back to CPU on Metal). |
+| No accelerator / cloud CPU | `cpu` | Functional but slow/memory-heavy on large images. Railway has no GPUs. |
 
-> Cloud platforms without GPUs (e.g. Railway) run the inference service in this
-> limited mode. See [`docs/TROUBLESHOOTING.md`](./docs/TROUBLESHOOTING.md).
+Manual annotation (drawing boxes/polygons), projects, assets, and all 8 exports work
+regardless of device. See [`docs/TROUBLESHOOTING.md`](./docs/TROUBLESHOOTING.md).
 
 ## Deployment
 

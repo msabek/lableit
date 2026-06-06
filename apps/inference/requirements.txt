@@ -21,13 +21,25 @@ requests==2.33.1
 modelscope==1.36.3
 huggingface-hub==1.12.0
 
-# SAM3 (Segment Anything Model 3) - Install from GitHub (PyPI 0.1.2 has broken package structure)
-# PyPI package is missing sam3.sam submodule: https://github.com/facebookresearch/sam3/issues/225
-sam3 @ git+https://github.com/facebookresearch/sam3.git@c97c893969003d3e6803fd5d679f21e515aef5ce
+# SAM3 (Segment Anything Model 3) is installed SEPARATELY with --no-deps, because its
+# pinned numpy<2 constraint conflicts with the rest of the stack and `triton` has no
+# macOS build. The launchers handle this:
+#   - Windows:      run.bat                 (installs triton-windows + sam3 --no-deps)
+#   - macOS/Linux:  apps/inference/setup_mac.sh  (installs sam3 --no-deps + patches triton)
+# Manual equivalent (pinned commit):
+#   pip install --no-deps "sam3 @ git+https://github.com/facebookresearch/sam3.git@c97c893969003d3e6803fd5d679f21e515aef5ce"
 
-# SAM3 missing declared dependencies (Windows: use triton-windows instead of triton)
+# SAM3 runtime dependencies (declared here because sam3 is installed with --no-deps).
 einops==0.8.2
-decord==0.6.0
+iopath==0.1.10
+timm==1.0.27
+ftfy==6.3.1
+regex==2026.5.9
+psutil==7.2.2
+# decord: video decoding used only by the SAM3 video tracker. There is no macOS /
+# Apple-Silicon wheel, and image text-prompt inference does not need it, so it is gated
+# to non-macOS platforms. (eva-decord has no wheel for current macOS either.)
+decord==0.6.0 ; sys_platform != "darwin"
 
 # For RLE encoding (COCO format)
 pycocotools==2.0.11

@@ -4,6 +4,12 @@ SAM3 (Segment Anything Model 3) integration for image segmentation
 Supports text-prompt based object detection and segmentation
 """
 
+# Enable CPU fallback for any op Metal (Apple Silicon / MPS) does not implement.
+# Must be set before torch initializes the MPS backend. Harmless on CUDA/Windows
+# hosts (no MPS backend), so this is safe cross-platform.
+import os
+os.environ.setdefault("PYTORCH_ENABLE_MPS_FALLBACK", "1")
+
 from fastapi import FastAPI, HTTPException, UploadFile, File, Form, Header, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
@@ -34,29 +40,74 @@ logger = logging.getLogger(__name__)
 # ================================
 # Configuration
 # ================================
+# Device selection priority: CUDA (NVIDIA) > MPS (Apple Silicon) > CPU.
+# An explicit override is supported via LABLEIT_DEVICE=cuda|mps|cpu.
 CUDA_AVAILABLE = torch.cuda.is_available()
-DEVICE = "cuda" if CUDA_AVAILABLE else "cpu"
+MPS_AVAILABLE = bool(getattr(torch.backends, "mps", None)) and torch.backends.mps.is_available()
+_forced_device = os.environ.get("LABLEIT_DEVICE", "").strip().lower()
 
-# Verify GPU architecture is actually supported by this PyTorch build
+if _forced_device in ("cuda", "mps", "cpu"):
+    DEVICE = _forced_device
+elif CUDA_AVAILABLE:
+    DEVICE = "cuda"
+else:
+    # Apple Silicon and other non-CUDA hosts default to CPU. SAM3 also runs on MPS
+    # (Metal) via the compatibility shim, but because many SAM3 ops are not
+    # implemented on MPS they fall back to CPU anyway — so MPS is not faster here
+    # and is less stable. Opt into the experimental MPS path with LABLEIT_DEVICE=mps.
+    DEVICE = "cpu"
+
+# Verify CUDA GPU architecture is actually supported by this PyTorch build
 # (catches sm_120 Blackwell GPUs with older PyTorch that only supports up to sm_90)
-if CUDA_AVAILABLE:
+if DEVICE == "cuda":
     try:
         _test = torch.zeros(1, device='cuda')
         del _test
     except RuntimeError as e:
         logging.getLogger(__name__).warning(f"CUDA available but GPU incompatible with this PyTorch build: {e}")
-        logging.getLogger(__name__).warning("Falling back to CPU mode. Install PyTorch with cu128 for Blackwell GPUs (RTX 50-series).")
+        logging.getLogger(__name__).warning("Falling back to MPS/CPU. Install PyTorch with cu128 for Blackwell GPUs (RTX 50-series).")
         CUDA_AVAILABLE = False
+        DEVICE = "mps" if MPS_AVAILABLE else "cpu"
+
+# Verify MPS is actually usable (rare driver/build mismatches)
+if DEVICE == "mps":
+    try:
+        _test = torch.zeros(1, device='mps')
+        del _test
+    except Exception as e:
+        logging.getLogger(__name__).warning(f"MPS reported available but unusable ({e}); falling back to CPU.")
         DEVICE = "cpu"
 
+# Export the resolved device so the optional SAM3 device patch (patch_sam3_device.py)
+# can redirect SAM3's hardcoded device="cuda" tensors to the real device.
+os.environ.setdefault("SAM3_DEVICE", DEVICE)
+
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+
+# On non-CUDA devices (Apple Silicon MPS / CPU), redirect SAM3's many hardcoded
+# CUDA tensor ops to the active device. No-op on CUDA, so Windows/Linux GPU hosts
+# are unaffected. Must run before any SAM3 model is built.
+if DEVICE != "cuda":
+    try:
+        import sys as _sys
+        if SCRIPT_DIR not in _sys.path:
+            _sys.path.insert(0, SCRIPT_DIR)
+        from _compat.torch_device_compat import enable as _enable_device_compat
+        _enable_device_compat(DEVICE)
+        logger.info(f"Enabled torch device-compat shim (CUDA-hardcoded ops -> {DEVICE}).")
+    except Exception as _compat_err:
+        logger.warning(f"Could not enable torch device-compat shim: {_compat_err}")
+
 MODEL_CACHE_DIR = os.environ.get('MODEL_CACHE_DIR', os.path.join(SCRIPT_DIR, 'models'))
 CONFIG_FILE = os.path.join(SCRIPT_DIR, "model_config.json")
 SETTINGS_FILE = os.path.join(SCRIPT_DIR, "settings.json")
 MODEL_LOAD_RETRY_COOLDOWN_SECONDS = int(os.environ.get("MODEL_LOAD_RETRY_COOLDOWN_SECONDS", "120"))
 
-# SAM3 library requires CUDA - it has hardcoded device="cuda" in position_encoding.py
-SAM3_AVAILABLE = CUDA_AVAILABLE
+# SAM3 can run on CUDA (NVIDIA), MPS (Apple Silicon), or CPU. On non-CUDA devices
+# the SAM3 library hardcodes device="cuda" in a few spots (e.g. position_encoding.py);
+# patch_sam3_device.py rewrites those to honor SAM3_DEVICE, and PYTORCH_ENABLE_MPS_FALLBACK
+# covers any op Metal lacks. CPU works but is slow; MPS is recommended on Apple Silicon.
+SAM3_AVAILABLE = DEVICE in ("cuda", "mps", "cpu")
 
 # ================================
 # Security / Network Configuration
@@ -105,17 +156,18 @@ os.makedirs(MODEL_CACHE_DIR, exist_ok=True)
 
 logger.info(f"Using device: {DEVICE}")
 logger.info(f"CUDA available: {CUDA_AVAILABLE}")
-if CUDA_AVAILABLE:
+if DEVICE == "cuda":
     logger.info(f"CUDA device: {torch.cuda.get_device_name(0)}")
     # Enable TF32 for better performance on Ampere GPUs
     torch.backends.cuda.matmul.allow_tf32 = True
     torch.backends.cudnn.allow_tf32 = True
+elif DEVICE == "mps":
+    logger.info("Using Apple Silicon GPU (Metal / MPS). Unsupported ops fall back to CPU.")
 else:
     logger.warning("=" * 60)
-    logger.warning("WARNING: No CUDA GPU detected!")
-    logger.warning("SAM3 requires a CUDA-capable GPU to function.")
-    logger.warning("The service will run but AI inference will be unavailable.")
-    logger.warning("Manual annotation features will still work in the frontend.")
+    logger.warning("WARNING: No GPU detected (no CUDA or MPS).")
+    logger.warning("SAM3 will run on CPU, which is significantly slower and memory-heavy.")
+    logger.warning("Manual annotation features always work in the frontend regardless.")
     logger.warning("=" * 60)
 
 # ================================
@@ -657,9 +709,10 @@ def load_sam3_model(force: bool = False) -> Union[bool, str]:
 
     model_state.last_load_attempt = datetime.now()
 
-    # SAM3 requires CUDA - the library has hardcoded device="cuda" in position_encoding.py
+    # SAM3 runs on CUDA (NVIDIA), MPS (Apple Silicon), or CPU. SAM3_AVAILABLE is
+    # only false if no usable torch device resolved at all.
     if not SAM3_AVAILABLE:
-        error_msg = "SAM3 requires a CUDA-capable GPU. No compatible GPU was detected. Please connect a CUDA GPU or run on a machine with GPU support."
+        error_msg = "No usable compute device for SAM3 (CUDA, MPS, or CPU). Check the PyTorch installation."
         logger.error(error_msg)
         model_state.set_error(error_msg, cooldown_seconds=MODEL_LOAD_RETRY_COOLDOWN_SECONDS)
         return error_msg
@@ -729,10 +782,17 @@ def load_sam3_model(force: bool = False) -> Union[bool, str]:
             logger.info("Building model with default configuration...")
             sam3_model = build_sam3_image_model(bpe_path=bpe_path)
         
-        # Move to device
+        # SAM3 ships MIXED-dtype weights (most modules bf16, some fp32) and relies
+        # on CUDA bf16 autocast to reconcile dtypes at run time. Off CUDA there is no
+        # equivalent, so on non-CUDA devices we run the whole model in float32: the
+        # device-compat shim also forces SAM3's explicit bf16/half casts to float32,
+        # giving a single consistent dtype that every CPU/MPS op supports. CUDA keeps
+        # its native dtype and bf16 autocast for performance.
+        if DEVICE != "cuda":
+            sam3_model = sam3_model.float()
         sam3_model.to(DEVICE)
         sam3_model.eval()
-        logger.info(f"Model moved to {DEVICE}")
+        logger.info(f"Model moved to {DEVICE} (float32 unified: {DEVICE != 'cuda'})")
         
         # Step 5: Initialize processor
         sam3_processor = Sam3Processor(sam3_model)
@@ -1315,7 +1375,7 @@ def get_model_status_endpoint():
         "inference_count": model_status["inference_count"],
         "device": DEVICE,
         "cuda_available": CUDA_AVAILABLE,
-        "cuda_required": True,
+        "cuda_required": False,
         "inference_available": inference_available,
         "status_message": status_message,
         "cuda_device": torch.cuda.get_device_name(0) if CUDA_AVAILABLE else None,

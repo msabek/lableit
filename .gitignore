@@ -59,6 +59,12 @@ apps/api/temp/*
 .remember/
 .playwright-mcp/
 
+# Local dev stack data (native Postgres/Redis/MinIO created by setup; not for git)
+.devstack/
+
+# Local demo/scratch media used for testing (not redistributed)
+apps/web/public/lableit_demo.jpg
+
 # Temporary files
 *.tmp
 *.bak

@@ -1,5 +1,16 @@
 # Changelog
 
+## Unreleased - Apple Silicon / macOS Support (Jun 2026)
+
+### Cross-platform inference (Windows behavior unchanged)
+- **ADDED**: SAM3 inference now runs on **Apple Silicon Macs** (and CPU-only Linux), not just NVIDIA CUDA. Verified end-to-end on Apple Silicon: model loads, text-prompt detection runs (~6 s/image on CPU), annotations render on the canvas, and exports work.
+- **ADDED**: Device auto-selection `cuda → cpu` with an explicit `LABLEIT_DEVICE=cuda|mps|cpu` override. Apple Silicon defaults to **CPU** (reliable); **MPS** (Metal) is an experimental opt-in.
+- **ADDED**: `apps/inference/_compat/torch_device_compat.py` — runtime shim that redirects SAM3's hardcoded CUDA usage (`.cuda()`, `device="cuda"`, `torch.autocast("cuda")`, `pin_memory()`) to the active device and forces a single float32 dtype. No-op on CUDA, so Windows/Linux GPU hosts are unaffected.
+- **ADDED**: `apps/inference/_compat/patch_sam3_triton.py` — makes SAM3's hard `import triton` (which has no macOS build) optional. Idempotent; no-op when real triton is present.
+- **ADDED**: `apps/inference/setup_mac.sh` — one-command macOS/Apple-Silicon setup (venv, torch, deps, SAM3 `--no-deps`, triton patch).
+- **CHANGED**: `requirements.txt` now declares SAM3's transitive deps (iopath, timm, ftfy, regex, psutil) since SAM3 is installed with `--no-deps`, and gates `decord` to non-macOS (no Apple-Silicon wheel; not needed for image inference). Re-added `psutil` (SAM3 requires it). The `sam3` git line is installed separately by the launchers to avoid a numpy resolver conflict.
+- **ADDED**: README "Devices" section + per-platform Quickstart; live app screenshots captured on Apple Silicon (projects, SAM3 detection on canvas, export).
+
 ## Unreleased - Public Release Preparation (Jun 2026)
 
 ### Licensing

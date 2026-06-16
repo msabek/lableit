@@ -50,11 +50,13 @@ if _forced_device in ("cuda", "mps", "cpu"):
     DEVICE = _forced_device
 elif CUDA_AVAILABLE:
     DEVICE = "cuda"
+elif MPS_AVAILABLE:
+    # Apple Silicon: automatically use the Metal (MPS) GPU. A few SAM3 ops are not
+    # implemented on MPS and fall back to CPU (PYTORCH_ENABLE_MPS_FALLBACK=1), so
+    # MPS does not always beat CPU for SAM3 — but this honors "detect the hardware
+    # and use the available GPU". Force CPU instead with LABLEIT_DEVICE=cpu.
+    DEVICE = "mps"
 else:
-    # Apple Silicon and other non-CUDA hosts default to CPU. SAM3 also runs on MPS
-    # (Metal) via the compatibility shim, but because many SAM3 ops are not
-    # implemented on MPS they fall back to CPU anyway — so MPS is not faster here
-    # and is less stable. Opt into the experimental MPS path with LABLEIT_DEVICE=mps.
     DEVICE = "cpu"
 
 # Verify CUDA GPU architecture is actually supported by this PyTorch build

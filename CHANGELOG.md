@@ -1,10 +1,22 @@
 # Changelog
 
+## Unreleased - GPU auto-detect, creation wizard, delete fix (Jun 2026)
+
+### Inference
+- **CHANGED**: Device auto-selection now prefers the **Apple Silicon GPU (MPS)** when no CUDA is present (`cuda → mps → cpu`), so Macs use the Metal GPU automatically instead of defaulting to CPU. Verified with a real SAM3 detection on MPS (returns boxes, no errors). Override with `LABLEIT_DEVICE=cpu`. A few SAM3 ops still fall back to CPU via `PYTORCH_ENABLE_MPS_FALLBACK=1`, so MPS is not always faster than CPU for SAM3.
+
+### Web
+- **ADDED**: Step-by-step **project creation wizard** (`ProjectCreateWizard`) replacing the name-only dialog — 1) name + upload images/videos (reuses video slicing), 2) add classes, 3) review + Start labeling. Lists are scroll-capped.
+- **FIXED**: Deleting projects/classes/tags/assets and renaming a project failed in the browser with a generic **"Network Error"**. The API CORS preflight only advertised `GET,HEAD,POST`, so browsers blocked `DELETE`/`PUT`/`PATCH` before the request reached the server. Added an explicit `methods` allowlist (`GET,HEAD,POST,PUT,PATCH,DELETE,OPTIONS`).
+
+### Tooling
+- **ADDED**: `run.command` — double-click macOS launcher that starts local infra (Postgres/Redis/MinIO) + API/inference/web, waits for readiness, opens the app, and stops everything on Ctrl+C.
+
 ## Unreleased - Apple Silicon / macOS Support (Jun 2026)
 
 ### Cross-platform inference (Windows behavior unchanged)
 - **ADDED**: SAM3 inference now runs on **Apple Silicon Macs** (and CPU-only Linux), not just NVIDIA CUDA. Verified end-to-end on Apple Silicon: model loads, text-prompt detection runs (~6 s/image on CPU), annotations render on the canvas, and exports work.
-- **ADDED**: Device auto-selection `cuda → cpu` with an explicit `LABLEIT_DEVICE=cuda|mps|cpu` override. Apple Silicon defaults to **CPU** (reliable); **MPS** (Metal) is an experimental opt-in.
+- **ADDED**: Device auto-selection with an explicit `LABLEIT_DEVICE=cuda|mps|cpu` override. (Apple Silicon originally defaulted to CPU; this was later changed to prefer the MPS GPU — see the top section.)
 - **ADDED**: `apps/inference/_compat/torch_device_compat.py` — runtime shim that redirects SAM3's hardcoded CUDA usage (`.cuda()`, `device="cuda"`, `torch.autocast("cuda")`, `pin_memory()`) to the active device and forces a single float32 dtype. No-op on CUDA, so Windows/Linux GPU hosts are unaffected.
 - **ADDED**: `apps/inference/_compat/patch_sam3_triton.py` — makes SAM3's hard `import triton` (which has no macOS build) optional. Idempotent; no-op when real triton is present.
 - **ADDED**: `apps/inference/setup_mac.sh` — one-command macOS/Apple-Silicon setup (venv, torch, deps, SAM3 `--no-deps`, triton patch).

@@ -845,7 +845,12 @@ await app.register(cors, {
   origin: process.env.NODE_ENV === 'production'
     ? process.env.ALLOWED_ORIGINS?.split(',') || false
     : true, // Allow all in development
-  credentials: true
+  credentials: true,
+  // Explicitly allow the mutating verbs. Without this the preflight advertises
+  // only GET,HEAD,POST, so browsers block DELETE/PUT/PATCH (e.g. delete project,
+  // delete class/tag/asset, rename project) and the request never reaches the
+  // server, surfacing as a generic "Network Error" in the UI.
+  methods: ['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
 });
 await app.register(fastifyStatic, {
   root: EXPORTS_DIR,

@@ -8,6 +8,7 @@ import ServiceStatusIndicator from './components/ServiceStatusIndicator';
 import { useSettings } from './contexts/SettingsContext';
 import { useUploader } from './hooks/useUploader';
 import VideoSliceDialog from './components/VideoSliceDialog';
+import ProjectCreateWizard from './components/ProjectCreateWizard';
 import { DragDropOverlay } from './components/ui/DragDropOverlay';
 import {
   Plus, FolderOpen, Tag, Sparkles, Settings, Search, Grid, List,
@@ -673,7 +674,6 @@ export default function Projects() {
   const [showSettings, setShowSettings] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [newProjectName, setNewProjectName] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [retrying, setRetrying] = useState(false);
@@ -764,17 +764,14 @@ export default function Projects() {
     }
   };
 
-  const handleCreateProject = async () => {
-    if (!newProjectName.trim()) return;
-    try {
-      const project = await projects.create(newProjectName.trim());
-      setProjectsList(prev => [project, ...prev]);
-      setNewProjectName('');
-      setShowNewProject(false);
-      setSelectedProject(project);
-    } catch (err: any) {
-      setError(err.message);
-    }
+  // The creation wizard owns project creation; this keeps the list/stats in sync
+  // as the draft project is created and gains assets/classes.
+  const handleWizardProjectChange = (project: Project) => {
+    setProjectsList(prev =>
+      prev.some(p => p.id === project.id)
+        ? prev.map(p => (p.id === project.id ? project : p))
+        : [project, ...prev]
+    );
   };
 
   const handleDeleteProject = async (id: string) => {
@@ -1062,42 +1059,12 @@ export default function Projects() {
         )}
       </div>
 
-      {/* New Project Modal */}
+      {/* New Project Wizard (Media -> Classes -> Start) */}
       {showNewProject && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center glass-overlay animate-fade-in">
-          <div className="glass-card rounded-2xl shadow-elevated-lg p-6 w-full max-w-md animate-scale-in">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-10 h-10 rounded-xl bg-gradient-primary flex items-center justify-center">
-                <FolderOpen className="w-5 h-5 text-white" />
-              </div>
-              <h3 className="text-xl font-bold text-text">Create New Project</h3>
-            </div>
-            <input
-              type="text"
-              value={newProjectName}
-              onChange={(e) => setNewProjectName(e.target.value)}
-              placeholder="Enter project name..."
-              className="w-full px-4 py-3 rounded-xl glass-input text-text mb-6"
-              autoFocus
-              onKeyPress={(e) => e.key === 'Enter' && handleCreateProject()}
-            />
-            <div className="flex justify-end gap-3">
-              <button
-                onClick={() => { setShowNewProject(false); setNewProjectName(''); }}
-                className="btn-secondary-glass"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleCreateProject}
-                disabled={!newProjectName.trim()}
-                className="btn-primary-gradient disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Create Project
-              </button>
-            </div>
-          </div>
-        </div>
+        <ProjectCreateWizard
+          onProjectChange={handleWizardProjectChange}
+          onClose={() => setShowNewProject(false)}
+        />
       )}
 
       {/* Settings Modal */}

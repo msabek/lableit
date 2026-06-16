@@ -69,3 +69,5 @@ apps/web/public/lableit_demo.jpg
 *.tmp
 *.bak
 *.old
+# Redis dump (generated)
+dump.rdb

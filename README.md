@@ -129,6 +129,11 @@ Install ffmpeg: `brew install ffmpeg` (macOS) · `sudo apt install ffmpeg` (Debi
 
 > Run each service in its **own terminal** — they are long-running processes.
 > Commands are cross-platform unless a line is marked for a specific OS.
+>
+> **macOS one-click:** after the one-time setup (steps 1, 3, 4, 5 below), just
+> double-click **`run.command`** in Finder (or run `./run.command`). It starts
+> infra (Postgres, Redis, MinIO) and all three services, opens the app, and
+> stops everything on Ctrl+C. The manual steps below are the cross-platform path.
 
 ### 1. Clone and configure
 

@@ -985,12 +985,20 @@ async function getOrCreateUserFromClerk(
   clerkUserId: string,
   tokenEmail?: string
 ): Promise<{ id: string; email: string; accessStatus: string }> {
-  // Clerk session JWTs usually omit the email claim, so resolve the verified
-  // primary email from the Clerk API. This is what the admin check and the
-  // request notifications rely on (a stale `@lableit.local` fallback would
-  // otherwise lock the admin out of their own approval screen).
+  // Try to find existing user by clerk ID (stored in externalId) FIRST, so the
+  // common case (returning user, real email already stored) makes zero calls to
+  // the Clerk API.
+  let user = await prisma.user.findFirst({ where: { externalId: clerkUserId } });
+
+  // Clerk session JWTs usually omit the email claim. Resolve the verified primary
+  // email from the Clerk API ONLY when we actually need it — a brand-new account,
+  // or a stored `@lableit.local` fallback that hasn't been replaced yet. This is
+  // what the admin check + request notifications rely on (a stale fallback would
+  // otherwise lock the admin out of their own approval screen). Avoiding the call
+  // on every request keeps the hot path off Clerk's backend rate limits.
   let email = tokenEmail;
-  if (!email && clerkClient) {
+  const needsEmailLookup = !email && !!clerkClient && (!user || user.email.includes('@lableit.local'));
+  if (needsEmailLookup && clerkClient) {
     try {
       const cu = await clerkClient.users.getUser(clerkUserId);
       email = cu.primaryEmailAddress?.emailAddress
@@ -1000,9 +1008,6 @@ async function getOrCreateUserFromClerk(
       logger.debug({ err }, 'Could not fetch Clerk user email');
     }
   }
-
-  // Try to find existing user by clerk ID (stored in externalId)
-  let user = await prisma.user.findFirst({ where: { externalId: clerkUserId } });
 
   if (!user && email) {
     // Try to find by email and link to Clerk

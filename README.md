@@ -358,6 +358,6 @@ If you use Lableit in academic work, please cite it (and SAM3). Citation metadat
 
 ## Acknowledgements
 
-Created by **Mohammed Sabek** — **IHT Lab**, Department of Civil and Environmental
+Created by **Mohamed Sabek** — **IHT Lab**, Department of Civil and Environmental
 Engineering, **University of Alberta**, Edmonton, Canada. Built on
 [SAM3](https://ai.meta.com/sam) by Meta AI.

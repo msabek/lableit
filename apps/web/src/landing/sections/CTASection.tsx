@@ -32,7 +32,7 @@ export default function CTASection({ onGetStarted }: CTASectionProps) {
         Join researchers and engineering teams using Lableit to create high-quality training datasets faster than ever.
       </p>
       <p className="animate-on-scroll text-sm text-slate-500 dark:text-slate-400 max-w-3xl mx-auto mb-8">
-        Lableit was created by <span className="font-semibold text-slate-700 dark:text-slate-300">PhD Mohammed Sabek</span> at the
+        Lableit was created by <span className="font-semibold text-slate-700 dark:text-slate-300">PhD Mohamed Sabek</span> at the
         IHT Lab, Department of Civil and Environmental Engineering, University of Alberta, Edmonton, Canada.
       </p>
 
@@ -88,7 +88,7 @@ export default function CTASection({ onGetStarted }: CTASectionProps) {
           </a>
         </div>
         <p className="text-slate-500 dark:text-slate-500 text-sm flex items-center justify-center gap-1">
-          Made with <Heart className="w-4 h-4 text-rose-500" /> by PhD Mohammed Sabek · IHT Lab · University of Alberta
+          Made with <Heart className="w-4 h-4 text-rose-500" /> by PhD Mohamed Sabek · IHT Lab · University of Alberta
         </p>
         <p className="text-slate-400 dark:text-slate-600 text-xs mt-2">
           © {new Date().getFullYear()} Lableit. All rights reserved.

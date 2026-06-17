@@ -11,7 +11,7 @@
 
 ### Web
 - **ADDED**: Step-by-step **project creation wizard** (`ProjectCreateWizard`) replacing the name-only dialog — 1) name + upload images/videos (reuses video slicing), 2) add classes, 3) review + Start labeling. Lists are scroll-capped.
-- **ADDED**: Global attribution footer (`Credit` component) — "Developed by Dr. Mohammed Sabek at the IHT Lab, University of Alberta" — shown at the bottom of every app page (projects, labeling, auth); the landing page keeps its existing richer credit footer.
+- **ADDED**: Global attribution footer (`Credit` component) — "Developed by Dr. Mohamed Sabek at the IHT Lab, University of Alberta" — shown at the bottom of every app page (projects, labeling, auth); the landing page keeps its existing richer credit footer.
 - **REMOVED**: "Smart Auto-Labeling" button and its entire `/build` workflow (`BuildFlow` component, the `/build/:projectId` route, and the `BuildFlowWrapper`). Superseded by the step-by-step creation wizard + per-project labeling flow.
 - **FIXED**: Theme color "hue" washing over / obscuring UI. The `.bg-mesh-gradient` decorative tint layers (`::before`/`::after`) were `position:absolute` with no `z-index`, so they painted **on top of** non-`z-indexed` page content (e.g. the labeling screen) as a colored film. Gave the container its own stacking context (`isolation:isolate; z-index:0`) and moved the tint layers to `z-index:-1` so they always sit behind content; softened the corner glow (opacity 0.5, smaller radii) and the dark-mode ambient mesh for better contrast in both light and dark.
 - **FIXED**: Deleting projects/classes/tags/assets and renaming a project failed in the browser with a generic **"Network Error"**. The API CORS preflight only advertised `GET,HEAD,POST`, so browsers blocked `DELETE`/`PUT`/`PATCH` before the request reached the server. Added an explicit `methods` allowlist (`GET,HEAD,POST,PUT,PATCH,DELETE,OPTIONS`).
@@ -33,7 +33,7 @@
 ## Unreleased - Public Release Preparation (Jun 2026)
 
 ### Licensing
-- **CHANGED**: Relicensed from MIT to **PolyForm Noncommercial License 1.0.0** (© Mohammed Sabek) with a separate paid **commercial license** (`LICENSE-COMMERCIAL.md`). Free for research/education/personal use; commercial use requires a license.
+- **CHANGED**: Relicensed from MIT to **PolyForm Noncommercial License 1.0.0** (© Mohamed Sabek) with a separate paid **commercial license** (`LICENSE-COMMERCIAL.md`). Free for research/education/personal use; commercial use requires a license.
 - **ADDED**: `NOTICE`, `THIRD-PARTY-LICENSES.md`, and `CITATION.cff`. Documented that SAM3 weights **and** the `sam3` package are governed by Meta's separate SAM License and are not redistributed by Lableit.
 
 ### Security
@@ -136,7 +136,7 @@
 ### Landing Page / Branding
 - **UPDATED**: Replaced placeholder “trusted by companies” row with University of Alberta branding and trust copy.
 - **UPDATED**: Added explicit attribution across landing sections:
-  - Created by **PhD Mohammed Sabek**
+  - Created by **PhD Mohamed Sabek**
   - **IHT Lab**, Department of Civil and Environmental Engineering
   - **University of Alberta, Edmonton, Canada**
 - **UPDATED**: Landing now uses University of Alberta logo asset sourced from UAlberta web assets.

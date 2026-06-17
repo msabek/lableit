@@ -5,7 +5,7 @@ export default function Credit({ className = '' }: { className?: string }) {
   return (
     <footer className={`w-full text-center text-xs text-text-muted py-4 px-4 ${className}`}>
       Developed by{' '}
-      <span className="font-medium text-text">Dr. Mohammed Sabek</span>{' '}
+      <span className="font-medium text-text">Dr. Mohamed Sabek</span>{' '}
       at the IHT Lab, University of Alberta
     </footer>
   );

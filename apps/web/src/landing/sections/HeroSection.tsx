@@ -65,7 +65,7 @@ export default function HeroSection({ onGetStarted }: HeroSectionProps) {
         <span className="text-indigo-600 dark:text-indigo-400 font-semibold"> Segment Anything 3 </span>
         technology with an intuitive interface to supercharge your ML workflow.
         <span className="block mt-3 text-sm text-slate-500 dark:text-slate-400">
-          Created by <span className="font-semibold text-slate-700 dark:text-slate-300">PhD Mohammed Sabek</span> at the
+          Created by <span className="font-semibold text-slate-700 dark:text-slate-300">PhD Mohamed Sabek</span> at the
           IHT Lab, Department of Civil and Environmental Engineering, University of Alberta, Edmonton, Canada.
         </span>
       </p>

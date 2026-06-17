@@ -3,7 +3,7 @@
   "private": true,
   "version": "0.0.1",
   "description": "SAM3-powered vision annotation platform for images and videos.",
-  "author": "Mohammed Sabek",
+  "author": "Mohamed Sabek",
   "license": "PolyForm-Noncommercial-1.0.0",
   "packageManager": "bun@1.3.12",
   "workspaces": [

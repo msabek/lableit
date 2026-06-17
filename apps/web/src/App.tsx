@@ -5,6 +5,7 @@ import './index.css';
 import ClerkTokenProvider from './components/ClerkTokenProvider';
 import { SettingsProvider } from './contexts/SettingsContext';
 import { ThemeDropdown } from './components/ThemeToggle';
+import Credit from './components/Credit';
 
 // Route-level code splitting: each top-level page is loaded on demand so the
 // anonymous landing page never pulls the labeling/canvas/inference bundles.
@@ -161,6 +162,9 @@ function AppContent() {
   return (
     <>
       <AppRoutes />
+      {/* Global attribution. Landing ('/') already carries its own richer
+          credit footer, so skip it there to avoid a duplicate line. */}
+      {location.pathname !== '/' && <Credit />}
       <SignedIn>
         {!hideDockOn && (
           <div className="fixed bottom-5 right-5 z-50">

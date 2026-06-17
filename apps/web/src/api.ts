@@ -899,3 +899,52 @@ export const inference = {
     return response.data;
   },
 };
+
+// ================================
+// Access control
+// ================================
+export type AccessStatus = 'pending' | 'approved' | 'denied';
+
+export interface AccessStatusResponse {
+  status: AccessStatus;
+  isAdmin: boolean;
+  email?: string;
+  requested?: boolean;
+}
+
+export interface AccessRequestItem {
+  id: string;
+  email: string;
+  institution: string | null;
+  phone: string | null;
+  useCase: string | null;
+  accessStatus: AccessStatus;
+  requestedAt: string | null;
+  decidedAt: string | null;
+  createdAt: string;
+}
+
+export const access = {
+  // Current account's access status (used to gate the UI after sign-in).
+  getStatus: async (): Promise<AccessStatusResponse> => {
+    const response = await api.get('/auth/access-status');
+    return response.data;
+  },
+  // Submit an access request (institution + intended use required).
+  submitRequest: async (data: {
+    name?: string; institution: string; phone?: string; useCase: string;
+  }): Promise<{ status: AccessStatus; emailSent?: boolean; emailReason?: string }> => {
+    const response = await api.post('/access-requests', data);
+    return response.data;
+  },
+  // Admin: list all access requests.
+  adminList: async (): Promise<{ requests: AccessRequestItem[] }> => {
+    const response = await api.get('/admin/access-requests');
+    return response.data;
+  },
+  // Admin: approve or deny an account.
+  adminDecide: async (userId: string, decision: 'approve' | 'deny'): Promise<{ id: string; status: AccessStatus }> => {
+    const response = await api.post(`/admin/access-requests/${userId}/decision`, { decision });
+    return response.data;
+  },
+};

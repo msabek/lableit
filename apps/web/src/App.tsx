@@ -6,6 +6,7 @@ import ClerkTokenProvider from './components/ClerkTokenProvider';
 import { SettingsProvider } from './contexts/SettingsContext';
 import { ThemeDropdown } from './components/ThemeToggle';
 import Credit from './components/Credit';
+import { AccessGuard } from './components/AccessGate';
 
 // Route-level code splitting: each top-level page is loaded on demand so the
 // anonymous landing page never pulls the labeling/canvas/inference bundles.
@@ -13,6 +14,7 @@ const LandingPage = lazy(() => import('./landing/LandingPage'));
 const Auth = lazy(() => import('./auth'));
 const Projects = lazy(() => import('./projects'));
 const LabelingInterface = lazy(() => import('./labeling'));
+const AdminAccessRequests = lazy(() => import('./components/AdminAccessRequests'));
 
 // Shared fallback shown while a lazily-loaded route chunk is fetched.
 function RouteFallback() {
@@ -97,7 +99,11 @@ function LabelingWrapper() {
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   return (
     <>
-      <SignedIn>{children}</SignedIn>
+      <SignedIn>
+        {/* Gate the app behind admin approval: unapproved accounts see the
+            access-request / pending screen instead of the app shell. */}
+        <AccessGuard>{children}</AccessGuard>
+      </SignedIn>
       <SignedOut>
         <Navigate to="/auth/sign-in" replace />
       </SignedOut>
@@ -131,6 +137,14 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <LabelingWrapper />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin"
+        element={
+          <ProtectedRoute>
+            <AdminAccessRequests />
           </ProtectedRoute>
         }
       />

@@ -15,6 +15,15 @@ model User {
   createdAt  DateTime  @default(now())
   projects   Project[]
 
+  // Access control: new accounts start "pending" and cannot use the app until an
+  // admin approves them. The access-request form fills institution/phone/useCase.
+  accessStatus String    @default("pending") // pending | approved | denied
+  institution  String?
+  phone        String?
+  useCase      String?
+  requestedAt  DateTime?
+  decidedAt    DateTime?
+
   @@map("users")
 }
 

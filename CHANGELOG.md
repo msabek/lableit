@@ -5,6 +5,10 @@
 ### Inference
 - **CHANGED**: Device auto-selection now prefers the **Apple Silicon GPU (MPS)** when no CUDA is present (`cuda → mps → cpu`), so Macs use the Metal GPU automatically instead of defaulting to CPU. Verified with a real SAM3 detection on MPS (returns boxes, no errors). Override with `LABLEIT_DEVICE=cpu`. A few SAM3 ops still fall back to CPU via `PYTORCH_ENABLE_MPS_FALLBACK=1`, so MPS is not always faster than CPU for SAM3.
 
+### Access control
+- **ADDED**: Admin-approval gate for new accounts. After Clerk sign-in, an unapproved account sees an **access-request form** (name + email prefilled, institution / phone / intended-use) instead of the app; submitting emails the admin via **Resend** and stores the request. The API blocks all app routes for unapproved accounts (allowlist gate → 403 `pending_approval`), so it can't be bypassed by calling the API directly.
+- **ADDED**: In-app **admin page** (`/admin`, admin-only) to approve/deny requests, plus a shield link in the projects header for the admin. Admin is `ADMIN_EMAIL` (default `appegy1@gmail.com`), resolved to the real verified email via the Clerk API and always auto-approved. Resend is optional — without `RESEND_API_KEY`, requests still appear on `/admin` (email skipped, reported honestly). New `users` columns: `accessStatus`, `institution`, `phone`, `useCase`, `requestedAt`, `decidedAt` (existing accounts grandfathered to `approved`).
+
 ### Web
 - **ADDED**: Step-by-step **project creation wizard** (`ProjectCreateWizard`) replacing the name-only dialog — 1) name + upload images/videos (reuses video slicing), 2) add classes, 3) review + Start labeling. Lists are scroll-capped.
 - **ADDED**: Global attribution footer (`Credit` component) — "Developed by Dr. Mohammed Sabek at the IHT Lab, University of Alberta" — shown at the bottom of every app page (projects, labeling, auth); the landing page keeps its existing richer credit footer.

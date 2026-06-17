@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useUser, useAuth, UserButton } from '@clerk/clerk-react';
-import { projects, classes as classesApi, assets as assetsApi, Project, ClassDef, Asset, subscribeToServiceStatus, ServiceStatus, getProjectAssetCount } from './api';
+import { projects, classes as classesApi, assets as assetsApi, Project, ClassDef, Asset, subscribeToServiceStatus, ServiceStatus, getProjectAssetCount, access } from './api';
 import SettingsModal from './components/SettingsModal';
 import { ThemeDropdown } from './components/ThemeToggle';
 import ServiceStatusIndicator from './components/ServiceStatusIndicator';
@@ -11,7 +11,7 @@ import VideoSliceDialog from './components/VideoSliceDialog';
 import ProjectCreateWizard from './components/ProjectCreateWizard';
 import { DragDropOverlay } from './components/ui/DragDropOverlay';
 import {
-  Plus, FolderOpen, Tag, Settings, Search, Grid, List,
+  Plus, FolderOpen, Tag, Settings, Search, Grid, List, ShieldCheck,
   Trash2, Edit3, X, Check, ChevronRight, Image, Film, Download, Upload,
   AlertCircle, Loader2, MoreHorizontal, Palette, ArrowLeft, RefreshCw
 } from 'lucide-react';
@@ -677,6 +677,7 @@ export default function Projects() {
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [retrying, setRetrying] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   // Track if we had a connection error and need to auto-retry
   const hadConnectionError = useRef(false);
@@ -740,6 +741,12 @@ export default function Projects() {
       loadProjects();
     }
   }, [isAuthLoaded, isSignedIn, loadProjects]);
+
+  // Surface the Admin link only for the admin account.
+  useEffect(() => {
+    if (!isAuthLoaded || !isSignedIn) return;
+    access.getStatus().then((s) => setIsAdmin(!!s.isAdmin)).catch(() => {});
+  }, [isAuthLoaded, isSignedIn]);
   
   if (!isAuthLoaded) {
     return (
@@ -842,6 +849,15 @@ export default function Projects() {
 
           <div className="flex items-center gap-3">
             <ServiceStatusIndicator />
+            {isAdmin && (
+              <button
+                onClick={() => navigate('/admin')}
+                className="icon-button-glass"
+                title="Access requests (admin)"
+              >
+                <ShieldCheck className="w-5 h-5" />
+              </button>
+            )}
             <ThemeDropdown />
             <button
               onClick={() => setShowSettings(true)}

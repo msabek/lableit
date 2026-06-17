@@ -95,6 +95,66 @@ if (CLERK_SECRET_KEY) {
 // Initialize Clerk client if keys are available
 const clerkClient = CLERK_SECRET_KEY ? createClerkClient({ secretKey: CLERK_SECRET_KEY }) : null;
 
+// ================================
+// Access control / admin configuration
+// ================================
+// The admin receives access requests and can approve/deny accounts. This email
+// is always treated as admin + approved at runtime (never locked out).
+const ADMIN_EMAIL = (process.env.ADMIN_EMAIL || 'appegy1@gmail.com').trim().toLowerCase();
+// Resend (https://resend.com) transactional email. If unset, requests are still
+// stored and visible on the admin page; only the email notification is skipped.
+const RESEND_API_KEY = process.env.RESEND_API_KEY || '';
+const RESEND_FROM = process.env.RESEND_FROM || 'Lableit <onboarding@resend.dev>';
+
+function escapeHtml(s: string): string {
+  return String(s).replace(/[&<>"']/g, (c) => (
+    { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c] as string
+  ));
+}
+
+// Email the admin about a new access request. Returns whether the email was sent
+// so the caller can surface "saved, email skipped" honestly.
+async function sendAccessRequestEmail(req: {
+  name: string; email: string; institution: string; phone: string; useCase: string;
+}): Promise<{ sent: boolean; reason?: string }> {
+  if (!RESEND_API_KEY) {
+    logger.warn('RESEND_API_KEY not set — access request stored but email notification skipped');
+    return { sent: false, reason: 'no_api_key' };
+  }
+  const html = `
+    <h2>New Lableit access request</h2>
+    <table cellpadding="6" style="font-family:sans-serif;font-size:14px">
+      <tr><td><b>Name</b></td><td>${escapeHtml(req.name)}</td></tr>
+      <tr><td><b>Email</b></td><td>${escapeHtml(req.email)}</td></tr>
+      <tr><td><b>Institution</b></td><td>${escapeHtml(req.institution)}</td></tr>
+      <tr><td><b>Phone</b></td><td>${escapeHtml(req.phone)}</td></tr>
+      <tr><td><b>Intended use</b></td><td>${escapeHtml(req.useCase)}</td></tr>
+    </table>
+    <p style="font-family:sans-serif;font-size:13px;color:#555">Approve or deny from the Lableit admin page.</p>`;
+  try {
+    const res = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${RESEND_API_KEY}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        from: RESEND_FROM,
+        to: [ADMIN_EMAIL],
+        reply_to: req.email,
+        subject: `Lableit access request: ${req.name || req.email}`,
+        html,
+      }),
+    });
+    if (!res.ok) {
+      const body = await res.text();
+      logger.error({ status: res.status, body }, 'Resend email failed');
+      return { sent: false, reason: 'send_failed' };
+    }
+    return { sent: true };
+  } catch (err) {
+    logger.error({ err }, 'Resend email threw');
+    return { sent: false, reason: 'exception' };
+  }
+}
+
 const execFileAsync = promisify(execFile);
 
 // Create a cleaner, more readable logger configuration
@@ -921,37 +981,67 @@ async function verifyClerkToken(token: string): Promise<{ userId: string; email?
 }
 
 // Helper to get or create user from Clerk ID
-async function getOrCreateUserFromClerk(clerkUserId: string, email?: string): Promise<string> {
+async function getOrCreateUserFromClerk(
+  clerkUserId: string,
+  tokenEmail?: string
+): Promise<{ id: string; email: string; accessStatus: string }> {
+  // Clerk session JWTs usually omit the email claim, so resolve the verified
+  // primary email from the Clerk API. This is what the admin check and the
+  // request notifications rely on (a stale `@lableit.local` fallback would
+  // otherwise lock the admin out of their own approval screen).
+  let email = tokenEmail;
+  if (!email && clerkClient) {
+    try {
+      const cu = await clerkClient.users.getUser(clerkUserId);
+      email = cu.primaryEmailAddress?.emailAddress
+        || cu.emailAddresses?.[0]?.emailAddress
+        || undefined;
+    } catch (err) {
+      logger.debug({ err }, 'Could not fetch Clerk user email');
+    }
+  }
+
   // Try to find existing user by clerk ID (stored in externalId)
-  let user = await prisma.user.findFirst({
-    where: { externalId: clerkUserId }
-  });
-  
+  let user = await prisma.user.findFirst({ where: { externalId: clerkUserId } });
+
   if (!user && email) {
     // Try to find by email and link to Clerk
     user = await prisma.user.findUnique({ where: { email } });
     if (user) {
-      // Link existing user to Clerk
-      await prisma.user.update({
-        where: { id: user.id },
-        data: { externalId: clerkUserId }
-      });
+      await prisma.user.update({ where: { id: user.id }, data: { externalId: clerkUserId } });
     }
   }
-  
+
   if (!user) {
-    // Create new user
+    const isAdmin = !!email && email.toLowerCase() === ADMIN_EMAIL;
     user = await prisma.user.create({
       data: {
         email: email || `clerk_${clerkUserId}@lableit.local`,
         password: '', // No password for Clerk users
         externalId: clerkUserId,
-      }
+        // Admin is auto-approved; everyone else must be approved by the admin.
+        accessStatus: isAdmin ? 'approved' : 'pending',
+      },
     });
     logger.info({ userId: user.id, clerkUserId }, 'Created new user from Clerk');
   }
-  
-  return user.id;
+
+  // Refresh a stale fallback email once the real one is known, and ensure the
+  // admin account is always approved (runtime rule, not just migrated data).
+  const updates: { email?: string; accessStatus?: string } = {};
+  if (email && email !== user.email) updates.email = email;
+  if (email && email.toLowerCase() === ADMIN_EMAIL && user.accessStatus !== 'approved') {
+    updates.accessStatus = 'approved';
+  }
+  if (Object.keys(updates).length > 0) {
+    try {
+      user = await prisma.user.update({ where: { id: user.id }, data: updates });
+    } catch (err) {
+      logger.warn({ err, userId: user.id }, 'User email/status refresh failed');
+    }
+  }
+
+  return { id: user.id, email: user.email, accessStatus: user.accessStatus };
 }
 
 // Export token helpers using Redis (auto-expires via TTL, persists across restarts)
@@ -1026,21 +1116,133 @@ app.addHook('preHandler', async (request, reply) => {
   }
   
   const token = authHeader.substring(7);
-  
-  // Try Clerk verification first
+
+  // Resolve the authenticated user id (Clerk first, then legacy JWT).
+  let userId: string | null = null;
   const clerkPayload = await verifyClerkToken(token);
   if (clerkPayload) {
-    const userId = await getOrCreateUserFromClerk(clerkPayload.userId, clerkPayload.email);
-    (request as any).user = { userId };
+    const u = await getOrCreateUserFromClerk(clerkPayload.userId, clerkPayload.email);
+    userId = u.id;
+  } else {
+    try {
+      await request.jwtVerify();
+      userId = (request as any).user?.userId || null;
+    } catch (err) {
+      return reply.status(401).send({ error: 'Unauthorized' });
+    }
+  }
+  if (!userId) {
+    return reply.status(401).send({ error: 'Unauthorized' });
+  }
+
+  // Load access status and resolve admin (runtime rule keyed on ADMIN_EMAIL so a
+  // fresh/re-created admin row is never locked out of its own approval screen).
+  const account = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { email: true, accessStatus: true },
+  });
+  const email = (account?.email || '').toLowerCase();
+  const isAdmin = email === ADMIN_EMAIL;
+  const approved = isAdmin || account?.accessStatus === 'approved';
+  (request as any).user = {
+    userId,
+    email: account?.email,
+    isAdmin,
+    accessStatus: account?.accessStatus || 'pending',
+  };
+
+  // Admin-only routes.
+  if (routePath?.startsWith('/admin')) {
+    if (!isAdmin) return reply.status(403).send({ error: 'Forbidden' });
     return;
   }
-  
-  // Fallback to legacy JWT verification
-  try {
-    await request.jwtVerify();
-  } catch (err) {
-    reply.status(401).send({ error: 'Unauthorized' });
+
+  // Access gate: an unapproved account may only reach the access endpoints
+  // (check its own status, submit a request). Everything else is 403 until the
+  // admin approves it. This is an allowlist so new routes are gated by default.
+  const accessAllowlist = ['/auth/access-status', '/access-requests'];
+  if (!approved && !accessAllowlist.includes(routePath || '')) {
+    return reply
+      .status(403)
+      .send({ error: 'pending_approval', accessStatus: account?.accessStatus || 'pending' });
   }
+});
+
+// ================================
+// Access control routes
+// ================================
+// Current account's access status — the web app calls this to gate the UI.
+app.get('/auth/access-status', async (request) => {
+  const u = (request as any).user;
+  const row = await prisma.user.findUnique({
+    where: { id: u.userId },
+    select: { requestedAt: true },
+  });
+  return { status: u.accessStatus, isAdmin: !!u.isAdmin, email: u.email, requested: !!row?.requestedAt };
+});
+
+// Submit / update an access request: stores the details on the account, marks it
+// pending, and emails the admin via Resend. Reachable while unapproved.
+app.post('/access-requests', async (request, reply) => {
+  const userId = (request as any).user.userId;
+  const body = (request.body || {}) as { name?: string; institution?: string; phone?: string; useCase?: string };
+  const institution = (body.institution || '').trim();
+  const phone = (body.phone || '').trim();
+  const useCase = (body.useCase || '').trim();
+  if (!institution || !useCase) {
+    return reply.status(400).send({ error: 'institution and useCase are required' });
+  }
+  const current = await prisma.user.findUnique({ where: { id: userId }, select: { accessStatus: true } });
+  if (current?.accessStatus === 'approved') {
+    return { status: 'approved' };
+  }
+  const name = (body.name || '').trim();
+  const updated = await prisma.user.update({
+    where: { id: userId },
+    data: { institution, phone, useCase, accessStatus: 'pending', requestedAt: new Date() },
+    select: { email: true },
+  });
+  const emailResult = await sendAccessRequestEmail({
+    name: name || updated.email,
+    email: updated.email,
+    institution,
+    phone,
+    useCase,
+  });
+  return { status: 'pending', emailSent: emailResult.sent, emailReason: emailResult.reason };
+});
+
+// Admin: list access requests (pending first, then most recently requested).
+app.get('/admin/access-requests', async (request) => {
+  const requests = await prisma.user.findMany({
+    where: { OR: [{ requestedAt: { not: null } }, { accessStatus: { not: 'approved' } }] },
+    select: {
+      id: true, email: true, institution: true, phone: true, useCase: true,
+      accessStatus: true, requestedAt: true, decidedAt: true, createdAt: true,
+    },
+    orderBy: [{ accessStatus: 'asc' }, { requestedAt: 'desc' }],
+  });
+  return { requests };
+});
+
+// Admin: approve or deny an account.
+app.post('/admin/access-requests/:userId/decision', async (request, reply) => {
+  const { userId: targetId } = request.params as { userId: string };
+  const { decision } = (request.body || {}) as { decision?: string };
+  if (decision !== 'approve' && decision !== 'deny') {
+    return reply.status(400).send({ error: "decision must be 'approve' or 'deny'" });
+  }
+  const target = await prisma.user.findUnique({ where: { id: targetId }, select: { email: true } });
+  if (!target) return reply.status(404).send({ error: 'User not found' });
+  if ((target.email || '').toLowerCase() === ADMIN_EMAIL && decision === 'deny') {
+    return reply.status(400).send({ error: 'Cannot deny the admin account' });
+  }
+  const updated = await prisma.user.update({
+    where: { id: targetId },
+    data: { accessStatus: decision === 'approve' ? 'approved' : 'denied', decidedAt: new Date() },
+    select: { id: true, accessStatus: true },
+  });
+  return { id: updated.id, status: updated.accessStatus };
 });
 
 // ================================

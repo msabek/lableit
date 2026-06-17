@@ -4,7 +4,6 @@ import { SignedIn, SignedOut, useAuth } from '@clerk/clerk-react';
 import './index.css';
 import ClerkTokenProvider from './components/ClerkTokenProvider';
 import { SettingsProvider } from './contexts/SettingsContext';
-import { Dataset, ClassDef, projects as projectsApi } from './api';
 import { ThemeDropdown } from './components/ThemeToggle';
 
 // Route-level code splitting: each top-level page is loaded on demand so the
@@ -13,7 +12,6 @@ const LandingPage = lazy(() => import('./landing/LandingPage'));
 const Auth = lazy(() => import('./auth'));
 const Projects = lazy(() => import('./projects'));
 const LabelingInterface = lazy(() => import('./labeling'));
-const BuildFlow = lazy(() => import('./components/BuildFlow'));
 
 // Shared fallback shown while a lazily-loaded route chunk is fetched.
 function RouteFallback() {
@@ -83,67 +81,6 @@ class ErrorBoundary extends React.Component<
   }
 }
 
-// Wrapper for BuildFlow to handle data fetching
-function BuildFlowWrapper() {
-  const { projectId } = useParams();
-  const navigate = useNavigate();
-  const { isLoaded: isAuthLoaded, isSignedIn } = useAuth();
-  const [dataset, setDataset] = React.useState<Dataset | null>(null);
-  const [projectClasses, setProjectClasses] = React.useState<ClassDef[]>([]);
-  const [loading, setLoading] = React.useState(true);
-
-  React.useEffect(() => {
-    const loadData = async () => {
-      // Don't load data if auth isn't ready or user isn't signed in
-      if (!isAuthLoaded || !isSignedIn) return;
-      if (!projectId) return;
-      try {
-        const project = await projectsApi.get(projectId);
-        // With simplified schema, project directly contains assets
-        // Create a virtual dataset from project assets for BuildFlow compatibility
-        const virtualDataset: Dataset = {
-          id: projectId,
-          projectId: projectId,
-          name: project.name,
-          createdAt: project.createdAt,
-          assets: project.assets || [],
-        };
-        setDataset(virtualDataset);
-        setProjectClasses(project.classes);
-      } catch (error) {
-        console.error('Failed to load project:', error);
-        // Don't navigate on 401 - auth will handle it
-        if ((error as any)?.response?.status !== 401) {
-          navigate('/projects');
-        }
-      } finally {
-        setLoading(false);
-      }
-    };
-    loadData();
-  }, [projectId, navigate, isAuthLoaded, isSignedIn]);
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-[#0f1117]">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
-      </div>
-    );
-  }
-
-  if (!dataset) return null;
-
-  return (
-    <BuildFlow
-      dataset={dataset}
-      projectId={projectId}
-      classes={projectClasses}
-      onBack={() => navigate('/projects')}
-      onComplete={() => navigate('/projects')}
-    />
-  );
-}
-
 function LabelingWrapper() {
   const { projectId } = useParams();
   const navigate = useNavigate();
@@ -188,23 +125,15 @@ function AppRoutes() {
           </ProtectedRoute>
         } 
       />
-      <Route 
-        path="/labeling/:projectId" 
+      <Route
+        path="/labeling/:projectId"
         element={
           <ProtectedRoute>
             <LabelingWrapper />
           </ProtectedRoute>
-        } 
+        }
       />
-      <Route 
-        path="/build/:projectId" 
-        element={
-          <ProtectedRoute>
-            <BuildFlowWrapper />
-          </ProtectedRoute>
-        } 
-      />
-      
+
       {/* Default redirect for unknown routes */}
       <Route path="*" element={<DefaultRedirect />} />
     </Routes>

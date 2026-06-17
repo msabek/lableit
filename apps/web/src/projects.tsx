@@ -11,7 +11,7 @@ import VideoSliceDialog from './components/VideoSliceDialog';
 import ProjectCreateWizard from './components/ProjectCreateWizard';
 import { DragDropOverlay } from './components/ui/DragDropOverlay';
 import {
-  Plus, FolderOpen, Tag, Sparkles, Settings, Search, Grid, List,
+  Plus, FolderOpen, Tag, Settings, Search, Grid, List,
   Trash2, Edit3, X, Check, ChevronRight, Image, Film, Download, Upload,
   AlertCircle, Loader2, MoreHorizontal, Palette, ArrowLeft, RefreshCw
 } from 'lucide-react';
@@ -1002,19 +1002,6 @@ export default function Projects() {
                   className="btn-primary-gradient flex items-center gap-2"
                 >
                   <Plus className="w-4 h-4" /> New Project
-                </button>
-                <button
-                  onClick={() => {
-                    if (filteredProjects.length > 0) {
-                      navigate(`/build/${filteredProjects[0].id}`);
-                    } else {
-                      alert('Please create a project first to use Smart Auto-Labeling.');
-                    }
-                  }}
-                  className="flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-white shadow-lg transition-all hover:-translate-y-0.5"
-                  style={{ background: 'linear-gradient(135deg, #10b981 0%, #14b8a6 50%, #06b6d4 100%)', boxShadow: '0 4px 15px -3px rgba(16, 185, 129, 0.4)' }}
-                >
-                  <Sparkles className="w-4 h-4" /> Smart Auto-Labeling
                 </button>
               </div>
             </div>

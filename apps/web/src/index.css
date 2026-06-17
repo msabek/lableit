@@ -76,11 +76,11 @@
   --gradient-hero: linear-gradient(180deg, #020617 0%, #0f172a 50%, #020617 100%);
   --gradient-success: linear-gradient(135deg, #34d399 0%, #4ade80 100%);
   --gradient-danger: linear-gradient(135deg, #f87171 0%, #fca5a5 100%);
-  --gradient-mesh: radial-gradient(at 40% 20%, rgba(129, 140, 248, 0.08) 0px, transparent 50%),
-                   radial-gradient(at 80% 0%, rgba(34, 211, 238, 0.06) 0px, transparent 50%),
-                   radial-gradient(at 0% 50%, rgba(167, 139, 250, 0.05) 0px, transparent 50%),
-                   radial-gradient(at 80% 50%, rgba(52, 211, 153, 0.04) 0px, transparent 50%),
-                   radial-gradient(at 0% 100%, rgba(129, 140, 248, 0.05) 0px, transparent 50%);
+  --gradient-mesh: radial-gradient(at 40% 20%, rgba(129, 140, 248, 0.05) 0px, transparent 50%),
+                   radial-gradient(at 80% 0%, rgba(34, 211, 238, 0.035) 0px, transparent 50%),
+                   radial-gradient(at 0% 50%, rgba(167, 139, 250, 0.03) 0px, transparent 50%),
+                   radial-gradient(at 80% 50%, rgba(52, 211, 153, 0.025) 0px, transparent 50%),
+                   radial-gradient(at 0% 100%, rgba(129, 140, 248, 0.03) 0px, transparent 50%);
 }
 
 /* Color Theme Palettes (applies in both light and dark mode) */
@@ -141,16 +141,23 @@ body {
   transition: background-color 0.2s ease, border-color 0.2s ease;
 }
 
-/* Hero mesh gradient background */
+/* Hero mesh gradient background.
+   `isolation: isolate` + `z-index: 0` make this element its own stacking context
+   so the decorative ::before/::after tint layers (z-index: -1) always render
+   BEHIND page content. Without this, the absolutely-positioned pseudo-elements
+   paint on top of static content and wash a colored film over the whole UI. */
 .bg-mesh-gradient {
   background: var(--gradient-hero);
   position: relative;
+  z-index: 0;
+  isolation: isolate;
 }
 
 .bg-mesh-gradient::before {
   content: '';
   position: absolute;
   inset: 0;
+  z-index: -1;
   background: var(--gradient-mesh);
   pointer-events: none;
 }
@@ -159,10 +166,14 @@ body {
   content: '';
   position: absolute;
   inset: 0;
+  z-index: -1;
+  /* Subtle accent glow in the corners only; kept low-opacity so the theme color
+     reads as ambient tint, never an overlay that reduces content contrast. */
   background:
-    radial-gradient(circle at 8% 18%, var(--color-primary-muted) 0%, transparent 32%),
-    radial-gradient(circle at 88% 14%, var(--glass-glow) 0%, transparent 30%),
-    radial-gradient(circle at 72% 88%, var(--color-primary-muted) 0%, transparent 34%);
+    radial-gradient(circle at 6% 12%, var(--color-primary-muted) 0%, transparent 22%),
+    radial-gradient(circle at 94% 8%, var(--glass-glow) 0%, transparent 20%),
+    radial-gradient(circle at 80% 96%, var(--color-primary-muted) 0%, transparent 22%);
+  opacity: 0.5;
   pointer-events: none;
 }
 

@@ -12,6 +12,9 @@
 
 set -uo pipefail
 
+# Postgres refuses to start ("postmaster became multithreaded") without a locale.
+export LC_ALL="${LC_ALL:-en_US.UTF-8}"
+
 # --- resolve repo root (this script lives at the repo root) -----------------
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR"
@@ -116,9 +119,11 @@ info "Starting API (:$API_PORT)..."
 ( cd "$SCRIPT_DIR" && bun run dev:api ) >"$LOGDIR/api.log" 2>&1 &
 
 info "Starting Inference (:$INFER_PORT) - SAM3 model load takes ~20-30s..."
-if [ -x "$SCRIPT_DIR/apps/inference/.venv/bin/uvicorn" ]; then
+# Use "python -m uvicorn": the venv's uvicorn launcher script hardcodes the
+# path the venv was created at, so it breaks if the project folder moved.
+if [ -x "$SCRIPT_DIR/apps/inference/.venv/bin/python" ]; then
   ( cd "$SCRIPT_DIR/apps/inference" && \
-    ./.venv/bin/uvicorn main:app --host 0.0.0.0 --port "$INFER_PORT" ) \
+    ./.venv/bin/python -m uvicorn main:app --host 0.0.0.0 --port "$INFER_PORT" ) \
     >"$LOGDIR/inference.log" 2>&1 &
 else
   err "Inference venv missing. Run: cd apps/inference && bash setup_mac.sh"

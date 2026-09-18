@@ -1,9 +1,11 @@
 # Lableit Web Frontend - Railway Configuration
-# Deploy from apps/web directory
+# Build context is the REPO ROOT (the Dockerfile copies package.json, bun.lock
+# and packages/shared). In the Railway service settings leave Root Directory
+# empty and set the Railway Config File to /apps/web/railway.toml.
 
 [build]
 builder = "dockerfile"
-dockerfilePath = "Dockerfile"
+dockerfilePath = "apps/web/Dockerfile"
 
 [deploy]
 startCommand = "/start.sh"

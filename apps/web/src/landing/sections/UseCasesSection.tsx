@@ -18,7 +18,7 @@ const useCases = [
     title: 'Autonomous Vehicles',
     shortDesc: 'Self-driving car training data',
     description: 'Create precise annotations for pedestrians, vehicles, road signs, and lane markings. Essential for training perception models in autonomous driving systems.',
-    stats: ['99.2% accuracy', '10x faster labeling', 'KITTI format support'],
+    stats: ['Video frame extraction', 'YOLO & COCO export', 'Text prompts like "car, person"'],
     color: 'blue',
     image: '/use-cases/autonomous.jpg',
   },
@@ -28,7 +28,7 @@ const useCases = [
     title: 'Medical Imaging',
     shortDesc: 'Healthcare AI diagnostics',
     description: 'Annotate medical scans including X-rays, MRIs, and CT scans. Support for tumor detection, organ segmentation, and diagnostic assistance systems.',
-    stats: ['HIPAA compatible', 'DICOM support', 'Multi-layer masks'],
+    stats: ['Pixel masks', 'PNG mask export', 'Human review of every label'],
     color: 'emerald',
     image: '/use-cases/medical.jpg',
   },
@@ -38,7 +38,7 @@ const useCases = [
     title: 'Quality Control',
     shortDesc: 'Defect detection systems',
     description: 'Train AI models to detect manufacturing defects, surface anomalies, and quality issues in production lines. Reduce human error and increase throughput.',
-    stats: ['Sub-pixel precision', 'Real-time inference', 'Edge deployment'],
+    stats: ['Polygon masks', 'Per-class confidence thresholds', 'Pascal VOC export'],
     color: 'amber',
     image: '/use-cases/manufacturing.jpg',
   },
@@ -48,7 +48,7 @@ const useCases = [
     title: 'Retail & E-commerce',
     shortDesc: 'Product recognition',
     description: 'Label product images for inventory management, visual search, and automated checkout systems. Perfect for catalog management and recommendation engines.',
-    stats: ['Product tagging', 'SKU classification', 'Visual search ready'],
+    stats: ['Custom classes', 'Tags per image', 'CreateML export'],
     color: 'pink',
     image: '/use-cases/retail.jpg',
   },
@@ -57,8 +57,8 @@ const useCases = [
     icon: Video,
     title: 'Security & Surveillance',
     shortDesc: 'Video analytics',
-    description: 'Create training data for person detection, facial recognition, and activity recognition in security systems. Handle video streams efficiently.',
-    stats: ['Video support', 'Frame extraction', 'Motion tracking'],
+    description: 'Create training data for person and vehicle detection in camera footage. Extract frames from video and label them in one place.',
+    stats: ['Video support', 'Frame extraction', 'Timeline of frames'],
     color: 'red',
     image: '/use-cases/security.jpg',
   },
@@ -67,8 +67,8 @@ const useCases = [
     icon: Plane,
     title: 'Aerospace & Drones',
     shortDesc: 'Aerial imagery analysis',
-    description: 'Annotate satellite and drone imagery for terrain mapping, object detection, and infrastructure inspection. Large-scale georeferenced datasets.',
-    stats: ['GeoTIFF support', 'Tile processing', 'Coordinate export'],
+    description: 'Annotate satellite and drone imagery for object detection and infrastructure inspection.',
+    stats: ['Box and mask labels', 'Batch detection', 'COCO & YOLO export'],
     color: 'indigo',
     image: '/use-cases/aerospace.jpg',
   },
@@ -77,8 +77,8 @@ const useCases = [
     icon: Microscope,
     title: 'Scientific Research',
     shortDesc: 'Research data annotation',
-    description: 'Annotate microscopy images, scientific visualizations, and experimental data for academic and industrial research applications.',
-    stats: ['Cell counting', 'Particle tracking', 'Custom schemas'],
+    description: 'Annotate microscopy images, scientific visualizations, and experimental data for academic research.',
+    stats: ['Count objects per image', 'Custom classes', 'LabelMe export'],
     color: 'purple',
     image: '/use-cases/research.jpg',
   },
@@ -88,7 +88,7 @@ const useCases = [
     title: 'Geospatial Analysis',
     shortDesc: 'Mapping & GIS',
     description: 'Label aerial and satellite imagery for land use classification, urban planning, and environmental monitoring applications.',
-    stats: ['Large images', 'Polygon tools', 'QGIS export'],
+    stats: ['Polygon masks', 'Custom classes', 'PNG mask export'],
     color: 'cyan',
     image: '/use-cases/geospatial.jpg',
   },
@@ -117,7 +117,7 @@ export default function UseCasesSection() {
           <span className="gradient-text">Every Industry</span>
         </h2>
         <p className="animate-on-scroll body-lg text-slate-600 dark:text-slate-400 max-w-2xl mx-auto">
-          From autonomous vehicles to medical imaging, Lableit powers AI teams worldwide
+          From traffic scenes to medical imaging, describe what you need and let SAM3 find it
         </p>
       </div>
 
@@ -207,10 +207,10 @@ export default function UseCasesSection() {
       {/* Bottom stats */}
       <div className="animate-on-scroll mt-16 grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
-          { value: '50K+', label: 'Images Labeled Daily' },
-          { value: '200+', label: 'Enterprise Teams' },
-          { value: '99.5%', label: 'Accuracy Rate' },
-          { value: '15+', label: 'Countries' },
+          { value: '8', label: 'Export Formats' },
+          { value: 'SAM3', label: 'Text-Prompt Model' },
+          { value: 'Images + Video', label: 'Media Types' },
+          { value: 'Free', label: 'For Academic Use' },
         ].map((stat) => (
           <div key={stat.label} className="text-center p-6 glass-card rounded-2xl">
             <div className="text-3xl font-bold gradient-text mb-1">{stat.value}</div>

@@ -11,23 +11,39 @@
 </p>
 
 <p align="center">
-  <a href="./LICENSE"><img alt="License: PolyForm Noncommercial 1.0.0" src="https://img.shields.io/badge/license-PolyForm%20Noncommercial%201.0.0-6366f1"></a>
+  <a href="./LICENSE"><img alt="License: Academic use only" src="https://img.shields.io/badge/license-academic%20use%20only-6366f1"></a>
   <img alt="Runtime: Bun 1.3" src="https://img.shields.io/badge/runtime-Bun%201.3-14151a">
   <img alt="Model: SAM3" src="https://img.shields.io/badge/model-SAM3-8b5cf6">
   <img alt="Python 3.11" src="https://img.shields.io/badge/python-3.11-22d3ee">
 </p>
 
-> **License at a glance.** Lableit is **free for noncommercial use** (research,
-> teaching, evaluation, personal projects) under the
-> [PolyForm Noncommercial License 1.0.0](./LICENSE). **Commercial use requires a
-> paid license** — see [`LICENSE-COMMERCIAL.md`](./LICENSE-COMMERCIAL.md). The
-> SAM3 model is governed separately by **Meta's SAM License** (see
+> **License at a glance.** Lableit is **free for academic use** (teaching,
+> learning, and non-commercial research at universities and non-profit research
+> institutes) under the [Lableit Academic Research License](./LICENSE). **Any
+> other use, including commercial use, needs our written permission first.**
+> See [`PERMISSIONS.md`](./PERMISSIONS.md) for how to ask. The SAM3 model is
+> governed separately by **Meta's SAM License** (see
 > [Models & AI license](#models--ai-license)).
+
+## About this project
+
+Lableit was developed by **Mohamed Sabek** as part of his research at the
+**IHT Lab**, Department of Civil and Environmental Engineering, **University of
+Alberta**, Edmonton, Canada.
+
+Labeling images and videos by hand is one of the slowest parts of building a
+computer-vision dataset. Lableit lets you describe what you want in plain words
+(for example `person, car, bicycle`), lets SAM3 find and outline every match,
+and leaves you to review and correct the results instead of drawing every box
+yourself. We used this technology, together with other tools, to build our
+**CIVAD** dataset, and we are releasing Lableit because we believe it can save
+a lot of labeling time for other researchers too.
 
 ---
 
 ## Table of contents
 
+- [About this project](#about-this-project)
 - [Screenshots](#screenshots)
 - [Features](#features)
 - [Architecture](#architecture)
@@ -279,8 +295,8 @@ The inference service auto-selects a device; override with `LABLEIT_DEVICE=cuda|
 | Host | Default device | Notes |
 |------|----------------|-------|
 | NVIDIA GPU | `cuda` | Fastest. bf16 autocast enabled. |
-| Apple Silicon (Mac) | `cpu` | **Works out of the box** (~6 s/image for SAM3 text-prompt detection). A compatibility shim adapts SAM3's CUDA-only code to run in float32. |
-| Apple Silicon, experimental | `mps` | Set `LABLEIT_DEVICE=mps`. Functional but not faster than CPU here (many SAM3 ops fall back to CPU on Metal). |
+| Apple Silicon (Mac) | `mps` | Uses the Mac's GPU automatically. A compatibility shim adapts SAM3's CUDA-only code to run in float32; some SAM3 ops fall back to CPU (`PYTORCH_ENABLE_MPS_FALLBACK=1`), so MPS is not always faster than CPU. |
+| Apple Silicon, CPU only | `cpu` | Set `LABLEIT_DEVICE=cpu`. Works out of the box (~6 s/image for SAM3 text-prompt detection). |
 | No accelerator / cloud CPU | `cpu` | Functional but slow/memory-heavy on large images. Railway has no GPUs. |
 
 Manual annotation (drawing boxes/polygons), projects, assets, and all 8 exports work
@@ -342,14 +358,15 @@ Materials. See [`NOTICE`](./NOTICE) and
 
 ## License
 
-Lableit is **dual-licensed**:
+Lableit is released under the **[Lableit Academic Research License 1.0](./LICENSE)**:
 
-- **Noncommercial:** [PolyForm Noncommercial License 1.0.0](./LICENSE) — free for
-  research, education, evaluation, and personal use.
-- **Commercial:** a paid license is required for any commercial use —
-  [`LICENSE-COMMERCIAL.md`](./LICENSE-COMMERCIAL.md).
+- **Academic use:** free. Use, study, modify, and share Lableit for teaching,
+  learning, and non-commercial research, keeping the notices and citing it.
+- **Any other use** (commercial, industrial, client work, hosted services for
+  others, government operational use): **written permission is required
+  first**. See [`PERMISSIONS.md`](./PERMISSIONS.md).
 
-Third-party components retain their own licenses — [`THIRD-PARTY-LICENSES.md`](./THIRD-PARTY-LICENSES.md).
+Third-party components retain their own licenses, see [`THIRD-PARTY-LICENSES.md`](./THIRD-PARTY-LICENSES.md).
 
 ## Citation
 
@@ -358,6 +375,8 @@ If you use Lableit in academic work, please cite it (and SAM3). Citation metadat
 
 ## Acknowledgements
 
-Created by **Mohamed Sabek** — **IHT Lab**, Department of Civil and Environmental
-Engineering, **University of Alberta**, Edmonton, Canada. Built on
-[SAM3](https://ai.meta.com/sam) by Meta AI.
+Created by **Mohamed Sabek** during his research at the **IHT Lab**, Department
+of Civil and Environmental Engineering, **University of Alberta**, Edmonton,
+Canada. Thanks to the lab's supervisors and colleagues for their support.
+Parts of this technology were used, alongside other tools, to build the
+**CIVAD** dataset. Built on [SAM3](https://ai.meta.com/sam) by Meta AI.

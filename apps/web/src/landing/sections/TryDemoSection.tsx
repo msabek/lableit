@@ -2,7 +2,6 @@ import React, { useState, useRef, useCallback } from 'react';
 import {
   Upload,
   Sparkles,
-  ImageIcon,
   X,
   Check,
   Loader2,
@@ -175,15 +174,15 @@ export default function TryDemoSection() {
       <div className="text-center mb-12">
         <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-200 dark:border-indigo-500/20 text-sm mb-6">
           <Sparkles className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
-          <span className="text-indigo-700 dark:text-indigo-300 font-medium">Interactive Demo</span>
+          <span className="text-indigo-700 dark:text-indigo-300 font-medium">Interface Preview</span>
         </div>
         <h2 className="animate-on-scroll heading-lg mb-4">
           <span className="text-slate-800 dark:text-white">Try It </span>
           <span className="gradient-text">Right Now</span>
         </h2>
         <p className="animate-on-scroll body-lg text-slate-600 dark:text-slate-400 max-w-2xl mx-auto">
-          Upload an image, select the objects you want to detect, and see the AI in action.
-          No sign-up required.
+          Get a feel for the workflow: upload an image and pick the objects to find.
+          This preview draws <strong>example boxes at random</strong>; sign in to run the real SAM3 model on your images.
         </p>
       </div>
 
@@ -277,8 +276,8 @@ export default function TryDemoSection() {
                   {isProcessing && (
                     <div className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm flex flex-col items-center justify-center">
                       <Loader2 className="w-10 h-10 text-white animate-spin mb-3" />
-                      <p className="text-white font-medium">Analyzing with SAM3 AI...</p>
-                      <p className="text-white/60 text-sm mt-1">This may take a few seconds</p>
+                      <p className="text-white font-medium">Preparing preview...</p>
+                      <p className="text-white/60 text-sm mt-1">Example boxes only, not real detections</p>
                     </div>
                   )}
 
@@ -411,10 +410,10 @@ export default function TryDemoSection() {
                   </div>
                   <div>
                     <h4 className="font-semibold text-emerald-800 dark:text-emerald-300">
-                      Detection Complete!
+                      Preview ready
                     </h4>
                     <p className="text-sm text-emerald-600 dark:text-emerald-400">
-                      Found {detections.length} object{detections.length !== 1 ? 's' : ''}
+                      {detections.length} example box{detections.length !== 1 ? 'es' : ''}, placed at random
                     </p>
                   </div>
                 </div>
@@ -468,7 +467,7 @@ export default function TryDemoSection() {
                   </li>
                   <li className="flex items-center gap-2">
                     <Check className="w-4 h-4 text-emerald-500" />
-                    Export in 8+ formats (COCO, YOLO, etc.)
+                    Export in 8 formats (COCO, YOLO, etc.)
                   </li>
                 </ul>
                 <a
@@ -484,27 +483,6 @@ export default function TryDemoSection() {
         </div>
       </div>
 
-      {/* Sample Images - Quick Test */}
-      <div className="animate-on-scroll mt-8 text-center">
-        <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
-          Don't have an image? Try one of these samples:
-        </p>
-        <div className="flex flex-wrap justify-center gap-3">
-          {['Street Scene', 'Wildlife', 'Urban Traffic', 'Beach'].map((name) => (
-            <button
-              key={name}
-              onClick={() => {
-                // For demo, we'll just show a placeholder message
-                setError('Sample images would be loaded here in production');
-              }}
-              className="px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors text-sm flex items-center gap-2"
-            >
-              <ImageIcon className="w-4 h-4" />
-              {name}
-            </button>
-          ))}
-        </div>
-      </div>
     </div>
   );
 }

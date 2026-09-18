@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lableit Visual Changelog</title>
+<style>
+  :root { --bg:#f8fafc; --card:#fff; --text:#0f172a; --muted:#64748b; --line:#e2e8f0; --accent:#4f46e5; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#0b1020; --card:#111827; --text:#e5e7eb; --muted:#94a3b8; --line:#1f2937; --accent:#818cf8; } }
+  body { margin:0; background:var(--bg); color:var(--text); font:15px/1.55 system-ui, -apple-system, Segoe UI, sans-serif; }
+  main { max-width:1100px; margin:0 auto; padding:32px 16px 64px; }
+  h1 { margin:0 0 4px; } .sub { color:var(--muted); margin:0 0 32px; }
+  article { background:var(--card); border:1px solid var(--line); border-radius:14px; padding:24px; margin-bottom:28px; }
+  h2 { margin:0 0 4px; font-size:20px; } time { color:var(--muted); font-size:13px; }
+  ul { padding-left:20px; } a { color:var(--accent); }
+  .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:14px; margin:14px 0; }
+  figure { margin:0; border:1px solid var(--line); border-radius:10px; overflow:hidden; background:var(--bg); }
+  figure img { display:block; width:100%; height:auto; }
+  figcaption { font-size:13px; color:var(--muted); padding:8px 10px; }
+  .pair { display:grid; grid-template-columns:1fr 1fr; gap:14px; } @media (max-width:700px){ .pair { grid-template-columns:1fr; } }
+  h3 { font-size:15px; margin:18px 0 6px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Lableit visual changelog</h1>
+  <p class="sub">Newest first. Screenshots live in <code>.evidence/</code> (kept local, not in git), so they may be missing on a fresh clone.</p>
+
+  <article>
+    <h2>1.0.0: public academic release, full system test</h2>
+    <time datetime="2026-09-18">2026-09-18</time>
+    <ul>
+      <li><strong>License:</strong> now academic use only; any other use needs written permission (<code>LICENSE</code>, new <code>PERMISSIONS.md</code>). Credits to Mohamed Sabek, IHT Lab, University of Alberta, and the CIVAD dataset added to README, NOTICE, and the landing page.</li>
+      <li><strong>Landing page honesty:</strong> removed invented numbers and features (200+ enterprise teams, 99% accuracy, HIPAA, GeoTIFF, and others). The "Try it" demo is now labelled as a preview with random example boxes.</li>
+      <li><strong>Deployment:</strong> fixed Railway builds, migrations, worker start, and missing sign-in/admin settings. There is no longer a built-in default admin email. Blank project renames are rejected.</li>
+    </ul>
+
+    <h3>Before and after: the "Try it" demo</h3>
+    <div class="pair">
+      <figure><img src=".evidence/2026-09-18/14-try-demo-simulated-boxes.png" alt="Before: demo shows Person 94% on a truck photo"><figcaption>Before: random "Person" boxes on a truck photo, presented as real AI</figcaption></figure>
+      <figure><img src=".evidence/2026-09-18/22-demo-preview-after.png" alt="After: Interface Preview with example boxes placed at random"><figcaption>After: clearly labelled preview with example boxes</figcaption></figure>
+    </div>
+
+    <h3>Before and after: landing page claims</h3>
+    <div class="pair">
+      <figure><img src=".evidence/2026-09-18/01-landing-hero.png" alt="Before: hero with Enterprise Ready and No credit card"><figcaption>Before: "Enterprise Ready", "No credit card required"</figcaption></figure>
+      <figure><img src=".evidence/2026-09-18/20-landing-hero-after.png" alt="After: hero with Free for academic use"><figcaption>After: "Free for academic use", "Developed at the University of Alberta"</figcaption></figure>
+    </div>
+    <div class="grid">
+      <figure><img src=".evidence/2026-09-18/21-usecases-stats-after.png" alt="Stats row after"><figcaption>Stats row now shows real facts (8 formats, SAM3, images + video, free)</figcaption></figure>
+      <figure><img src=".evidence/2026-09-18/24-features-stats-after.png" alt="Feature stats after"><figcaption>Feature stats: no more "10x" / "99%"</figcaption></figure>
+      <figure><img src=".evidence/2026-09-18/25-usecases-after.png" alt="Use cases after"><figcaption>Use-case chips list real capabilities</figcaption></figure>
+      <figure><img src=".evidence/2026-09-18/23-cta-footer-after.png" alt="CTA and footer after"><figcaption>Credit with CIVAD, real GitHub + License links</figcaption></figure>
+      <figure><img src=".evidence/2026-09-18/04-sign-in.png" alt="Sign-in page"><figcaption>Sign-in (Google) tested live</figcaption></figure>
+    </div>
+
+    <h3>Test results (captured output)</h3>
+    <ul>
+      <li>Type checks api/web/shared clean, web tests 15/15, production build OK, Python compiles, schema matches migrations: <a href=".evidence/2026-09-18/static/">.evidence/2026-09-18/static/</a></li>
+      <li>End-to-end through the API: access gate, admin approve, project + upload, SAM3 detection (1 car + 4 wheels, 22.5 s on Apple GPU), COCO/YOLO exports with real annotations, video slicing: <a href=".evidence/2026-09-18/10-api-e2e-run.txt">10-api-e2e-run.txt</a>, <a href=".evidence/2026-09-18/11-export-contents.txt">11-export-contents.txt</a>, <a href=".evidence/2026-09-18/12-api-e2e-part2.txt">12-api-e2e-part2.txt</a></li>
+      <li>Fix checks: blank rename rejected, missing admin warning: <a href=".evidence/2026-09-18/verify/">.evidence/2026-09-18/verify/</a></li>
+    </ul>
+
+    <h3>References</h3>
+    <ul>
+      <li>Files: <a href="LICENSE">LICENSE</a>, <a href="PERMISSIONS.md">PERMISSIONS.md</a>, <a href="NOTICE">NOTICE</a>, <a href="README.md">README.md</a>, <a href="CITATION.cff">CITATION.cff</a>, <a href="DEPLOYMENT.md">DEPLOYMENT.md</a>, <a href="RAILWAY_DEPLOYMENT.md">RAILWAY_DEPLOYMENT.md</a>, <a href="docker-compose.prod.yml">docker-compose.prod.yml</a>, <a href="apps/api/src/index.ts">apps/api/src/index.ts</a>, <a href="apps/web/src/landing/sections/">landing sections</a>, <a href="run.command">run.command</a></li>
+      <li>Details: <a href="CHANGELOG.md">CHANGELOG.md</a> (1.0.0). Base commit 61140df; see git log on branch <code>claude/system-testing-release-prep-006fd2</code> for the release commit.</li>
+      <li>Repository: <a href="https://github.com/msabek/lableit">github.com/msabek/lableit</a></li>
+    </ul>
+  </article>
+</main>
+</body>
+</html>

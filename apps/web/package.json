@@ -1,9 +1,9 @@
 {
   "name": "@lableit/web",
   "private": true,
-  "version": "0.0.1",
+  "version": "1.0.0",
   "type": "module",
-  "license": "PolyForm-Noncommercial-1.0.0",
+  "license": "SEE LICENSE IN LICENSE",
   "engines": {
     "node": ">=20.19",
     "bun": ">=1.2"

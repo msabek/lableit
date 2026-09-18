@@ -31,7 +31,7 @@ const steps = [
     icon: Download,
     title: 'Export & Deploy',
     description: 'Export your labeled dataset in any major format. Ready for training with PyTorch, TensorFlow, YOLO, and more.',
-    features: ['8+ export formats', 'ML-ready output', 'Metadata preservation'],
+    features: ['8 export formats', 'ML-ready output', 'Metadata preservation'],
     color: 'emerald',
   },
 ];
@@ -122,7 +122,7 @@ export default function HowItWorksSection() {
               Ready to streamline your labeling workflow?
             </p>
             <p className="text-sm text-slate-600 dark:text-slate-400">
-              Start for free, no credit card required
+              Free for academic research
             </p>
           </div>
           <a

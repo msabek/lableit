@@ -2,8 +2,8 @@
   "name": "@lableit/api",
   "private": true,
   "type": "module",
-  "version": "0.0.1",
-  "license": "PolyForm-Noncommercial-1.0.0",
+  "version": "1.0.0",
+  "license": "SEE LICENSE IN LICENSE",
   "scripts": {
     "dev": "bun run --hot src/index.ts",
     "start": "bun run src/index.ts",

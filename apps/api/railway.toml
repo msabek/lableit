@@ -1,12 +1,16 @@
 # Lableit API Service - Railway Configuration
-# Deploy from apps/api directory
+# Build context is the REPO ROOT (the Dockerfile copies package.json, bun.lock
+# and packages/shared). In the Railway service settings leave Root Directory
+# empty and set the Railway Config File to /apps/api/railway.toml.
+# No startCommand here on purpose: the Dockerfile CMD (/start.sh) runs
+# `prisma migrate deploy` and then starts the API.
+# Do NOT use this file for the worker service (it has no HTTP /health endpoint).
 
 [build]
 builder = "dockerfile"
-dockerfilePath = "Dockerfile"
+dockerfilePath = "apps/api/Dockerfile"
 
 [deploy]
-startCommand = "bun run start"
 healthcheckPath = "/health"
 healthcheckTimeout = 30
 restartPolicyType = "on_failure"

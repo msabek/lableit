@@ -41,7 +41,7 @@ npm-debug.log*
 *.bin
 *.onnx
 *.safetensors
-apps/inference/models/
+apps/inference/models
 
 # Inference runtime config + settings (generated at first model download; may contain absolute paths)
 apps/inference/model_config.json
@@ -60,7 +60,7 @@ apps/api/temp/*
 .playwright-mcp/
 
 # Local dev stack data (native Postgres/Redis/MinIO created by setup; not for git)
-.devstack/
+.devstack
 
 # Local demo/scratch media used for testing (not redistributed)
 apps/web/public/lableit_demo.jpg
@@ -71,3 +71,6 @@ apps/web/public/lableit_demo.jpg
 *.old
 # Redis dump (generated)
 dump.rdb
+
+# Local test evidence (screenshots/recordings, never committed)
+.evidence/

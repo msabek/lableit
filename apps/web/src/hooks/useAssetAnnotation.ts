@@ -102,7 +102,7 @@ export function useAssetAnnotation(project: Project | null) {
         id: ann.id,
         class_name: className,
         confidence: 1.0,
-        box
+        box: box as Detection['box']
       }]);
     } catch (err) {
       setError('Failed to add annotation');
@@ -117,7 +117,7 @@ export function useAssetAnnotation(project: Project | null) {
       await annotationsApi.update(det.id, { box });
       setAssetDetections(prev => {
         const next = [...prev];
-        next[index] = { ...next[index], box };
+        next[index] = { ...next[index], box: box as Detection['box'] };
         return next;
       });
     } catch (err) {

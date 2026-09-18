@@ -20,9 +20,9 @@ interface HeroSectionProps {
 const featurePills = [
   { icon: Zap, text: 'One-Click Segmentation', color: 'indigo' },
   { icon: Image, text: 'Images & Videos', color: 'purple' },
-  { icon: Tag, text: '8+ Export Formats', color: 'emerald' },
-  { icon: Gauge, text: '10x Faster Labeling', color: 'cyan' },
-  { icon: Shield, text: 'Enterprise Ready', color: 'amber' },
+  { icon: Tag, text: '8 Export Formats', color: 'emerald' },
+  { icon: Gauge, text: 'Review, Not Redraw', color: 'cyan' },
+  { icon: Shield, text: 'Free for Academia', color: 'amber' },
   { icon: Layers, text: 'Multi-Layer Masks', color: 'pink' },
 ];
 
@@ -65,7 +65,7 @@ export default function HeroSection({ onGetStarted }: HeroSectionProps) {
         <span className="text-indigo-600 dark:text-indigo-400 font-semibold"> Segment Anything 3 </span>
         technology with an intuitive interface to supercharge your ML workflow.
         <span className="block mt-3 text-sm text-slate-500 dark:text-slate-400">
-          Created by <span className="font-semibold text-slate-700 dark:text-slate-300">PhD Mohamed Sabek</span> at the
+          Created by <span className="font-semibold text-slate-700 dark:text-slate-300">Dr. Mohamed Sabek</span> at the
           IHT Lab, Department of Civil and Environmental Engineering, University of Alberta, Edmonton, Canada.
         </span>
       </p>
@@ -73,8 +73,8 @@ export default function HeroSection({ onGetStarted }: HeroSectionProps) {
       {/* Key benefits */}
       <div className="animate-on-scroll flex flex-wrap justify-center gap-3 mb-10">
         {[
-          'Free to start',
-          'No credit card required',
+          'Free for academic use',
+          'Built at the University of Alberta',
           'GPU-accelerated inference',
         ].map((benefit) => (
           <div key={benefit} className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400">
@@ -123,7 +123,7 @@ export default function HeroSection({ onGetStarted }: HeroSectionProps) {
       {/* Social proof */}
       <div className="animate-on-scroll mt-16 pt-8 border-t border-slate-200 dark:border-slate-800">
         <p className="text-sm text-slate-500 dark:text-slate-500 mb-4">
-          Trusted by teams in University of Alberta
+          Developed at the University of Alberta
         </p>
         <div className="flex flex-wrap items-center justify-center gap-6 opacity-80">
           <img

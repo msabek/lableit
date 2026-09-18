@@ -116,7 +116,7 @@ Repo layout
       - Batch URL fetching via getBatchUrls()
     - src/landing/: Interactive landing page with GSAP vertical section animations
       - LandingPage.tsx: Main page with ScrollTrigger section reveals
-      - sections/HeroSection.tsx: Hero with animated badge, feature pills, and University of Alberta trust/branding row
+      - sections/HeroSection.tsx: Hero with animated badge, feature pills, and University of Alberta attribution row
       - sections/FeaturesSection.tsx: 6 feature cards with stats
       - sections/DemoCarousel.tsx: 4-step demo with interactive mockups
       - sections/ExportShowcase.tsx: Export format selector with samples

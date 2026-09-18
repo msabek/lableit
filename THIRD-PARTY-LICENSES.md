@@ -1,8 +1,8 @@
 # Third-Party Licenses
 
-Lableit (Copyright (c) 2024-2026 Mohammed Sabek) is distributed under the
-PolyForm Noncommercial License 1.0.0 (see [`LICENSE`](./LICENSE)), with a
-commercial dual-license available (see [`LICENSE-COMMERCIAL.md`](./LICENSE-COMMERCIAL.md)).
+Lableit (Copyright (c) 2024-2026 Mohamed Sabek) is distributed under the
+Lableit Academic Research License 1.0 (see [`LICENSE`](./LICENSE)): academic use
+only, other uses by written permission (see [`PERMISSIONS.md`](./PERMISSIONS.md)).
 
 Lableit's own license covers **only Lableit's source code**. The platform
 depends on third-party components, each governed by its own license. This

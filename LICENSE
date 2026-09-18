@@ -1,144 +1,106 @@
-# PolyForm Noncommercial License 1.0.0
+# Lableit Academic Research License 1.0
 
-<https://polyformproject.org/licenses/noncommercial/1.0.0>
+Copyright (c) 2024-2026 Mohamed Sabek. All rights reserved except as granted below.
 
-Required Notice: Copyright (c) 2024-2026 Mohammed Sabek
+Lableit was developed by Mohamed Sabek during his research at the IHT Lab,
+Department of Civil and Environmental Engineering, University of Alberta,
+Edmonton, Canada.
 
-> **Dual licensing.** This license grants rights for **noncommercial use only**
-> (see "Noncommercial Purposes" below). It does **not** grant any right to use
-> the software for commercial purposes. A separate **commercial license** is
-> available for purchase — see [`LICENSE-COMMERCIAL.md`](./LICENSE-COMMERCIAL.md).
->
-> **Third-party components.** This license covers only Lableit's own source
-> code. It does **not** cover the SAM3 model weights or the `sam3` software
-> package, which are governed by Meta's separate **SAM License**, nor other
-> third-party dependencies. See [`NOTICE`](./NOTICE) and
-> [`THIRD-PARTY-LICENSES.md`](./THIRD-PARTY-LICENSES.md).
+> **In short.** You may use, study, modify, and share Lableit **for academic
+> purposes only**. **Any other use** (commercial, industrial, government
+> operational, consulting, or any use that is not academic) **requires prior
+> written permission** from the copyright holder. See
+> [`PERMISSIONS.md`](./PERMISSIONS.md) for how to ask. This summary is for
+> convenience; the terms below govern.
 
-## Acceptance
+## 1. Definitions
 
-In order to get any license under these terms, you must agree
-to them as both strict obligations and conditions to all
-your licenses.
+- **"Software"** means the Lableit source code, documentation, and other files
+  in this repository that are owned by the Licensor. It does not include
+  third-party components (see Section 8).
+- **"Licensor"** means Mohamed Sabek.
+- **"You"** means the individual or institution exercising rights under this
+  license.
+- **"Academic Purpose"** means non-commercial teaching, learning, and
+  scientific research carried out by students, faculty, and researchers at
+  universities, colleges, or non-profit research institutes, where the results
+  are intended for publication, teaching, or open scholarly exchange, and are
+  not sold, licensed for a fee, or used to provide a product or service to a
+  commercial party.
 
-## Copyright License
+## 2. Grant of rights
 
-The licensor grants you a copyright license for the
-software to do everything you might do with the software
-that would otherwise infringe the licensor's copyright
-in it for any permitted purpose.  However, you may
-only distribute the software according to [Distribution
-License](#distribution-license) and make changes or new works
-based on the software according to [Changes and New Works
-License](#changes-and-new-works-license).
+Subject to the conditions of this license, the Licensor grants You a
+worldwide, royalty-free, non-exclusive, non-transferable license to use, copy,
+run, study, and modify the Software, and to share copies of it (with or
+without Your modifications), **solely for Academic Purposes**.
 
-## Distribution License
+## 3. Conditions
 
-The licensor grants you an additional copyright license
-to distribute copies of the software.  Your license
-to distribute covers distributing the software with
-changes and new works permitted by [Changes and New Works
-License](#changes-and-new-works-license).
+1. **Academic use only.** You may not use the Software, or any work based on
+   it, for any purpose other than an Academic Purpose without the Licensor's
+   prior written permission.
+2. **Keep the notices.** Every copy or modified version You share must include
+   this license file, the [`NOTICE`](./NOTICE) file, and the copyright line
+   above, unchanged.
+3. **Same terms for shared copies.** Anyone who receives the Software or a
+   modified version from You receives it only under this license. You may not
+   offer it under different terms.
+4. **Mark your changes.** Modified versions must state clearly that they were
+   changed and must not suggest they are endorsed by the Licensor, the IHT Lab,
+   or the University of Alberta.
+5. **Cite it.** If You use the Software in work that leads to a publication,
+   thesis, report, or dataset, You must cite it as described in
+   [`CITATION.cff`](./CITATION.cff).
 
-## Notices
+## 4. Uses that require permission
 
-You must ensure that anyone who gets a copy of any part of
-the software from you also gets a copy of these terms or the
-URL for them above, as well as copies of any plain-text lines
-beginning with `Required Notice:` that the licensor provided
-with the software.  For example:
+Without prior written permission from the Licensor, You may **not**, for
+example:
 
-> Required Notice: Copyright (c) 2024-2026 Mohammed Sabek
+- use the Software inside, or for the benefit of, a for-profit company;
+- use the Software, or annotations or datasets made with it, in a product,
+  service, paid deliverable, or client engagement;
+- offer the Software, or a modified version, as a hosted or online service to
+  others, other than within Your own academic research group or course;
+- sell, sublicense, or redistribute the Software as part of any non-academic
+  offering.
 
-## Changes and New Works License
+To request permission, follow [`PERMISSIONS.md`](./PERMISSIONS.md). Permission
+is granted only in writing and only for the scope stated in it.
 
-The licensor grants you an additional copyright license to
-make changes and new works based on the software for any
-permitted purpose.
+## 5. Patents
 
-## Patent License
+The Licensor grants You a license, limited to Academic Purposes, under any
+patent claims the Licensor can license that You would otherwise infringe by
+using the Software as permitted here.
 
-The licensor grants you a patent license for the software that
-covers patent claims the licensor can license, or becomes able
-to license, that you would infringe by using the software.
+## 6. Termination
 
-## Noncommercial Purposes
+If You break any term of this license, Your rights under it end
+automatically. If You stop the violation and it is Your first one, Your rights
+are restored if You come into compliance within 30 days of learning of it.
 
-Any noncommercial purpose is a permitted purpose.
+## 7. No warranty and no liability
 
-## Personal Uses
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT. IN NO EVENT SHALL THE
+LICENSOR, THE IHT LAB, OR THE UNIVERSITY OF ALBERTA BE LIABLE FOR ANY CLAIM,
+DAMAGES, OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT, OR
+OTHERWISE, ARISING FROM, OUT OF, OR IN CONNECTION WITH THE SOFTWARE OR THE USE
+OR OTHER DEALINGS IN THE SOFTWARE.
 
-Personal use for research, experiment, and testing for
-the benefit of public knowledge, personal study, private
-entertainment, hobby projects, amateur pursuits, or religious
-observance, without any anticipated commercial application,
-is use for a permitted purpose.
+## 8. Third-party components
 
-## Noncommercial Organizations
+This license covers only the Licensor's own code. It does **not** cover the
+SAM3 model weights or the `sam3` software package, which are governed by
+Meta's separate **SAM License**, nor any other third-party dependency. You must
+comply with those licenses yourself. See [`NOTICE`](./NOTICE) and
+[`THIRD-PARTY-LICENSES.md`](./THIRD-PARTY-LICENSES.md).
 
-Use by any charitable organization, educational institution,
-public research organization, public safety or health
-organization, environmental protection organization,
-or government institution is use for a permitted purpose
-regardless of the source of funding or obligations resulting
-from the funding.
+## 9. Other terms
 
-## Fair Use
-
-You may have "fair use" rights for the software under the
-law. These terms do not limit them.
-
-## No Other Rights
-
-These terms do not allow you to sublicense or transfer any of
-your licenses to anyone else, or prevent the licensor from
-granting licenses to anyone else.  These terms do not imply
-any other licenses.
-
-## Patent Defense
-
-If you make any written claim that the software infringes or
-contributes to infringement of any patent, your patent license
-for the software granted under these terms ends immediately. If
-your company makes such a claim, your patent license ends
-immediately for work on behalf of your company.
-
-## Violations
-
-The first time you are notified in writing that you have
-violated any of these terms, or done anything with the software
-not covered by your licenses, your licenses can nonetheless
-continue if you come into full compliance with these terms,
-and take practical steps to correct past violations, within
-32 days of receiving notice.  Otherwise, all your licenses
-end immediately.
-
-## No Liability
-
-***As far as the law allows, the software comes as is, without
-any warranty or condition, and the licensor will not be liable
-to you for any damages arising out of these terms or the use
-or nature of the software, under any kind of legal claim.***
-
-## Definitions
-
-The **licensor** is the individual or entity offering these
-terms, and the **software** is the software the licensor makes
-available under these terms.
-
-**You** refers to the individual or entity agreeing to these
-terms.
-
-**Your company** is any legal entity, sole proprietorship,
-or other kind of organization that you work for, plus all
-organizations that have control over, are under the control of,
-or are under common control with that organization.  **Control**
-means ownership of substantially all the assets of an entity,
-or the power to direct its management and policies by vote,
-contract, or otherwise.  Control can be direct or indirect.
-
-**Your licenses** are all the licenses granted to you for the
-software under these terms.
-
-**Use** means anything you do with the software requiring one
-of your licenses.
+The Licensor keeps all rights not expressly granted here. This license is
+governed by the laws of the Province of Alberta and the federal laws of Canada
+that apply there.

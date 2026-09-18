@@ -6,8 +6,10 @@ authors:
   - family-names: "Sabek"
     given-names: "Mohamed"
     affiliation: "IHT Lab, Department of Civil and Environmental Engineering, University of Alberta"
-repository-code: "https://github.com/your-org/lableit"
-license: "PolyForm-Noncommercial-1.0.0"
+version: "1.0.0"
+date-released: "2026-09-18"
+repository-code: "https://github.com/msabek/lableit"
+license-url: "https://github.com/msabek/lableit/blob/main/LICENSE"
 keywords:
   - "image annotation"
   - "video annotation"

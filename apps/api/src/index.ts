@@ -100,7 +100,14 @@ const clerkClient = CLERK_SECRET_KEY ? createClerkClient({ secretKey: CLERK_SECR
 // ================================
 // The admin receives access requests and can approve/deny accounts. This email
 // is always treated as admin + approved at runtime (never locked out).
-const ADMIN_EMAIL = (process.env.ADMIN_EMAIL || 'appegy1@gmail.com').trim().toLowerCase();
+// No default: a fork deployed without ADMIN_EMAIL has no admin rather than
+// silently making someone else's address the admin.
+const ADMIN_EMAIL = (process.env.ADMIN_EMAIL || '').trim().toLowerCase();
+if (!ADMIN_EMAIL) {
+  console.warn('[Access] WARNING: ADMIN_EMAIL not set - nobody can approve new accounts!');
+}
+const isAdminEmail = (email?: string | null): boolean =>
+  !!ADMIN_EMAIL && (email || '').toLowerCase() === ADMIN_EMAIL;
 // Resend (https://resend.com) transactional email. If unset, requests are still
 // stored and visible on the admin page; only the email notification is skipped.
 const RESEND_API_KEY = process.env.RESEND_API_KEY || '';
@@ -117,6 +124,7 @@ function escapeHtml(s: string): string {
 async function sendAccessRequestEmail(req: {
   name: string; email: string; institution: string; phone: string; useCase: string;
 }): Promise<{ sent: boolean; reason?: string }> {
+  if (!ADMIN_EMAIL) return { sent: false, reason: 'no_admin_email' };
   if (!RESEND_API_KEY) {
     logger.warn('RESEND_API_KEY not set — access request stored but email notification skipped');
     return { sent: false, reason: 'no_api_key' };
@@ -1018,7 +1026,7 @@ async function getOrCreateUserFromClerk(
   }
 
   if (!user) {
-    const isAdmin = !!email && email.toLowerCase() === ADMIN_EMAIL;
+    const isAdmin = isAdminEmail(email);
     user = await prisma.user.create({
       data: {
         email: email || `clerk_${clerkUserId}@lableit.local`,
@@ -1035,7 +1043,7 @@ async function getOrCreateUserFromClerk(
   // admin account is always approved (runtime rule, not just migrated data).
   const updates: { email?: string; accessStatus?: string } = {};
   if (email && email !== user.email) updates.email = email;
-  if (email && email.toLowerCase() === ADMIN_EMAIL && user.accessStatus !== 'approved') {
+  if (isAdminEmail(email) && user.accessStatus !== 'approved') {
     updates.accessStatus = 'approved';
   }
   if (Object.keys(updates).length > 0) {
@@ -1147,7 +1155,7 @@ app.addHook('preHandler', async (request, reply) => {
     select: { email: true, accessStatus: true },
   });
   const email = (account?.email || '').toLowerCase();
-  const isAdmin = email === ADMIN_EMAIL;
+  const isAdmin = isAdminEmail(email);
   const approved = isAdmin || account?.accessStatus === 'approved';
   (request as any).user = {
     userId,
@@ -1239,7 +1247,7 @@ app.post('/admin/access-requests/:userId/decision', async (request, reply) => {
   }
   const target = await prisma.user.findUnique({ where: { id: targetId }, select: { email: true } });
   if (!target) return reply.status(404).send({ error: 'User not found' });
-  if ((target.email || '').toLowerCase() === ADMIN_EMAIL && decision === 'deny') {
+  if (isAdminEmail(target.email) && decision === 'deny') {
     return reply.status(400).send({ error: 'Cannot deny the admin account' });
   }
   const updated = await prisma.user.update({
@@ -1415,22 +1423,20 @@ app.get('/projects/:id', async (request, reply) => {
   return project;
 });
 
+// Shared by create and rename so both reject blank / oversized names.
+function projectNameError(name: unknown): string | null {
+  if (!name || typeof name !== 'string') return 'Project name is required and must be a string';
+  if (name.trim().length === 0) return 'Project name cannot be empty';
+  if (name.length > 100) return 'Project name must be less than 100 characters';
+  return null;
+}
+
 app.post('/projects', async (request, reply) => {
   const userId = (request as any).user.userId;
   const { name } = request.body as { name: string };
 
-  // Validation
-  if (!name || typeof name !== 'string') {
-    return reply.status(400).send({ error: 'Project name is required and must be a string' });
-  }
-
-  if (name.trim().length === 0) {
-    return reply.status(400).send({ error: 'Project name cannot be empty' });
-  }
-
-  if (name.length > 100) {
-    return reply.status(400).send({ error: 'Project name must be less than 100 characters' });
-  }
+  const nameError = projectNameError(name);
+  if (nameError) return reply.status(400).send({ error: nameError });
 
   const project = await prisma.project.create({
     data: { name: name.trim(), ownerId: userId },
@@ -1444,6 +1450,8 @@ app.put('/projects/:id', async (request, reply) => {
   const userId = (request as any).user.userId;
   const { id } = request.params as { id: string };
   const { name } = request.body as { name: string };
+  const nameError = projectNameError(name);
+  if (nameError) return reply.status(400).send({ error: nameError });
 
   const project = await prisma.project.findFirst({ where: { id, ownerId: userId } });
   if (!project) {
@@ -1452,7 +1460,7 @@ app.put('/projects/:id', async (request, reply) => {
 
   return await prisma.project.update({
     where: { id },
-    data: { name },
+    data: { name: name.trim() },
     include: { assets: true, classes: true }
   });
 });

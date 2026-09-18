@@ -287,7 +287,7 @@ export default function LabelingInterface({ onBack, projectId }: LabelingProps) 
     }
   };
 
-  const handleDeleteClass = (classId: string) => {
+  const handleDeleteClass = async (classId: string) => {
     if (!project) return;
     const cls = project.classes.find(c => c.id === classId);
     if (!cls) return;

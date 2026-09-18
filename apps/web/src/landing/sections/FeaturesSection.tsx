@@ -106,15 +106,15 @@ export default function FeaturesSection() {
         <div className="text-center glass-card rounded-2xl p-8 hover-lift">
           <div className="flex items-center justify-center gap-2 mb-2">
             <Zap className="w-6 h-6 text-indigo-500" />
-            <span className="text-4xl font-bold gradient-text">10x</span>
+            <span className="text-4xl font-bold gradient-text">1</span>
           </div>
-          <div className="text-slate-600 dark:text-slate-400">Faster Labeling</div>
-          <p className="text-sm text-slate-500 dark:text-slate-500 mt-1">Compared to manual annotation</p>
+          <div className="text-slate-600 dark:text-slate-400">Text Prompt</div>
+          <p className="text-sm text-slate-500 dark:text-slate-500 mt-1">Finds every matching object at once</p>
         </div>
         <div className="text-center glass-card rounded-2xl p-8 hover-lift">
           <div className="flex items-center justify-center gap-2 mb-2">
             <Download className="w-6 h-6 text-emerald-500" />
-            <span className="text-4xl font-bold gradient-text">8+</span>
+            <span className="text-4xl font-bold gradient-text">8</span>
           </div>
           <div className="text-slate-600 dark:text-slate-400">Export Formats</div>
           <p className="text-sm text-slate-500 dark:text-slate-500 mt-1">COCO, YOLO, VOC, and more</p>
@@ -122,10 +122,10 @@ export default function FeaturesSection() {
         <div className="text-center glass-card rounded-2xl p-8 hover-lift">
           <div className="flex items-center justify-center gap-2 mb-2">
             <Shield className="w-6 h-6 text-purple-500" />
-            <span className="text-4xl font-bold gradient-text">99%</span>
+            <span className="text-4xl font-bold gradient-text">You</span>
           </div>
-          <div className="text-slate-600 dark:text-slate-400">Accuracy Rate</div>
-          <p className="text-sm text-slate-500 dark:text-slate-500 mt-1">SAM3 precision segmentation</p>
+          <div className="text-slate-600 dark:text-slate-400">Stay in Control</div>
+          <p className="text-sm text-slate-500 dark:text-slate-500 mt-1">Review and correct every SAM3 label</p>
         </div>
       </div>
     </div>

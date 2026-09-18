@@ -1,5 +1,34 @@
 # Changelog
 
+## 1.0.0 - Public academic release (2026-09-18)
+
+### License
+- **CHANGED**: Relicensed from PolyForm Noncommercial + paid commercial license to the **Lableit Academic Research License 1.0** (`LICENSE`): free for academic use (teaching, learning, non-commercial research at universities and non-profit research institutes); **any other use needs prior written permission**. `LICENSE-COMMERCIAL.md` is replaced by `PERMISSIONS.md` (how to ask). Updated `NOTICE`, `THIRD-PARTY-LICENSES.md`, `CONTRIBUTING.md` (contribution terms, CLA TODO resolved), `CITATION.cff` (real repo URL, version, `license-url`), and the `license` field of every `package.json` (`SEE LICENSE IN LICENSE`).
+- **FIXED**: Copyright holder name spelled "Mohamed Sabek" consistently in LICENSE, NOTICE, and third-party notices.
+
+### Docs
+- **ADDED**: README "About this project": developed by Mohamed Sabek during his research at the IHT Lab, University of Alberta; used alongside other tools to build the CIVAD dataset.
+- **FIXED**: README device table now says Apple Silicon uses MPS (the GPU) by default.
+- **CHANGED**: `SECURITY.md` contact TODO resolved.
+
+### Web (landing page)
+- **FIXED**: Removed made-up marketing claims ("200+ Enterprise Teams", "50K+ images labeled daily", "99.5% accuracy", "15+ countries", "Free tier with 100 images/month", "Enterprise Ready", "10x faster") and replaced them with true facts (8 export formats, SAM3 text prompts, images + video, free for academic use). Footer GitHub link now points to the real repo; placeholder Twitter link replaced with a License link; credit wording aligned to "Dr. Mohamed Sabek".
+- **FIXED**: Use-case cards and feature stats no longer promise things the app does not do ("99% accuracy", "10x faster", "HIPAA compatible", "DICOM", "KITTI", "GeoTIFF", "QGIS export", "motion tracking", "facial recognition", "edge deployment"); they now list real capabilities. "8+ formats" is now "8 formats" everywhere.
+- **FIXED**: The landing "Try it" section drew random boxes while claiming to run SAM3. It is now labelled an **Interface Preview** that draws example boxes at random; the broken sample-image buttons ("would be loaded here in production") were removed.
+- **FIXED**: 4 TypeScript errors (`labeling.tsx`, `ExportWizard.tsx`, `useAssetAnnotation.ts`); `tsc --noEmit` is now clean for web and api.
+
+### API / security
+- **CHANGED**: `ADMIN_EMAIL` has **no default** any more (it used to fall back to the maintainer's personal address, so a fork deployed without it would have made that address its admin). If unset, the API warns at startup, nobody is admin, and no request emails are sent. All admin checks go through one `isAdminEmail()` guard so an empty value can never match an account with no email.
+
+- **FIXED**: Renaming a project to a blank name was accepted (200). Create and rename now share one `projectNameError()` check (400 on blank / >100 chars) and names are trimmed.
+
+### Tooling
+- **FIXED**: `run.command` starts inference with `.venv/bin/python -m uvicorn` (the venv's `uvicorn` launcher hardcodes the folder the venv was created in, so it broke after the project moved) and sets `LC_ALL` so Postgres starts.
+- **FIXED**: `.gitignore` now ignores `.devstack` and `apps/inference/models` when they are symlinks; `.evidence/` (local test screenshots) is ignored.
+
+### Deployment
+- **FIXED**: Deployment templates and guides updated for production (see `DEPLOYMENT.md`, `RAILWAY_DEPLOYMENT.md`, `docker-compose.prod.yml`, env templates): access-control variables, Railway build context (repo root + Dockerfile path), API runs `/start.sh` so migrations apply, worker start command fixed (`bun --cwd apps/api run start`; the old root `bun run start` did not exist) and marked required, web container gets the Clerk key and API URL, S3 credentials required (no `minioadmin` fallback), bucket no longer public, `S3_ENDPOINT` overridable, `HF_TOKEN` passed to inference, Clerk production setup documented.
+
 ## Unreleased - GPU auto-detect, creation wizard, delete fix (Jun 2026)
 
 ### Inference

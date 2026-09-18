@@ -100,12 +100,21 @@ Railway will automatically detect the monorepo structure and suggest services.
 
 ### 5. Configure Services
 
-For each service (api, web, inference), configure in Railway dashboard:
+For each service (api, web, inference, worker), configure in Railway dashboard.
+
+> **Build context:** the API, web and worker Dockerfiles copy `package.json`,
+> `bun.lock` and `packages/shared` from the repo root, so those services must
+> build from the **repo root**. Leave Root Directory empty and point Railway at
+> the Dockerfile with **Dockerfile Path** (or set the service variable
+> `RAILWAY_DOCKERFILE_PATH`, e.g. `RAILWAY_DOCKERFILE_PATH=apps/api/Dockerfile`).
+> The Railway Config File does not follow Root Directory, so set its full path
+> (for example `/apps/api/railway.toml`) in the service settings.
 
 #### API Service
-- **Root Directory**: `apps/api`
-- **Build Command**: (auto-detected from Dockerfile)
-- **Start Command**: `bun run start`
+- **Root Directory**: (leave empty, repo root)
+- **Dockerfile Path**: `apps/api/Dockerfile`
+- **Railway Config File**: `/apps/api/railway.toml`
+- **Start Command**: (leave empty) so the Dockerfile's `/start.sh` runs. It applies pending Prisma migrations (`prisma migrate deploy`) and then starts the API. Do not set `bun run start` here, or migrations are skipped.
 
 **Environment Variables:**
 ```
@@ -123,6 +132,15 @@ S3_SECRET_KEY=<your-secret-key>
 S3_BUCKET=lableit
 JWT_SECRET=<generate-secure-random-string>
 CLERK_SECRET_KEY=<your-clerk-secret-key>
+# Required, no default: email of the account that approves access requests.
+# If unset, nobody can approve new users.
+ADMIN_EMAIL=<admin-email>
+# Optional: email the admin on new access requests (requests still show on /admin without it).
+RESEND_API_KEY=<your-resend-api-key>
+RESEND_FROM=Lableit <access@your-domain.com>
+# Optional: API CORS allow-list, comma-separated, no spaces. Only needed if the
+# browser calls the API from another origin (the web /api proxy is same-origin).
+# ALLOWED_ORIGINS=https://app.your-domain.com
 # Point at the inference service on the private network. Use the port the
 # inference service actually listens on in Railway (its injected $PORT / :8080).
 INFERENCE_URL=http://inference.railway.internal:8080
@@ -137,8 +155,9 @@ FFMPEG_PATH=ffmpeg
 > do **not** apply on Railway.
 
 #### Web Service
-- **Root Directory**: `apps/web`
-- **Build Command**: (auto-detected from Dockerfile)
+- **Root Directory**: (leave empty, repo root)
+- **Dockerfile Path**: `apps/web/Dockerfile`
+- **Railway Config File**: `/apps/web/railway.toml`
 
 **Environment Variables:**
 ```
@@ -150,7 +169,8 @@ VITE_API_URL=/api
 ```
 
 #### Inference Service
-- **Root Directory**: `apps/inference`
+- **Root Directory**: `apps/inference` (its Dockerfile only copies files from this folder)
+- **Railway Config File**: `/apps/inference/railway.toml`
 - **Python**: 3.11 (canonical)
 - **Build Command**: (auto-detected from Dockerfile)
 - **Start Command**: `uvicorn main:app --host 0.0.0.0 --port $PORT` (Railway sets `$PORT`; the service is reached internally on `:8080`)
@@ -160,6 +180,9 @@ VITE_API_URL=/api
 PRELOAD_MODEL=false
 MODEL_CACHE_DIR=/app/models
 PYTHONUNBUFFERED=1
+# facebook/sam3 is a gated Hugging Face model: request access on its model
+# page, then use a token from the approved account.
+HF_TOKEN=<your-huggingface-token>
 ```
 
 > **Note (GPU):** Set `PRELOAD_MODEL=false`. **SAM3 requires an NVIDIA CUDA GPU**
@@ -169,11 +192,18 @@ PYTHONUNBUFFERED=1
 > For automatic detection in production, run inference on an external CUDA GPU
 > service and point the API's `INFERENCE_URL` at it (see "GPU Considerations").
 
-#### Worker Service (Optional)
-- **Root Directory**: `apps/api`
-- **Start Command**: `bun run start`
+#### Worker Service (Required)
+Background jobs (detection batches, exports, video processing) only run in the
+worker. In production the API does not start an embedded worker, so without
+this service those jobs are queued but never processed.
 
-**Environment Variables:** (same as API, plus)
+- **Root Directory**: (leave empty, repo root)
+- **Dockerfile Path**: `apps/api/Dockerfile` (same image as the API)
+- **Railway Config File**: (leave empty; do not reuse `apps/api/railway.toml`, its `/health` check would fail because the worker has no HTTP listener)
+- **Start Command**: `bun --cwd apps/api run start` (does not run migrations; the API service does that)
+- **Healthcheck Path**: (leave empty)
+
+**Environment Variables:** (same as API, including `ADMIN_EMAIL`, plus)
 ```
 WORKER_MODE=true
 RUN_HTTP_SERVER=false
@@ -220,6 +250,11 @@ Or click **"Deploy"** in the Railway dashboard.
 | API | `CLERK_SECRET_KEY` | From Clerk dashboard |
 | API | `JWT_SECRET` | Generate secure random string |
 | API | `S3_*` | S3 storage credentials |
+| API + Worker | `ADMIN_EMAIL` | Email of the account that approves access requests. No default; if unset, nobody can approve new users |
+| API + Worker | `RESEND_API_KEY`, `RESEND_FROM` | Optional. Emails the admin on new access requests; without them requests still show on `/admin` |
+| API | `ALLOWED_ORIGINS` | Optional. CORS allow-list, comma-separated, no spaces. Only needed for cross-origin API calls |
+| Worker | `WORKER_MODE=true`, `RUN_HTTP_SERVER=false` | Runs the background job worker |
+| Inference | `HF_TOKEN` | Hugging Face token with approved access to the gated `facebook/sam3` model |
 | Web | `VITE_CLERK_PUBLISHABLE_KEY` | From Clerk dashboard |
 | Web | `API_URL` | Internal API URL |
 
@@ -242,10 +277,10 @@ Each service includes a `railway.toml` configuration file:
 ```toml
 [build]
 builder = "dockerfile"
-dockerfilePath = "Dockerfile"
+dockerfilePath = "apps/api/Dockerfile"
 
 [deploy]
-startCommand = "bun run start"
+# No startCommand: the Dockerfile CMD (/start.sh) migrates, then starts the API.
 healthcheckPath = "/health"
 healthcheckTimeout = 30
 restartPolicyType = "on_failure"
@@ -266,7 +301,8 @@ Railway monitors these endpoints and restarts unhealthy services.
 
 ### Running Migrations
 
-After deployment, run Prisma migrations:
+The API service runs `prisma migrate deploy` automatically on every start
+(the Dockerfile's `/start.sh`). To run them by hand:
 
 ```bash
 # Using Railway CLI
@@ -411,7 +447,9 @@ reachable internally on `:8080`):
 
 #### 4. Build failures
 
-Check Dockerfile paths are relative to the service root directory.
+The API, web and worker Dockerfiles need the repo root as build context. If the
+build fails on `COPY package.json bun.lock` or `packages/shared`, clear Root
+Directory and set Dockerfile Path (or `RAILWAY_DOCKERFILE_PATH`) instead.
 
 #### 5. Memory issues
 
@@ -486,6 +524,8 @@ Railway deployment checklist:
 - [ ] Configure API service with environment variables
 - [ ] Configure Web service with environment variables
 - [ ] Configure Inference service with volume mount
+- [ ] Configure Worker service (required for background jobs)
+- [ ] Set `ADMIN_EMAIL` on API and worker
 - [ ] Run database migrations
 - [ ] Set up S3 storage (external)
 - [ ] Configure custom domain (optional)

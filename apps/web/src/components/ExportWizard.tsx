@@ -30,7 +30,6 @@ const getFormatExtension = (format: ExportFormat): string => {
   if (format.includes('yolo')) return '.txt';
   if (format === 'voc') return '.xml';
   if (format === 'png_masks') return '.png';
-  if (format === 'csv') return '.csv';
   return '.json';
 };
 

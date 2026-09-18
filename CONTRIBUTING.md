@@ -6,16 +6,15 @@ each service, and the conventions for branches, PRs, and code style.
 
 ## License of contributions
 
-Lableit is released under the **PolyForm Noncommercial License 1.0.0** (see
-[`LICENSE`](./LICENSE)), with a separate **commercial dual-license** (see
-[`LICENSE-COMMERCIAL.md`](./LICENSE-COMMERCIAL.md)). By contributing, you agree
-that your contributions are provided under the project's license.
+Lableit is released under the **Lableit Academic Research License 1.0** (see
+[`LICENSE`](./LICENSE)): academic use only, other uses by written permission
+(see [`PERMISSIONS.md`](./PERMISSIONS.md)).
 
-> **TODO (maintainer):** Because Lableit uses a dual-license model
-> (noncommercial + commercial), a **Contributor License Agreement (CLA)** or
-> Developer Certificate of Origin (DCO) is likely needed so the maintainer can
-> relicense contributions under the commercial license. Decide on and document
-> a CLA/DCO process before accepting external contributions.
+By submitting a contribution (pull request, patch, or issue attachment), you
+confirm that you wrote it or have the right to submit it, you license it under
+the project's license, and you also grant Mohamed Sabek the right to include it
+in any written permission he gives for non-academic use of Lableit. If you
+cannot agree to this, please open an issue to discuss before contributing.
 
 ## Repository layout
 

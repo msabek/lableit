@@ -27,9 +27,9 @@ GitHub issue for a security problem.
 3. Please allow a reasonable disclosure window before any public disclosure so a
    fix can be prepared and released.
 
-> **TODO (maintainer):** Replace the `appegy1@gmail.com` contact above with a
-> dedicated security contact (e.g. `security@<your-domain>`) or enable GitHub
-> Private Vulnerability Reporting for the repository before public release.
+You can also use GitHub's private **Report a vulnerability** button on the
+repository's Security tab, if it is enabled. Please do not open a public issue
+for security problems.
 
 ## Scope and Hardening Notes
 

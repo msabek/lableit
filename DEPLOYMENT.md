@@ -40,7 +40,7 @@ docker compose -f docker-compose.prod.yml up -d --build
 
 4. **Initialize database:**
 ```bash
-# Run migrations (production-safe, non-interactive)
+# The api container runs migrations on every start (/start.sh). To run them by hand:
 docker compose -f docker-compose.prod.yml exec api bunx prisma migrate deploy
 
 # Create MinIO bucket (optional - auto-created on first use)
@@ -59,15 +59,46 @@ S3_ACCESS_KEY=your_s3_access_key
 S3_SECRET_KEY=your_s3_secret_key
 INFERENCE_BATCH_TIMEOUT_MS=300000
 
-# External services (if using cloud providers)
-# AWS_S3_BUCKET=your-s3-bucket
-# AWS_ACCESS_KEY_ID=your-access-key
-# AWS_SECRET_ACCESS_KEY=your-secret-key
+# Clerk (see "Clerk for production" below)
+VITE_CLERK_PUBLISHABLE_KEY=pk_live_...
+CLERK_SECRET_KEY=sk_live_...
+
+# Access control (api + worker)
+ADMIN_EMAIL=you@example.com   # REQUIRED, no default: approves access requests. If unset, nobody can approve new users
+RESEND_API_KEY=               # optional: email the admin on new requests (they still show on /admin without it)
+RESEND_FROM=                  # optional: sender, must use a domain verified in Resend
+ALLOWED_ORIGINS=              # optional: API CORS list, comma-separated, no spaces; only for cross-origin API calls
+
+# Inference: facebook/sam3 is a gated Hugging Face model, so request access on
+# its model page and use a token from the approved account
+HF_TOKEN=hf_...
 
 # Process roles
 WORKER_MODE=false        # API service
 # WORKER_MODE=true       # Worker service
 ```
+
+The S3 variables above have no defaults in `docker-compose.prod.yml`; compose
+refuses to start until they (and `ADMIN_EMAIL`) are set.
+
+### Object storage must be reachable from browsers
+
+The API returns presigned URLs built from `S3_ENDPOINT`, and users' browsers
+load images and downloads from those URLs directly. `http://minio:9000` only
+works inside the Docker network. In production, point `S3_ENDPOINT` at a public
+MinIO host behind TLS (for example `https://storage.your-domain.com`), or use
+S3 or Cloudflare R2.
+
+### Clerk for production
+
+1. In the Clerk dashboard, create a **Production** instance (development keys
+   are rate limited and show a banner).
+2. Add your domain and create the DNS records Clerk asks for, then wait for
+   them to verify.
+3. Use the live keys: `pk_live_...` and `sk_live_...`.
+4. Set `VITE_CLERK_PUBLISHABLE_KEY` on the **web** service. It is read when the
+   container starts, so no rebuild is needed to change it.
+5. Set `CLERK_SECRET_KEY` on the **api** and **worker** services.
 
 ## SSL/HTTPS Setup
 

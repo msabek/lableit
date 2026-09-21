@@ -19,6 +19,12 @@
   figcaption { font-size:13px; color:var(--muted); padding:8px 10px; }
   .pair { display:grid; grid-template-columns:1fr 1fr; gap:14px; } @media (max-width:700px){ .pair { grid-template-columns:1fr; } }
   h3 { font-size:15px; margin:18px 0 6px; }
+  .toc { background:var(--card); border:1px solid var(--line); border-radius:14px; padding:16px 24px; margin-bottom:28px; }
+  .toc ol { margin:8px 0; padding-left:20px; } .toc li { margin:3px 0; }
+  .toc span { color:var(--muted); font-size:12px; margin-left:6px; }
+  .toc p { margin:8px 0 0; color:var(--muted); font-size:13px; }
+  .status { border-left:3px solid var(--accent); padding:2px 0 2px 14px; margin:14px 0; }
+  .status p { margin:6px 0; }
 </style>
 </head>
 <body>
@@ -26,8 +32,20 @@
   <h1>Lableit visual changelog</h1>
   <p class="sub">Newest first. Screenshots live in <code>.evidence/</code> (kept local, not in git), so they may be missing on a fresh clone.</p>
 
+  <nav class="toc">
+    <strong>On this page</strong>
+    <ol>
+      <li><a href="#theme-default">Light theme is now the default</a> <span>2026-09-21</span></li>
+      <li><a href="#iht-logo">IHT Lab logo replaces the University of Alberta logo</a> <span>2026-09-21</span></li>
+      <li><a href="#cleanup-tests">Dev-data cleanup and tests that skip without a database</a> <span>2026-09-21</span></li>
+      <li><a href="#lint">Lint works again: one shared ESLint config</a> <span>2026-09-21</span></li>
+      <li><a href="#release-1-0-0">1.0.0: public academic release, full system test</a> <span>2026-09-18</span></li>
+    </ol>
+    <p>Everything above is part of the <strong>1.0.0 public academic release</strong> (released 2026-09-21).</p>
+  </nav>
+
   <article>
-    <h2>Light theme is now the default</h2>
+    <h2 id="theme-default">Light theme is now the default</h2>
     <time datetime="2026-09-21">2026-09-21</time>
     <ul>
       <li><strong>What changed:</strong> the app used to follow the visitor's device setting, so anyone on a dark-mode laptop saw the dark UI first. It now opens in the light theme. The Light / Dark / System toggle still works as before.</li>
@@ -45,7 +63,7 @@
   </article>
 
   <article>
-    <h2>IHT Lab logo replaces the University of Alberta logo</h2>
+    <h2 id="iht-logo">IHT Lab logo replaces the University of Alberta logo</h2>
     <time datetime="2026-09-21">2026-09-21</time>
     <ul>
       <li><strong>Why:</strong> using a university's logo publicly usually needs the university's permission. The landing page now credits the lab whose work this is.</li>
@@ -64,7 +82,7 @@
   </article>
 
   <article>
-    <h2>Dev-data cleanup and tests that skip without a database</h2>
+    <h2 id="cleanup-tests">Dev-data cleanup and tests that skip without a database</h2>
     <time datetime="2026-09-21">2026-09-21</time>
     <ul>
       <li><strong>Local dev database cleaned:</strong> removed the three leftover test accounts (<code>lableit-e2e+local</code>, <code>lableit-pending+local</code>, <code>lableit-admin+clerk_test</code>), the "E2E Street Demo" project and everything it owned - 4 assets, 1 class, 1 annotation and 6 jobs - plus the 8 matching objects in MinIO and the stale files under <code>apps/api/exports/</code>. The real account and its two projects were left untouched.</li>
@@ -88,7 +106,7 @@
   </article>
 
   <article>
-    <h2>Lint works again: one shared ESLint config for the whole repo</h2>
+    <h2 id="lint">Lint works again: one shared ESLint config for the whole repo</h2>
     <time datetime="2026-09-21">2026-09-21</time>
     <ul>
       <li><strong>What was broken:</strong> <code>bun run lint</code> failed everywhere. The API had a lint command but no linter installed, so it downloaded a newer ESLint that refused the old settings format. The web app had an old ESLint and no settings file at all. The root command also crashed on <code>packages/shared</code>, which has no lint script.</li>
@@ -107,13 +125,20 @@
   </article>
 
   <article>
-    <h2>1.0.0: public academic release, full system test</h2>
+    <h2 id="release-1-0-0">1.0.0: public academic release, full system test</h2>
     <time datetime="2026-09-18">2026-09-18</time>
     <ul>
       <li><strong>License:</strong> now academic use only; any other use needs written permission (<code>LICENSE</code>, new <code>PERMISSIONS.md</code>). Credits to Mohamed Sabek, IHT Lab, University of Alberta, and the CIVAD dataset added to README, NOTICE, and the landing page.</li>
       <li><strong>Landing page honesty:</strong> removed invented numbers and features (200+ enterprise teams, 99% accuracy, HIPAA, GeoTIFF, and others). The "Try it" demo is now labelled as a preview with random example boxes.</li>
       <li><strong>Deployment:</strong> fixed Railway builds, migrations, worker start, and missing sign-in/admin settings. There is no longer a built-in default admin email. Blank project renames are rejected.</li>
     </ul>
+
+    <div class="status">
+      <p><strong>Released 2026-09-21.</strong> The entries above are follow-up fixes that are part of this release.</p>
+      <p><strong>Verified:</strong> type checks, lint, web tests (15/15), production build, Python compile, database schema vs migrations, and the production compose config. End to end through the API on Apple Silicon: access gate, admin approval, project and upload, SAM3 text-prompt detection (1 car and 4 wheels in 22.5 s), COCO and YOLO exports with real annotations, class delete, project rename, video slicing. In the browser: the landing page and the light-theme default.</p>
+      <p><strong>Not verified:</strong> the signed-in app screens (dashboard, creation wizard, labeling canvas, export dialog, admin page) were exercised through the API only, not clicked through in a browser, because sign-in offers Google only and no test login path was available.</p>
+      <p><strong>Not legal advice:</strong> the license text has not been reviewed by a lawyer, and university IP policy may apply to research work. Review both before relying on it.</p>
+    </div>
 
     <h3>Before and after: the "Try it" demo</h3>
     <div class="pair">

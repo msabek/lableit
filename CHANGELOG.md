@@ -1,6 +1,6 @@
 # Changelog
 
-## 1.0.0 - Public academic release (2026-09-18)
+## 1.0.0 - Public academic release (2026-09-21)
 
 ### License
 - **CHANGED**: Relicensed from PolyForm Noncommercial + paid commercial license to the **Lableit Academic Research License 1.0** (`LICENSE`): free for academic use (teaching, learning, non-commercial research at universities and non-profit research institutes); **any other use needs prior written permission**. `LICENSE-COMMERCIAL.md` is replaced by `PERMISSIONS.md` (how to ask). Updated `NOTICE`, `THIRD-PARTY-LICENSES.md`, `CONTRIBUTING.md` (contribution terms, CLA TODO resolved), `CITATION.cff` (real repo URL, version, `license-url`), and the `license` field of every `package.json` (`SEE LICENSE IN LICENSE`).
@@ -21,7 +21,6 @@
 
 ### API / security
 - **CHANGED**: `ADMIN_EMAIL` has **no default** any more (it used to fall back to the maintainer's personal address, so a fork deployed without it would have made that address its admin). If unset, the API warns at startup, nobody is admin, and no request emails are sent. All admin checks go through one `isAdminEmail()` guard so an empty value can never match an account with no email.
-
 - **FIXED**: Renaming a project to a blank name was accepted (200). Create and rename now share one `projectNameError()` check (400 on blank / >100 chars) and names are trimmed.
 
 ### Tooling
@@ -32,6 +31,13 @@
 
 ### Deployment
 - **FIXED**: Deployment templates and guides updated for production (see `DEPLOYMENT.md`, `RAILWAY_DEPLOYMENT.md`, `docker-compose.prod.yml`, env templates): access-control variables, Railway build context (repo root + Dockerfile path), API runs `/start.sh` so migrations apply, worker start command fixed (`bun --cwd apps/api run start`; the old root `bun run start` did not exist) and marked required, web container gets the Clerk key and API URL, S3 credentials required (no `minioadmin` fallback), bucket no longer public, `S3_ENDPOINT` overridable, `HF_TOKEN` passed to inference, Clerk production setup documented.
+
+### Verification (2026-09-21)
+- **Automated:** `tsc --noEmit` clean for `apps/api`, `apps/web`, `packages/shared`; `bun run lint` 0 errors (55 advisory warnings); web tests 15/15; `bun test` in `apps/api` 11 pass / 7 skip without a database, 18 pass with one; `vite build` succeeds; Python sources compile; Prisma schema matches the migrations; `docker compose -f docker-compose.prod.yml config` validates.
+- **End-to-end (through the API, on Apple Silicon):** access gate blocks an unapproved account and accepts a request; admin approves and a non-admin gets 403; project creation, image upload, SAM3 text-prompt detection (1 car + 4 wheels in 22.5 s on MPS), COCO / YOLO-detect / YOLO-segment exports containing real annotations, one-shot export download tokens, class deletion cascading to annotations, project rename, and video slicing into frames.
+- **In the browser:** landing page (hero, features, use cases, interface preview, CTA/footer), sign-in page, and the light-theme default (new visitor, returning visitor, explicit dark choice).
+- **NOT verified:** the signed-in app screens (projects dashboard, creation wizard, labeling canvas, export dialog, `/admin`) were exercised through the API only, not clicked through in a browser, because the Clerk instance offers Google sign-in only and no test login path was available.
+- **Not legal advice:** the license text in `LICENSE` has not been reviewed by a lawyer, and university IP policy may apply to work done during research at the University of Alberta. Review both before relying on the license.
 
 ## Unreleased - GPU auto-detect, creation wizard, delete fix (Jun 2026)
 
@@ -150,7 +156,7 @@
 - **FIXED**: Inference Docker image now installs Python dependencies with `uv` (system install) and includes `git` for Git-based dependencies.
 
 ### Tooling
-- **FIXED**: Root lint command updated to a workspace-compatible Bun command (`bun run --workspaces lint`).
+- **FIXED**: Root lint command updated to a workspace-compatible Bun command (`bun run --workspaces lint`). *(Superseded in 1.0.0: that command crashed on `packages/shared`, and neither app had an ESLint config. See the 1.0.0 Tooling section.)*
 
 ## 0.4.6 - SAM3 Resilience + UAlberta Landing Attribution (Feb 8, 2026)
 

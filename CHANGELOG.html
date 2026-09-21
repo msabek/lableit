@@ -27,6 +27,24 @@
   <p class="sub">Newest first. Screenshots live in <code>.evidence/</code> (kept local, not in git), so they may be missing on a fresh clone.</p>
 
   <article>
+    <h2>Light theme is now the default</h2>
+    <time datetime="2026-09-21">2026-09-21</time>
+    <ul>
+      <li><strong>What changed:</strong> the app used to follow the visitor's device setting, so anyone on a dark-mode laptop saw the dark UI first. It now opens in the light theme. The Light / Dark / System toggle still works as before.</li>
+      <li><strong>Existing visitors:</strong> a one-time reset moves browsers still carrying the old "system" default to light. A theme the visitor picks after that is kept, and a deliberate "dark" choice is never overwritten.</li>
+      <li><strong>Bug caught while testing:</strong> the reset first ran inside React's state initializer, which React calls twice in development, so it cancelled itself out and the page stayed dark. Moved to run once at page load.</li>
+    </ul>
+    <div class="grid">
+      <figure><img src=".evidence/2026-09-21/32-default-light-on-dark-device.png" alt="Landing page in light theme on a device set to dark mode"><figcaption>Fresh visitor on a dark-mode device: light theme</figcaption></figure>
+    </div>
+    <p>Verified three cases in a browser emulating a dark-mode device: new visitor (light), returning visitor carrying the old "system" default (light), visitor who chose dark (stays dark).</p>
+    <h3>References</h3>
+    <ul>
+      <li>File: <a href="apps/web/src/contexts/SettingsContext.tsx">apps/web/src/contexts/SettingsContext.tsx</a></li>
+    </ul>
+  </article>
+
+  <article>
     <h2>IHT Lab logo replaces the University of Alberta logo</h2>
     <time datetime="2026-09-21">2026-09-21</time>
     <ul>

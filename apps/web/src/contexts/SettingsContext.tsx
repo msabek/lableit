@@ -113,7 +113,9 @@ const DEFAULT_SETTINGS: AppSettings = {
   showConfidenceScores: true,
   showMasksOnCanvas: true,
   canvasZoomSensitivity: 1.0,
-  theme: 'system',
+  // Light is the default look. Visitors on a dark-mode device still land on
+  // the light theme; they can pick 'dark' or 'system' from the theme toggle.
+  theme: 'light',
   colorTheme: 'indigo',
   
   // Export
@@ -125,6 +127,31 @@ const DEFAULT_SETTINGS: AppSettings = {
 };
 
 const SETTINGS_STORAGE_KEY = 'lableit_settings';
+// Marker for the one-time switch of the default theme from 'system' to 'light'.
+const THEME_DEFAULT_MIGRATED_KEY = 'lableit_theme_default_v2';
+
+// Browsers that only ever saw the old 'system' default are moved to the light
+// default once; after that the visitor's own choice is kept. Runs at module
+// load, not inside the state initializer, which React may call twice.
+function migrateThemeDefault(): void {
+  try {
+    if (typeof window === 'undefined') return;
+    if (localStorage.getItem(THEME_DEFAULT_MIGRATED_KEY)) return;
+    localStorage.setItem(THEME_DEFAULT_MIGRATED_KEY, '1');
+    const stored = localStorage.getItem(SETTINGS_STORAGE_KEY);
+    if (!stored) return;
+    const parsed = JSON.parse(stored);
+    if (parsed?.theme === 'system') {
+      localStorage.setItem(
+        SETTINGS_STORAGE_KEY,
+        JSON.stringify({ ...parsed, theme: DEFAULT_SETTINGS.theme })
+      );
+    }
+  } catch (e) {
+    console.warn('Theme default migration skipped:', e);
+  }
+}
+migrateThemeDefault();
 
 // ================================
 // Context

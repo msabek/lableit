@@ -14,10 +14,13 @@
     "dev:api": "cd apps/api && bun run dev",
     "dev:inference": "cd apps/inference && uvicorn main:app --reload --host 0.0.0.0 --port 8001",
     "dev:web": "cd apps/web && bun run dev",
-    "lint": "bun run --workspaces lint"
+    "lint": "eslint apps packages"
   },
   "devDependencies": {
-    "prisma": "5.19.1"
+    "@eslint/js": "^9",
+    "eslint": "^9",
+    "prisma": "5.19.1",
+    "typescript-eslint": "^8.70.1"
   },
   "dependencies": {
     "@prisma/client": "5.19.1"

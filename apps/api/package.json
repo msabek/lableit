@@ -7,7 +7,7 @@
   "scripts": {
     "dev": "bun run --hot src/index.ts",
     "start": "bun run src/index.ts",
-    "lint": "bunx eslint src --ext .ts",
+    "lint": "eslint src",
     "prisma:generate": "bunx prisma generate",
     "prisma:migrate": "bunx prisma migrate dev"
   },

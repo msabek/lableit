@@ -11,7 +11,7 @@ import {
   Layers,
   Check
 } from 'lucide-react';
-import ualbertaLogo from '../assets/ualberta-logo.svg';
+import ihtLabLogo from '../assets/iht-lab-logo.svg';
 
 interface HeroSectionProps {
   onGetStarted: () => void;
@@ -123,20 +123,24 @@ export default function HeroSection({ onGetStarted }: HeroSectionProps) {
       {/* Social proof */}
       <div className="animate-on-scroll mt-16 pt-8 border-t border-slate-200 dark:border-slate-800">
         <p className="text-sm text-slate-500 dark:text-slate-500 mb-4">
-          Developed at the University of Alberta
+          Developed at the IHT Lab
         </p>
         <div className="flex flex-wrap items-center justify-center gap-6 opacity-80">
-          <img
-            src={ualbertaLogo}
-            alt="University of Alberta logo"
-            className="h-14 md:h-16 w-auto"
-          />
+          <a
+            href="https://iht-lab.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hover:opacity-80 transition-opacity"
+          >
+            <img
+              src={ihtLabLogo}
+              alt="IHT Lab, Infrastructure and Human Tech Lab"
+              className="h-12 md:h-14 w-auto"
+            />
+          </a>
           <div className="text-left">
-            <p className="text-slate-700 dark:text-slate-300 font-semibold">
-              University of Alberta
-            </p>
             <p className="text-slate-500 dark:text-slate-500 text-sm">
-              Civil and Environmental Engineering · IHT Lab
+              Civil and Environmental Engineering, University of Alberta
             </p>
           </div>
         </div>

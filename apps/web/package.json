@@ -12,7 +12,7 @@
     "dev": "bunx vite",
     "build": "bunx vite build",
     "preview": "bunx vite preview",
-    "lint": "bunx eslint src --ext .ts,.tsx"
+    "lint": "eslint src"
   },
   "dependencies": {
     "@clerk/clerk-react": "^5.61.3",
@@ -30,7 +30,6 @@
     "@types/react-dom": "^18.3.1",
     "@vitejs/plugin-react": "^6.0.1",
     "autoprefixer": "^10.4.22",
-    "eslint": "^8.57.1",
     "postcss": "^8.5.12",
     "tailwindcss": "^3.4.19",
     "typescript": "^5.6.3",

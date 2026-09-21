@@ -117,12 +117,17 @@ each service (including ffmpeg and SAM3 setup).
 ## Code style
 
 - **TypeScript** (`apps/api`, `apps/web`, `packages/shared`): follow the
-  existing style; run the linters before opening a PR:
+  existing style; run the linter and the type checker before opening a PR:
 
   ```bash
-  cd apps/api && bun run lint
-  cd apps/web && bun run lint
+  bun run lint                    # whole workspace, shared eslint.config.mjs
+  bunx tsc --noEmit -p apps/api
+  bunx tsc --noEmit -p apps/web
   ```
+
+  `bun run lint` must exit cleanly. Warnings are advisory (mostly unused
+  imports); do not introduce new errors. Per-app runs also work:
+  `cd apps/web && bun run lint`.
 
 - **Python** (`apps/inference`): follow PEP 8, prefer type hints and Pydantic
   models for request/response shapes, keep functions small and logged.

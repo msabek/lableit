@@ -175,7 +175,6 @@ required citation is provided in [`CITATION.cff`](./CITATION.cff):
 | `vite`, `@vitejs/plugin-react` | MIT |
 | `tailwindcss` | MIT |
 | `postcss`, `autoprefixer` | MIT |
-| `eslint` | MIT |
 | `vitest` | MIT |
 | `typescript` | Apache-2.0 (see §1) |
 
@@ -183,6 +182,16 @@ required citation is provided in [`CITATION.cff`](./CITATION.cff):
 
 `packages/shared` contains only Lableit's own TypeScript type definitions
 (covered by Lableit's license) and uses `typescript` (Apache-2.0) as a tool.
+
+### Workspace root (`package.json`)
+
+Shared tooling, installed once for every workspace.
+
+| Package | License |
+| --- | --- |
+| `eslint`, `@eslint/js` | MIT |
+| `typescript-eslint` | MIT |
+| `prisma`, `@prisma/client` | Apache-2.0 (see §1) |
 
 ---
 

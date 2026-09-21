@@ -12,6 +12,7 @@
 - **CHANGED**: `SECURITY.md` contact TODO resolved.
 
 ### Web (landing page)
+- **CHANGED**: The landing attribution row now shows the **IHT Lab** wordmark (linking to iht-lab.com) instead of the University of Alberta logo, with the department named in text. Uses a locally drawn SVG so no third-party logo artwork is redistributed.
 - **FIXED**: Removed made-up marketing claims ("200+ Enterprise Teams", "50K+ images labeled daily", "99.5% accuracy", "15+ countries", "Free tier with 100 images/month", "Enterprise Ready", "10x faster") and replaced them with true facts (8 export formats, SAM3 text prompts, images + video, free for academic use). Footer GitHub link now points to the real repo; placeholder Twitter link replaced with a License link; credit wording aligned to "Dr. Mohamed Sabek".
 - **FIXED**: Use-case cards and feature stats no longer promise things the app does not do ("99% accuracy", "10x faster", "HIPAA compatible", "DICOM", "KITTI", "GeoTIFF", "QGIS export", "motion tracking", "facial recognition", "edge deployment"); they now list real capabilities. "8+ formats" is now "8 formats" everywhere.
 - **FIXED**: The landing "Try it" section drew random boxes while claiming to run SAM3. It is now labelled an **Interface Preview** that draws example boxes at random; the broken sample-image buttons ("would be loaded here in production") were removed.
@@ -23,6 +24,8 @@
 - **FIXED**: Renaming a project to a blank name was accepted (200). Create and rename now share one `projectNameError()` check (400 on blank / >100 chars) and names are trimmed.
 
 ### Tooling
+- **FIXED**: `bun run lint` works again. Single flat `eslint.config.mjs` at the repo root (ESLint 9 + typescript-eslint installed once at the root, the web app's own ESLint 8 removed); per-app scripts dropped the removed `--ext` flag, and the root script lints `apps packages` directly, so it no longer crashes on `packages/shared` (which has no lint script). Rules are advisory: 0 errors, 55 warnings (mostly unused imports), no application code rewritten. This supersedes the 0.4.7 note about `bun run --workspaces lint`.
+- **FIXED**: `apps/api/src/tests/benchmarks.test.ts` crashed on import without a database (`new PrismaClient()` at module load), so `bun test` showed 7 failures on a fresh clone. The Prisma client and the 7 database tests are now guarded by `DATABASE_URL`: 11 pass / 7 skip / exit 0 without a database, 18 pass with one. Assertions unchanged.
 - **FIXED**: `run.command` starts inference with `.venv/bin/python -m uvicorn` (the venv's `uvicorn` launcher hardcodes the folder the venv was created in, so it broke after the project moved) and sets `LC_ALL` so Postgres starts.
 - **FIXED**: `.gitignore` now ignores `.devstack` and `apps/inference/models` when they are symlinks; `.evidence/` (local test screenshots) is ignored.
 

@@ -1,11 +1,21 @@
-import { expect, test, describe, beforeAll, afterAll } from "bun:test";
+import { expect, test, describe, afterAll } from "bun:test";
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcrypt";
 // Note: In a real environment, we would use a test database
 // but for this benchmark, we'll use the existing prisma client 
 // and clean up after ourselves.
 
-const prisma = new PrismaClient();
+// Some of these benchmarks need a real database. On a fresh clone there is no
+// DATABASE_URL, so they skip instead of failing. PrismaClient is only constructed
+// when a database is configured - building it without DATABASE_URL throws on import
+// and takes the whole file down with it.
+const hasDb = Boolean(process.env.DATABASE_URL);
+if (!hasDb) {
+    console.log("skipped: DATABASE_URL not set - database benchmarks will not run");
+}
+const dbTest = test.skipIf(!hasDb);
+const prisma = hasDb ? new PrismaClient() : (null as unknown as PrismaClient);
+
 let testUserId = "";
 let testProjectId = "";
 let testAssetId = "";
@@ -16,7 +26,7 @@ describe("Lableit Backend Benchmarks", () => {
     // ================================
     // 1-3: Auth Benchmarks
     // ================================
-    test("1. Auth - Registration", async () => {
+    dbTest("1. Auth - Registration", async () => {
         const email = `test-${Date.now()}@example.com`;
         const password = "password123";
         const hashedPassword = await bcrypt.hash(password, 10);
@@ -30,7 +40,7 @@ describe("Lableit Backend Benchmarks", () => {
         expect(user.id).toBeDefined();
     });
 
-    test("2. Auth - Login (Simulated)", async () => {
+    dbTest("2. Auth - Login (Simulated)", async () => {
         // In a real test we would call the /auth/login endpoint
         // Here we verify the logic: find user -> compare password
         const email = `login-${Date.now()}@example.com`;
@@ -59,7 +69,7 @@ describe("Lableit Backend Benchmarks", () => {
     // ================================
     // 4-6: Project & Dataset Benchmarks
     // ================================
-    test("4. CRUD - Project Lifecycle", async () => {
+    dbTest("4. CRUD - Project Lifecycle", async () => {
         // Create
         const project = await prisma.project.create({
             data: {
@@ -78,7 +88,7 @@ describe("Lableit Backend Benchmarks", () => {
         expect(updated.name).toBe("Updated Project");
     });
 
-    test("5. CRUD - Classes Configuration", async () => {
+    dbTest("5. CRUD - Classes Configuration", async () => {
         const classDef = await prisma.classDef.create({
             data: {
                 name: "Person",
@@ -94,7 +104,7 @@ describe("Lableit Backend Benchmarks", () => {
     // ================================
     // 6-8: Asset & Annotation Benchmarks
     // ================================
-    test("6. Asset Management - Creation", async () => {
+    dbTest("6. Asset Management - Creation", async () => {
         const asset = await prisma.asset.create({
             data: {
                 uri: `s3://bucket/test-${Date.now()}.jpg`,
@@ -108,7 +118,7 @@ describe("Lableit Backend Benchmarks", () => {
         expect(asset.uri).toContain("test");
     });
 
-    test("7. Annotation - Manual Creation", async () => {
+    dbTest("7. Annotation - Manual Creation", async () => {
         const annotation = await prisma.annotation.create({
             data: {
                 assetId: testAssetId,
@@ -122,7 +132,7 @@ describe("Lableit Backend Benchmarks", () => {
         expect(annotation.box).toEqual([100, 100, 200, 200]);
     });
 
-    test("9. Annotation - Auto (Model Output Logic)", async () => {
+    dbTest("9. Annotation - Auto (Model Output Logic)", async () => {
         // Simulate model output being saved
         const annotation = await prisma.annotation.create({
             data: {
@@ -193,6 +203,7 @@ describe("Lableit Backend Benchmarks", () => {
     // Cleanup all test data
     // ================================
     afterAll(async () => {
+        if (!hasDb) return;
         if (testProjectId) {
             await prisma.project.delete({ where: { id: testProjectId } });
         }

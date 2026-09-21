@@ -121,7 +121,7 @@ Repo layout
       - sections/DemoCarousel.tsx: 4-step demo with interactive mockups
       - sections/ExportShowcase.tsx: Export format selector with samples
       - sections/CTASection.tsx: Call to action with benefits and creator/lab attribution
-      - assets/ualberta-logo.svg: University of Alberta logo asset used in landing social-proof section
+      - assets/iht-lab-logo.svg: IHT Lab wordmark used in the landing attribution row (links to iht-lab.com)
     - Theme: CSS variables for dark/light modes, system preference detection, and multi-palette color themes
     - Glassmorphism: glass-panel, glass-card, glass-button, gradient borders
   - inference/ (FastAPI SAM3 runner) - uses .venv for Python deps, runs on port 8001

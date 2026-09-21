@@ -27,6 +27,68 @@
   <p class="sub">Newest first. Screenshots live in <code>.evidence/</code> (kept local, not in git), so they may be missing on a fresh clone.</p>
 
   <article>
+    <h2>IHT Lab logo replaces the University of Alberta logo</h2>
+    <time datetime="2026-09-21">2026-09-21</time>
+    <ul>
+      <li><strong>Why:</strong> using a university's logo publicly usually needs the university's permission. The landing page now credits the lab whose work this is.</li>
+      <li><strong>What changed:</strong> the attribution row shows the IHT Lab wordmark (the orange "#" mark plus "Infrastructure and Human Tech Lab"), drawn locally as an SVG and linked to iht-lab.com. The department and university stay in plain text. <code>ualberta-logo.svg</code> deleted.</li>
+      <li><strong>Colour note:</strong> the logo is loaded as an image, so <code>currentColor</code> would not follow the page theme. Fixed colours were chosen that read on both light and dark backgrounds, verified below.</li>
+    </ul>
+    <div class="pair">
+      <figure><img src=".evidence/2026-09-21/30-iht-logo-light.png" alt="IHT Lab logo in the landing attribution row, light mode"><figcaption>Light mode</figcaption></figure>
+      <figure><img src=".evidence/2026-09-21/31-iht-logo-dark.png" alt="IHT Lab logo in the landing attribution row, dark mode"><figcaption>Dark mode</figcaption></figure>
+    </div>
+    <h3>References</h3>
+    <ul>
+      <li>Files: <a href="apps/web/src/landing/assets/iht-lab-logo.svg">apps/web/src/landing/assets/iht-lab-logo.svg</a> (new), <a href="apps/web/src/landing/sections/HeroSection.tsx">HeroSection.tsx</a>, <a href="structure.md">structure.md</a>; <code>apps/web/src/landing/assets/ualberta-logo.svg</code> removed.</li>
+      <li>Source of the lab wordmark: <a href="https://iht-lab.com">iht-lab.com</a></li>
+    </ul>
+  </article>
+
+  <article>
+    <h2>Dev-data cleanup and tests that skip without a database</h2>
+    <time datetime="2026-09-21">2026-09-21</time>
+    <ul>
+      <li><strong>Local dev database cleaned:</strong> removed the three leftover test accounts (<code>lableit-e2e+local</code>, <code>lableit-pending+local</code>, <code>lableit-admin+clerk_test</code>), the "E2E Street Demo" project and everything it owned - 4 assets, 1 class, 1 annotation and 6 jobs - plus the 8 matching objects in MinIO and the stale files under <code>apps/api/exports/</code>. The real account and its two projects were left untouched.</li>
+      <li><strong><code>bun test</code> no longer looks broken on a fresh clone:</strong> the 7 database-backed benchmarks in <code>apps/api/src/tests/benchmarks.test.ts</code> used to fail with "DATABASE_URL not found" when no database was configured. They now skip cleanly and print one line saying why. With a database configured they run exactly as before, and none of the assertions were weakened.</li>
+    </ul>
+
+    <h3>Test results (captured output)</h3>
+    <ul>
+      <li>No database configured: 11 pass, 7 skip, 0 fail, exit code 0 - <a href=".evidence/2026-09-21/bun-test-skip.txt">bun-test-skip.txt</a></li>
+      <li>Dev database running: 18 pass, 0 fail, exit code 0 - <a href=".evidence/2026-09-21/bun-test-with-db.txt">bun-test-with-db.txt</a></li>
+      <li>Before/after row counts for the database cleanup - <a href=".evidence/2026-09-21/db-cleanup.txt">db-cleanup.txt</a></li>
+    </ul>
+    <p class="sub">No visual surface: this change touches test data and a test file only, so the evidence is captured terminal output rather than screenshots.</p>
+
+    <h3>References</h3>
+    <ul>
+      <li><a href="apps/api/src/tests/benchmarks.test.ts">apps/api/src/tests/benchmarks.test.ts</a> (only file changed)</li>
+      <li><a href="apps/api/prisma/schema.prisma">apps/api/prisma/schema.prisma</a> - cascade rules that made the project delete safe</li>
+      <li>Not committed: left uncommitted deliberately at the task owner's request.</li>
+    </ul>
+  </article>
+
+  <article>
+    <h2>Lint works again: one shared ESLint config for the whole repo</h2>
+    <time datetime="2026-09-21">2026-09-21</time>
+    <ul>
+      <li><strong>What was broken:</strong> <code>bun run lint</code> failed everywhere. The API had a lint command but no linter installed, so it downloaded a newer ESLint that refused the old settings format. The web app had an old ESLint and no settings file at all. The root command also crashed on <code>packages/shared</code>, which has no lint script.</li>
+      <li><strong>What changed:</strong> a single <code>eslint.config.mjs</code> at the repo root now covers both apps. ESLint 9 plus <code>typescript-eslint</code> are installed once at the root instead of per app. Rules are deliberately relaxed, so the linter flags real leftovers (unused imports and variables) as warnings rather than blocking the build.</li>
+      <li><strong>Result:</strong> <code>bun run lint</code> exits cleanly at the root and in each app. 55 advisory warnings, 0 errors. No application code was rewritten.</li>
+    </ul>
+
+    <h3>No visual surface</h3>
+    <p>This is tooling only, nothing on screen changed. Evidence is captured terminal output: <a href=".evidence/2026-09-21/lint-fix-verification.txt">.evidence/2026-09-21/lint-fix-verification.txt</a> (lint, both type checks, and a frozen-lockfile install, all passing).</p>
+
+    <h3>References</h3>
+    <ul>
+      <li>Files: <a href="eslint.config.mjs">eslint.config.mjs</a> (new), <a href="package.json">package.json</a>, <a href="apps/api/package.json">apps/api/package.json</a>, <a href="apps/web/package.json">apps/web/package.json</a>, <a href="CONTRIBUTING.md">CONTRIBUTING.md</a>, <a href="THIRD-PARTY-LICENSES.md">THIRD-PARTY-LICENSES.md</a>, <code>bun.lock</code></li>
+      <li>Known stale note: <a href="CHANGELOG.md">CHANGELOG.md</a> (1.0.0) still describes the old root command <code>bun run --workspaces lint</code>.</li>
+    </ul>
+  </article>
+
+  <article>
     <h2>1.0.0: public academic release, full system test</h2>
     <time datetime="2026-09-18">2026-09-18</time>
     <ul>
@@ -44,7 +106,7 @@
     <h3>Before and after: landing page claims</h3>
     <div class="pair">
       <figure><img src=".evidence/2026-09-18/01-landing-hero.png" alt="Before: hero with Enterprise Ready and No credit card"><figcaption>Before: "Enterprise Ready", "No credit card required"</figcaption></figure>
-      <figure><img src=".evidence/2026-09-18/20-landing-hero-after.png" alt="After: hero with Free for academic use"><figcaption>After: "Free for academic use", "Developed at the University of Alberta"</figcaption></figure>
+      <figure><img src=".evidence/2026-09-18/20-landing-hero-after.png" alt="After: hero with Free for academic use"><figcaption>After: "Free for academic use" (the attribution row was changed again on 2026-09-21, see the newer entry)</figcaption></figure>
     </div>
     <div class="grid">
       <figure><img src=".evidence/2026-09-18/21-usecases-stats-after.png" alt="Stats row after"><figcaption>Stats row now shows real facts (8 formats, SAM3, images + video, free)</figcaption></figure>

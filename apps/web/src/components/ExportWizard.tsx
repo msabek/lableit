@@ -295,7 +295,7 @@ export const ExportWizard: React.FC<ExportWizardProps> = ({
             </div>
             <div>
               <h2 className="text-xl font-semibold text-text">Export Annotations</h2>
-              <p className="text-sm text-text-muted">Step {step} of 3</p>
+              <p className="text-sm text-text-muted">{step > 3 ? 'Done' : `Step ${step} of 3`}</p>
             </div>
           </div>
           <button

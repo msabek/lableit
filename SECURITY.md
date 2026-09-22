@@ -17,7 +17,7 @@ Always run the most recent version. See `CHANGELOG.md` for the current version.
 Please report security vulnerabilities **privately**. Do **not** open a public
 GitHub issue for a security problem.
 
-1. Email **appegy1@gmail.com** with:
+1. Email **Sabek@ualberta.ca** with:
    - a description of the vulnerability and its impact,
    - steps to reproduce (proof-of-concept if available),
    - affected component(s): `apps/api`, `apps/web`, `apps/inference`, infra, or

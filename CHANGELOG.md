@@ -9,7 +9,11 @@
 ### Docs
 - **ADDED**: README "About this project": developed by Mohamed Sabek during his research at the IHT Lab, University of Alberta; used alongside other tools to build the CIVAD dataset.
 - **FIXED**: README device table now says Apple Silicon uses MPS (the GPU) by default.
-- **CHANGED**: `SECURITY.md` contact TODO resolved.
+- **CHANGED**: Public contact changed from a personal Gmail to **Sabek@ualberta.ca** in `PERMISSIONS.md` and `SECURITY.md` (the `SECURITY.md` contact TODO is resolved).
+
+### Web (app screens)
+- **FIXED**: The theme menu in the floating dock (bottom-right; the dock is hidden on `/projects` and `/labeling/*`, so this affects `/admin` and other pages that show it) always opened downwards, so at 1440x900 the whole Light / Dark / System panel rendered below the viewport and was unreachable. It now flips upwards when there is less than ~230 px below. Measured after the fix: button bottom 880, panel top 638 / bottom 834, fully on screen; the header version on `/projects` still opens downwards.
+- **FIXED**: The finished-export screen said "Step 4 of 3" in the wizard header; it now says "Done".
 
 ### Web (landing page)
 - **CHANGED**: The **light theme is now the default** (`DEFAULT_SETTINGS.theme` is `light`, was `system`), so a visitor on a dark-mode device lands on the light UI. The Light / Dark / System toggle is unchanged. A one-time migration (`lableit_theme_default_v2`) moves existing browsers that still carry the old `system` default to light; an explicit `dark` or `system` choice made after that is kept. The migration runs at module load, not in the `useState` initializer, which React StrictMode calls twice.
@@ -35,8 +39,8 @@
 ### Verification (2026-09-21)
 - **Automated:** `tsc --noEmit` clean for `apps/api`, `apps/web`, `packages/shared`; `bun run lint` 0 errors (55 advisory warnings); web tests 15/15; `bun test` in `apps/api` 11 pass / 7 skip without a database, 18 pass with one; `vite build` succeeds; Python sources compile; Prisma schema matches the migrations; `docker compose -f docker-compose.prod.yml config` validates.
 - **End-to-end (through the API, on Apple Silicon):** access gate blocks an unapproved account and accepts a request; admin approves and a non-admin gets 403; project creation, image upload, SAM3 text-prompt detection (1 car + 4 wheels in 22.5 s on MPS), COCO / YOLO-detect / YOLO-segment exports containing real annotations, one-shot export download tokens, class deletion cascading to annotations, project rename, and video slicing into frames.
-- **In the browser:** landing page (hero, features, use cases, interface preview, CTA/footer), sign-in page, and the light-theme default (new visitor, returning visitor, explicit dark choice).
-- **NOT verified:** the signed-in app screens (projects dashboard, creation wizard, labeling canvas, export dialog, `/admin`) were exercised through the API only, not clicked through in a browser, because the Clerk instance offers Google sign-in only and no test login path was available.
+- **In the browser, signed out:** landing page (hero, features, use cases, interface preview, CTA/footer), sign-in page, and the light-theme default (new visitor, returning visitor, explicit dark choice).
+- **In the browser, signed in:** the signed-in screens were walked through with a throwaway Clerk test user (created through the Clerk Backend API with a sign-in token, then deleted): access-request gate, `/admin` with pending requests, projects dashboard, the creation wizard (upload + classes), the labeling workspace, a real SAM3 detection (1 car, 4 wheels, 6 windows in 68 s on MPS), the export dialog with all 8 formats, a completed export, and the theme menu. This walkthrough is what surfaced the two app-screen bugs above.
 - **Not legal advice:** the license text in `LICENSE` has not been reviewed by a lawyer, and university IP policy may apply to work done during research at the University of Alberta. Review both before relying on the license.
 
 ## Unreleased - GPU auto-detect, creation wizard, delete fix (Jun 2026)

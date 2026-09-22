@@ -7,6 +7,9 @@ interface ThemeToggleProps {
   className?: string;
 }
 
+// Roughly the panel's rendered height; used to decide which way it opens.
+const PANEL_MAX_HEIGHT = 230;
+
 const MODE_OPTIONS: { id: ThemeMode; label: string; icon: React.ReactNode }[] = [
   { id: 'light', label: 'Light', icon: <Sun className="w-4 h-4" /> },
   { id: 'dark', label: 'Dark', icon: <Moon className="w-4 h-4" /> },
@@ -61,6 +64,16 @@ export function ThemeDropdown({ className = '' }: { className?: string }) {
     return () => document.removeEventListener('mousedown', onDocClick);
   }, []);
 
+  // The floating dock places this button near the bottom of the screen, where a panel
+  // opening downwards would fall outside the viewport. Flip it upwards when
+  // there is not enough room below.
+  const [openUpwards, setOpenUpwards] = useState(false);
+  useEffect(() => {
+    if (!open || !containerRef.current) return;
+    const spaceBelow = window.innerHeight - containerRef.current.getBoundingClientRect().bottom;
+    setOpenUpwards(spaceBelow < PANEL_MAX_HEIGHT);
+  }, [open]);
+
   const currentModeIcon = settings.theme === 'light'
     ? <Sun className="w-4 h-4" />
     : settings.theme === 'dark'
@@ -85,7 +98,7 @@ export function ThemeDropdown({ className = '' }: { className?: string }) {
       </button>
 
       {open && (
-        <div className="absolute right-0 mt-2 w-64 glass-card rounded-2xl p-3 z-50 animate-scale-in">
+        <div className={`absolute right-0 w-64 glass-card rounded-2xl p-3 z-50 animate-scale-in ${openUpwards ? 'bottom-full mb-2' : 'mt-2'}`}>
           <div className="text-xs font-semibold text-text-muted uppercase tracking-wide mb-2 px-1">Mode</div>
           <div className="grid grid-cols-3 gap-2 mb-3">
             {MODE_OPTIONS.map((mode) => (

@@ -28,7 +28,7 @@ Email the copyright holder with:
 3. roughly how many people or deployments are involved, and for how long.
 
 - **Copyright holder:** Mohamed Sabek
-- **Contact:** appegy1@gmail.com
+- **Contact:** Sabek@ualberta.ca
 
 Permission is only valid in writing and only for the scope it states.
 

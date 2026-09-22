@@ -35,6 +35,7 @@
   <nav class="toc">
     <strong>On this page</strong>
     <ol>
+      <li><a href="#app-screens">Signed-in screens photographed, and two bugs they exposed</a> <span>2026-09-21</span></li>
       <li><a href="#theme-default">Light theme is now the default</a> <span>2026-09-21</span></li>
       <li><a href="#iht-logo">IHT Lab logo replaces the University of Alberta logo</a> <span>2026-09-21</span></li>
       <li><a href="#cleanup-tests">Dev-data cleanup and tests that skip without a database</a> <span>2026-09-21</span></li>
@@ -43,6 +44,36 @@
     </ol>
     <p>Everything above is part of the <strong>1.0.0 public academic release</strong> (released 2026-09-21).</p>
   </nav>
+
+  <article>
+    <h2 id="app-screens">Signed-in screens photographed, and two bugs they exposed</h2>
+    <time datetime="2026-09-21">2026-09-21</time>
+    <ul>
+      <li><strong>What happened:</strong> the signed-in part of the app had never been walked through in a browser, because sign-in offers Google only. With the owner's approval a throwaway test user was created in the project's own Clerk development instance, signed in with a one-time link, used for the walkthrough, and then deleted.</li>
+      <li><strong>Bug 1, fixed:</strong> the theme menu in the floating dock opened downwards, so on the admin page its whole panel sat below the bottom of the screen and could not be reached. It now flips upwards when there is no room below.</li>
+      <li><strong>Bug 2, fixed:</strong> the finished-export screen said "Step 4 of 3". It now says "Done".</li>
+      <li><strong>Contact:</strong> the public contact address in the permissions and security files is now Sabek@ualberta.ca instead of a personal Gmail.</li>
+    </ul>
+    <h3>The app, for real</h3>
+    <div class="grid">
+      <figure><img src=".evidence/2026-09-21/app/46-detection.png" alt="Labeling canvas with SAM3 masks and boxes"><figcaption>Real SAM3 detection: 1 car, 4 wheels, 6 windows, with masks and confidence</figcaption></figure>
+      <figure><img src=".evidence/2026-09-21/app/42-projects.png" alt="Projects dashboard"><figcaption>Projects dashboard</figcaption></figure>
+      <figure><img src=".evidence/2026-09-21/app/44-wizard-classes.png" alt="Creation wizard, classes step"><figcaption>Creation wizard: classes</figcaption></figure>
+      <figure><img src=".evidence/2026-09-21/app/47-export.png" alt="Export dialog with 8 formats"><figcaption>Export dialog, all 8 formats</figcaption></figure>
+      <figure><img src=".evidence/2026-09-21/app/40-access-gate.png" alt="Access request form"><figcaption>Access gate for a new account</figcaption></figure>
+      <figure><img src=".evidence/2026-09-21/app/41-admin.png" alt="Admin page with pending requests"><figcaption>Admin page with pending requests</figcaption></figure>
+    </div>
+    <h3>The two fixes, verified</h3>
+    <div class="pair">
+      <figure><img src=".evidence/2026-09-21/app/50-theme-dock-upwards.png" alt="Theme menu opening upwards and fully visible"><figcaption>Theme menu now opens upwards and is fully on screen (panel 638 to 834, viewport 900)</figcaption></figure>
+      <figure><img src=".evidence/2026-09-21/app/51-export-done-label.png" alt="Export finished screen reading Done"><figcaption>Finished export now reads "Done", not "Step 4 of 3"</figcaption></figure>
+    </div>
+    <h3>References</h3>
+    <ul>
+      <li>Files: <a href="apps/web/src/components/ThemeToggle.tsx">ThemeToggle.tsx</a>, <a href="apps/web/src/components/ExportWizard.tsx">ExportWizard.tsx</a>, <a href="PERMISSIONS.md">PERMISSIONS.md</a>, <a href="SECURITY.md">SECURITY.md</a></li>
+      <li>Measurements: <a href=".evidence/2026-09-21/app/50-51-ui-fix-measurements.txt">50-51-ui-fix-measurements.txt</a>; screenshots in <a href=".evidence/2026-09-21/app/">.evidence/2026-09-21/app/</a></li>
+    </ul>
+  </article>
 
   <article>
     <h2 id="theme-default">Light theme is now the default</h2>

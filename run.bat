@@ -708,7 +708,7 @@ if defined NEED_CUDA_TORCH (
     uv pip install triton-windows einops decord --python .venv\Scripts\python.exe >nul 2>&1
     REM Install SAM3 from GitHub (PyPI sam3==0.1.2 has broken package structure - missing sam3.sam submodule)
     echo      Installing SAM3 from GitHub ^(PyPI package is broken^)...
-    uv pip install --upgrade --no-deps "sam3 @ git+https://github.com/facebookresearch/sam3.git" --python .venv\Scripts\python.exe
+    uv pip install --upgrade --no-deps "sam3 @ git+https://github.com/facebookresearch/sam3.git@c97c893969003d3e6803fd5d679f21e515aef5ce" --python .venv\Scripts\python.exe
     if !errorlevel! neq 0 (
         echo      GitHub install failed, trying PyPI fallback...
         uv pip install --upgrade --no-deps "sam3>=0.1.2" --python .venv\Scripts\python.exe >nul 2>&1
@@ -751,7 +751,7 @@ REM Always ensure sam3 + modelscope packages are installed (fast if already ok)
 echo.
 echo [SAM3 Setup] Ensuring SAM3 dependencies...
 REM Install SAM3 from GitHub (PyPI 0.1.2 has broken package - missing sam3.sam submodule)
-uv pip install --upgrade --no-deps "sam3 @ git+https://github.com/facebookresearch/sam3.git" --python "%VENV_PYTHON%" >nul 2>&1
+uv pip install --upgrade --no-deps "sam3 @ git+https://github.com/facebookresearch/sam3.git@c97c893969003d3e6803fd5d679f21e515aef5ce" --python "%VENV_PYTHON%" >nul 2>&1
 if !errorlevel! neq 0 uv pip install --upgrade --no-deps "sam3>=0.1.2" --python "%VENV_PYTHON%" >nul 2>&1
 REM SAM3 Windows deps + model download deps
 uv pip install triton-windows einops decord modelscope packaging requests --python "%VENV_PYTHON%" >nul 2>&1
@@ -1278,7 +1278,7 @@ echo.
 echo Installing SAM3 dependencies for Windows...
 uv pip install triton-windows einops decord --python .venv\Scripts\python.exe >nul 2>&1
 echo Installing SAM3 from GitHub ^(PyPI package has broken imports^)...
-uv pip install --upgrade --no-deps "sam3 @ git+https://github.com/facebookresearch/sam3.git" --python .venv\Scripts\python.exe
+uv pip install --upgrade --no-deps "sam3 @ git+https://github.com/facebookresearch/sam3.git@c97c893969003d3e6803fd5d679f21e515aef5ce" --python .venv\Scripts\python.exe
 
 echo.
 echo GPU support installation complete!

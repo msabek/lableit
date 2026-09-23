@@ -61,7 +61,13 @@ wait_port() { # port name timeout_seconds
   ok "  $n ready (:$p)"
 }
 
+# Runs on Ctrl+C and on any exit, including an early failure, so nothing is left
+# running in the background. It preserves the exit status it was called with.
+CLEANED=0
 cleanup() {
+  status=$?
+  [ "$CLEANED" = "1" ] && exit "$status"
+  CLEANED=1
   echo
   info "Shutting down Lableit..."
   for p in "$API_PORT" "$WEB_PORT" "$INFER_PORT"; do
@@ -71,19 +77,52 @@ cleanup() {
   redis-cli -p "$REDIS_PORT" shutdown nosave >/dev/null 2>&1
   [ -n "$PG_BIN" ] && "$PG_BIN/pg_ctl" -D "$DEVSTACK/pg" stop -m fast >/dev/null 2>&1
   ok "All services stopped."
-  exit 0
+  exit "$status"
 }
-trap cleanup INT TERM
+trap cleanup INT TERM EXIT
 
 info "=== Lableit launcher ==="
+
+# 0. First-run setup ----------------------------------------------------------
+# A fresh clone has no .env, no node_modules, no Prisma client and no local
+# database. Create whatever is missing; every step here is a no-op on reruns.
+if [ ! -f "$SCRIPT_DIR/.env" ]; then
+  info "Creating .env from .env.example..."
+  cp "$SCRIPT_DIR/.env.example" "$SCRIPT_DIR/.env"
+fi
+
+if ! command -v bun >/dev/null 2>&1; then
+  err "bun not found. Install it with: curl -fsSL https://bun.sh/install | bash"; exit 1
+fi
+
+if [ ! -d "$SCRIPT_DIR/node_modules" ]; then
+  info "Installing JS dependencies (first run only)..."
+  ( cd "$SCRIPT_DIR" && bun install ) || { err "bun install failed"; exit 1; }
+fi
 
 # 1. Postgres -----------------------------------------------------------------
 if port_up "$PG_PORT"; then
   ok "Postgres already running (:$PG_PORT)"
 elif [ -n "$PG_BIN" ]; then
+  # Create the cluster on first run. initdb alone is not enough: the app connects
+  # as the "lableit" role to a "lableit" database, so both are created here.
+  if [ ! -d "$DEVSTACK/pg/base" ]; then
+    info "Creating the local Postgres cluster (first run only)..."
+    mkdir -p "$DEVSTACK/pg"
+    "$PG_BIN/initdb" -D "$DEVSTACK/pg" -U "$(whoami)" --encoding=UTF8 >"$LOGDIR/initdb.log" 2>&1 \
+      || { err "initdb failed, see .devstack/logs/initdb.log"; exit 1; }
+    NEW_CLUSTER=1
+  fi
   info "Starting Postgres 16 (:$PG_PORT)..."
   "$PG_BIN/pg_ctl" -D "$DEVSTACK/pg" -o "-p $PG_PORT" -l "$DEVSTACK/pg.log" start >/dev/null
-  wait_port "$PG_PORT" Postgres 30 || exit 1
+  wait_port "$PG_PORT" Postgres 30 || { err "Postgres did not start, see .devstack/pg.log"; exit 1; }
+  if [ "${NEW_CLUSTER:-0}" = "1" ]; then
+    info "Creating the lableit role and database..."
+    "$PG_BIN/psql" -p "$PG_PORT" -d postgres -v ON_ERROR_STOP=1 \
+      -c "CREATE ROLE lableit LOGIN PASSWORD 'lableit' SUPERUSER;" \
+      -c "CREATE DATABASE lableit OWNER lableit;" >>"$LOGDIR/initdb.log" 2>&1 \
+      || { err "Could not create the lableit role/database, see .devstack/logs/initdb.log"; exit 1; }
+  fi
 else
   err "PostgreSQL 16 not found. Install with: brew install postgresql@16"; exit 1
 fi
@@ -102,19 +141,40 @@ fi
 # 3. MinIO --------------------------------------------------------------------
 if port_up "$MINIO_PORT"; then
   ok "MinIO already running (:$MINIO_PORT)"
-elif [ -x "$DEVSTACK/bin/minio" ]; then
+else
+  # Prefer a binary vendored in .devstack, else one on PATH (brew install
+  # minio/stable/minio). MinIO no longer serves direct binary downloads, so this
+  # asks rather than fetching from a URL that can disappear.
+  MINIO_BIN=""
+  if [ -x "$DEVSTACK/bin/minio" ]; then
+    MINIO_BIN="$DEVSTACK/bin/minio"
+  elif command -v minio >/dev/null 2>&1; then
+    MINIO_BIN="$(command -v minio)"
+  else
+    err "MinIO not found. Install it with: brew install minio/stable/minio"
+    err "(or put a minio binary at .devstack/bin/minio), then run this again."
+    exit 1
+  fi
   info "Starting MinIO (:$MINIO_PORT, console :$MINIO_CONSOLE)..."
   MINIO_ROOT_USER=minioadmin MINIO_ROOT_PASSWORD=minioadmin \
-    "$DEVSTACK/bin/minio" server "$DEVSTACK/minio" \
+    "$MINIO_BIN" server "$DEVSTACK/minio" \
     --address ":$MINIO_PORT" --console-address ":$MINIO_CONSOLE" \
     >"$LOGDIR/minio.log" 2>&1 &
   MINIO_PID=$!
-  wait_port "$MINIO_PORT" MinIO 20 || exit 1
-else
-  err "MinIO binary missing at .devstack/bin/minio"; exit 1
+  wait_port "$MINIO_PORT" MinIO 20 || { err "MinIO did not start, see .devstack/logs/minio.log"; exit 1; }
 fi
 
-# 4. App services -------------------------------------------------------------
+# The API uploads into this bucket; create it once. mc is optional, so fall back
+# to MinIO's own filesystem layout, where a bucket is just a directory.
+mkdir -p "$DEVSTACK/minio/lableit"
+
+# 4. Database schema ----------------------------------------------------------
+info "Applying database migrations..."
+( cd "$SCRIPT_DIR/apps/api" && bunx prisma generate >>"$LOGDIR/prisma.log" 2>&1 \
+  && bunx prisma migrate deploy >>"$LOGDIR/prisma.log" 2>&1 ) \
+  || { err "Prisma setup failed, see .devstack/logs/prisma.log"; exit 1; }
+
+# 5. App services -------------------------------------------------------------
 info "Starting API (:$API_PORT)..."
 ( cd "$SCRIPT_DIR" && bun run dev:api ) >"$LOGDIR/api.log" 2>&1 &
 
@@ -133,19 +193,30 @@ info "Starting Web (:$WEB_PORT)..."
 ( cd "$SCRIPT_DIR" && bun run dev:web ) >"$LOGDIR/web.log" 2>&1 &
 
 # Wait for readiness (web/API are quick; inference waits on SAM3) -------------
-wait_port "$API_PORT"   API       60  || true
-wait_port "$WEB_PORT"   Web       60  || true
-wait_port "$INFER_PORT" Inference 150 || true
+FAILED=""
+wait_port "$API_PORT"   API       60  || FAILED="$FAILED api"
+wait_port "$WEB_PORT"   Web       60  || FAILED="$FAILED web"
+wait_port "$INFER_PORT" Inference 150 || FAILED="$FAILED inference"
 
 echo
-ok "=== Lableit is running ==="
+if [ -z "$FAILED" ]; then
+  ok "=== Lableit is running ==="
+else
+  err "=== Some services did not start:$FAILED ==="
+  for svc in $FAILED; do
+    err "  last lines of .devstack/logs/$svc.log:"
+    tail -5 "$LOGDIR/$svc.log" 2>/dev/null | sed 's/^/    /'
+  done
+  echo
+fi
 echo "  Web app      http://localhost:$WEB_PORT"
 echo "  API health   http://localhost:$API_PORT/health"
 echo "  Inference    http://localhost:$INFER_PORT/docs"
 echo "  MinIO admin  http://localhost:$MINIO_CONSOLE  (minioadmin / minioadmin)"
 echo
 info "Logs: .devstack/logs/   |   Press Ctrl+C in this window to stop everything."
-open "http://localhost:$WEB_PORT" 2>/dev/null || true
+# Only open the browser when the web app is actually up.
+case "$FAILED" in *web*) ;; *) open "http://localhost:$WEB_PORT" 2>/dev/null || true ;; esac
 
 # Stream app logs so this window stays live; Ctrl+C triggers cleanup.
 tail -f "$LOGDIR/api.log" "$LOGDIR/web.log" "$LOGDIR/inference.log" &

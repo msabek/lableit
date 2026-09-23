@@ -187,11 +187,6 @@ export interface InferenceHealth {
 // API Responses
 // ================================
 
-export interface AuthResponse {
-  user: User;
-  token: string;
-}
-
 export interface UploadResponse {
   asset: Asset;
   filename: string;

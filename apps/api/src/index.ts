@@ -924,8 +924,8 @@ app.addHook('preHandler', async (request, reply) => {
   const routePath = request.routeOptions?.url || request.url.split('?')[0];
   const actualUrl = request.url.split('?')[0];
 
-  // Export file downloads require a valid export token (not status checks)
-  // Status endpoint uses normal authentication
+  // Export file downloads require a valid, single-use export token. The status
+  // endpoint is a normal route and needs none.
   // Check both route pattern and actual URL to handle parameterized routes
   const isStatusEndpoint = actualUrl.includes('/status') || routePath?.includes('/status');
   if ((routePath?.startsWith('/exports/') || actualUrl.startsWith('/exports/')) && !isStatusEndpoint) {
@@ -2706,12 +2706,6 @@ app.get('/inference/models/:modelId/download/status', async (request, reply) => 
 // SAM3 Text Prompt Inference (with retry logic)
 // ================================
 app.post('/inference/text', async (request, reply) => {
-  // Verify user is authenticated (inference endpoints require auth)
-  const userId = (request as any).user?.userId;
-  if (!userId) {
-    return reply.status(401).send({ error: 'Authentication required for inference' });
-  }
-
   try {
     const result = await fetchInferenceWithRetry('/infer/text', {
       method: 'POST',
@@ -2734,12 +2728,6 @@ app.post('/inference/text', async (request, reply) => {
 });
 
 app.post('/inference/points', async (request, reply) => {
-  // Verify user is authenticated (inference endpoints require auth)
-  const userId = (request as any).user?.userId;
-  if (!userId) {
-    return reply.status(401).send({ error: 'Authentication required for inference' });
-  }
-
   try {
     const result = await fetchInferenceWithRetry('/infer/points', {
       method: 'POST',

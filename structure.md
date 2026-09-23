@@ -216,7 +216,6 @@ Environment Variables (optional):
 - WORKER_MODE: Set to true for standalone worker process; disables HTTP listener
 - RUN_WORKER: Set to true to embed a worker in production API, false to disable dev embedded worker
 - RUN_HTTP_SERVER: Set to false to disable HTTP listener
-- PRELOAD_MODEL: Auto-load model on startup (default: true)
 - MODEL_LOAD_RETRY_COOLDOWN_SECONDS: Cooldown after model-load failure (default: 120)
 - HF_TOKEN: HuggingFace token for fallback downloads
 - FFMPEG_PATH: Path to ffmpeg executable (auto-detected if in PATH)

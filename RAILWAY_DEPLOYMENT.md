@@ -169,7 +169,6 @@ FFMPEG_PATH=ffmpeg
 
 **Environment Variables:**
 ```
-RAILWAY_ENVIRONMENT=production
 # Use the API service's internal listening port on Railway (:8080).
 API_URL=http://api.railway.internal:8080
 VITE_API_URL=/api
@@ -184,7 +183,6 @@ VITE_API_URL=/api
 
 **Environment Variables:**
 ```
-PRELOAD_MODEL=false
 MODEL_CACHE_DIR=/app/models
 PYTHONUNBUFFERED=1
 # facebook/sam3 is a gated Hugging Face model: request access on its model
@@ -192,7 +190,7 @@ PYTHONUNBUFFERED=1
 HF_TOKEN=<your-huggingface-token>
 ```
 
-> **Note (GPU):** Set `PRELOAD_MODEL=false`. **SAM3 requires an NVIDIA CUDA GPU**
+> **Note (GPU):** **SAM3 runs best on an NVIDIA CUDA GPU**
 > and **Railway has no GPUs**, so on Railway the inference service starts in
 > **limited / unavailable mode**: automatic SAM3 detection will not run, while
 > manual annotation, project management, video slicing, and export still work.

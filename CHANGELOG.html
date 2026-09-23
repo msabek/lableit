@@ -35,6 +35,7 @@
   <nav class="toc">
     <strong>On this page</strong>
     <ol>
+      <li><a href="#first-run">The one-click launcher now actually works on a fresh clone</a> <span>2026-09-23</span></li>
       <li><a href="#no-auth">Sign-in removed: clone it, run it, start labeling</a> <span>2026-09-23</span></li>
       <li><a href="#release-blockers">Two release blockers found by the pre-publication security review</a> <span>2026-09-23</span></li>
       <li><a href="#hardening">Authorization gaps closed, dead controls removed</a> <span>2026-09-23</span></li>
@@ -48,6 +49,29 @@
     </ol>
     <p>Everything above is part of the <strong>1.0.0 public academic release</strong> (released 2026-09-21).</p>
   </nav>
+
+  <article>
+    <h2 id="first-run">The one-click launcher now actually works on a fresh clone</h2>
+    <time datetime="2026-09-23">2026-09-23</time>
+    <ul>
+      <li><strong>The problem:</strong> the macOS launcher the README advertises could not work for anyone who had just downloaded the project. It never installed dependencies, never set up the database, and gave up on a missing storage binary. And it printed a green "Lableit is running" and opened the browser <strong>even when nothing had started</strong>, hiding the failures in a log file.</li>
+      <li><strong>Now:</strong> first run creates the settings file, installs dependencies, creates the local database with its user, applies the schema, then starts everything. If something fails it says which service and shows the last lines of its log. The browser only opens when the app is really up, and everything is stopped on any exit, not just Ctrl+C.</li>
+      <li><strong>Tested three ways on a clean slate:</strong> a full successful start, an honest failure when the storage service would not run, and a shutdown that left no ports listening.</li>
+      <li>Also: Windows was installing a different, unpinned version of the SAM3 model; the model-download command in the README could not work outside the Python environment; and four documents told people to set a setting no code reads.</li>
+    </ul>
+    <div class="grid">
+      <figure><img src=".evidence/2026-09-23/fresh-run/01-fresh-clone-running.jpg" alt="Lableit running after a single launcher run on a clean machine state"><figcaption>One command, from nothing to a running app</figcaption></figure>
+    </div>
+    <h3>Evidence</h3>
+    <ul>
+      <li>Successful first run: <a href=".evidence/2026-09-23/fresh-run/02-launcher-success.log">02-launcher-success.log</a></li>
+      <li>Honest failure and clean shutdown: <a href=".evidence/2026-09-23/fresh-run/03-launcher-honest-failure.log">03-launcher-honest-failure.log</a></li>
+    </ul>
+    <h3>References</h3>
+    <ul>
+      <li>Files: <a href="run.command">run.command</a>, <a href="run.bat">run.bat</a>, <a href="README.md">README.md</a>, <a href="apps/api/src/index.ts">apps/api/src/index.ts</a>, <a href="packages/shared/src/index.ts">packages/shared/src/index.ts</a>, <a href="RAILWAY_DEPLOYMENT.md">RAILWAY_DEPLOYMENT.md</a>, <a href="structure.md">structure.md</a></li>
+    </ul>
+  </article>
 
   <article>
     <h2 id="no-auth">Sign-in removed: clone it, run it, start labeling</h2>

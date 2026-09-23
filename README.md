@@ -271,13 +271,23 @@ Install ffmpeg: `brew install ffmpeg` (macOS), `sudo apt install ffmpeg`
 
 > Run each service in its **own terminal**, they are long-running processes.
 >
-> **macOS one-click:** **`run.command`** starts everything (local database, cache,
-> storage, then the API, inference and web services), opens the app, and stops it
-> all on Ctrl+C. It does **not** use Docker: it expects native tooling and a
-> prepared `.devstack` folder, namely `brew install postgresql@16 redis`, a MinIO
-> binary at `.devstack/bin/minio`, and an initialised `.devstack/pg` data
-> directory. If you would rather use Docker, follow the numbered steps below
-> instead. **Windows:** `run.bat` gives you a guided menu.
+> **macOS one-click:** **`run.command`** does the whole thing. On first run it
+> creates `.env`, installs dependencies, creates a local Postgres cluster with the
+> `lableit` role and database, applies the migrations, then starts the database,
+> cache, storage, API, inference and web services, opens the app, and stops
+> everything on Ctrl+C. It does **not** use Docker, so install its three native
+> pieces first:
+>
+> ```bash
+> brew install postgresql@16 redis
+> brew install minio/stable/minio   # or drop a minio binary at .devstack/bin/minio
+> cd apps/inference && bash setup_mac.sh && cd ../..   # SAM3 environment
+> ```
+>
+> If a service fails to start it says which one and prints the last lines of its
+> log, rather than claiming success. Logs live in `.devstack/logs/`.
+> Prefer Docker? Follow the numbered steps below instead.
+> **Windows:** `run.bat` gives you a guided menu and uses Docker.
 
 ### 1. Clone and configure
 
@@ -397,7 +407,9 @@ yourself and accept Meta's SAM License:
 Download from the **Settings** panel in the UI, or:
 
 ```bash
-python apps/inference/download_models.py
+# Use the inference environment's Python: the script needs modelscope /
+# huggingface-hub, which live in apps/inference/.venv
+apps/inference/.venv/bin/python apps/inference/download_models.py
 ```
 
 A `model_config.json` is generated locally on first download (it is gitignored, see

@@ -147,7 +147,6 @@ services:
       context: apps/inference
       dockerfile: Dockerfile
     environment:
-      PRELOAD_MODEL: "true"
       MODEL_CACHE_DIR: /app/models
       PYTHONUNBUFFERED: "1"
       # facebook/sam3 is a gated Hugging Face model: request access on its model
@@ -186,7 +185,6 @@ services:
   #   runtime: nvidia
   #   environment:
   #     NVIDIA_VISIBLE_DEVICES: all
-  #     PRELOAD_MODEL: "true"
   #     MODEL_CACHE_DIR: /app/models
   #   volumes:
   #     - inference_models:/app/models

@@ -35,6 +35,7 @@
   <nav class="toc">
     <strong>On this page</strong>
     <ol>
+      <li><a href="#readme">README rebuilt as the front door, and the claims behind it checked</a> <span>2026-09-22</span></li>
       <li><a href="#app-screens">Signed-in screens photographed, and two bugs they exposed</a> <span>2026-09-21</span></li>
       <li><a href="#theme-default">Light theme is now the default</a> <span>2026-09-21</span></li>
       <li><a href="#iht-logo">IHT Lab logo replaces the University of Alberta logo</a> <span>2026-09-21</span></li>
@@ -44,6 +45,30 @@
     </ol>
     <p>Everything above is part of the <strong>1.0.0 public academic release</strong> (released 2026-09-21).</p>
   </nav>
+
+  <article>
+    <h2 id="readme">README rebuilt as the front door, and the claims behind it checked</h2>
+    <time datetime="2026-09-22">2026-09-22</time>
+    <ul>
+      <li><strong>README:</strong> rewritten around what the system actually does. A picture-led walkthrough of the five workflow steps, capability tables, the access-control story, keyboard shortcuts, and the setup, configuration and deployment sections refreshed. All screenshots are current in-app captures; the old set predated the creation wizard and the light theme.</li>
+      <li><strong>CIVAD spelled out:</strong> the <strong>Construction Industry Vision Alberta Dataset</strong>, over 50 classes and more than 86,905 images, with the ISARC 2025 citation and the co-authors credited by name.</li>
+      <li><strong>Claims checked against the code:</strong> the export dialog described <code>png_masks</code> as producing PNG images (it produces a colour map and metadata JSON), and its "Include images" checkbox did nothing. Both now tell the truth.</li>
+      <li><strong>Production bug found on the way:</strong> the api and worker containers did not share the exports folder, so every export download would have failed on a self-hosted deployment. They now share a volume.</li>
+      <li><strong>Docs:</strong> the four access-control and admin routes were missing from the API reference. Added, along with the approval gate's behaviour.</li>
+    </ul>
+    <h3>The new README, in the shots it now uses</h3>
+    <div class="grid">
+      <figure><img src=".evidence/2026-09-21/app/46-detection.png" alt="SAM3 detection on the review canvas"><figcaption>Hero: one prompt, eleven objects found</figcaption></figure>
+      <figure><img src=".evidence/2026-09-21/app/45-labeling-empty.png" alt="Labeling workspace with model settings and inference health"><figcaption>The workspace, showing device and model settings</figcaption></figure>
+      <figure><img src=".evidence/2026-09-21/app/47-export.png" alt="Export dialog with eight formats"><figcaption>All 8 export formats</figcaption></figure>
+      <figure><img src=".evidence/2026-09-21/app/40-access-gate.png" alt="Access request form"><figcaption>The access gate</figcaption></figure>
+    </div>
+    <h3>References</h3>
+    <ul>
+      <li>Files: <a href="README.md">README.md</a>, <a href="docs/API.md">docs/API.md</a>, <a href="docker-compose.prod.yml">docker-compose.prod.yml</a>, <a href="apps/api/src/index.ts">apps/api/src/index.ts</a>, <a href="apps/api/src/exportService.ts">exportService.ts</a>, <a href="apps/web/src/components/ExportWizard.tsx">ExportWizard.tsx</a>, <code>assets/screenshots/*.jpg</code></li>
+      <li>CIVAD: <a href="https://doi.org/10.22260/ISARC2025/0124">doi.org/10.22260/ISARC2025/0124</a> (ISARC 2025, pages 956-963)</li>
+    </ul>
+  </article>
 
   <article>
     <h2 id="app-screens">Signed-in screens photographed, and two bugs they exposed</h2>

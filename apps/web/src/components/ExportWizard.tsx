@@ -29,7 +29,6 @@ const getFormatColor = (format: ExportFormat): string => {
 const getFormatExtension = (format: ExportFormat): string => {
   if (format.includes('yolo')) return '.txt';
   if (format === 'voc') return '.xml';
-  if (format === 'png_masks') return '.png';
   return '.json';
 };
 
@@ -61,7 +60,6 @@ export const ExportWizard: React.FC<ExportWizardProps> = ({
   const [selectedFormat, setSelectedFormat] = useState<ExportFormat | null>(null);
   const [formats, setFormats] = useState<ExportFormatInfo[]>([]);
   const [loadingFormats, setLoadingFormats] = useState(true);
-  const [includeImages, setIncludeImages] = useState(false);
   const [splitRatio, setSplitRatio] = useState({ train: 80, val: 20 });
   const [isExporting, setIsExporting] = useState(false);
   const [exportComplete, setExportComplete] = useState(false);
@@ -268,7 +266,7 @@ export const ExportWizard: React.FC<ExportWizardProps> = ({
 
   const estimatedSize = () => {
     const baseSize = annotationCount * 0.5; // ~0.5KB per annotation
-    const imageSize = includeImages ? assetCount * 500 : 0; // ~500KB per image avg
+    const imageSize = assetCount * 500; // images are always bundled, ~500KB per image avg
     const total = baseSize + imageSize;
 
     if (total > 1000) {
@@ -444,22 +442,14 @@ export const ExportWizard: React.FC<ExportWizardProps> = ({
             <div className="space-y-6">
               <h3 className="text-lg font-medium text-text">Export Options</h3>
 
-              {/* Include Images Option */}
-              <label className="flex items-center justify-between p-4 rounded-xl bg-surface-elevated cursor-pointer hover:bg-surface transition-colors">
-                <div className="flex items-center gap-3">
-                  <Image className="w-5 h-5 text-text-muted" />
-                  <div>
-                    <div className="font-medium text-text">Include images</div>
-                    <div className="text-xs text-text-muted">Bundle original images with annotations</div>
-                  </div>
+              {/* Images are always bundled by the exporter, so this states it rather than pretending to be a choice */}
+              <div className="flex items-center gap-3 p-4 rounded-xl bg-surface-elevated">
+                <Image className="w-5 h-5 text-text-muted" />
+                <div>
+                  <div className="font-medium text-text">Images included</div>
+                  <div className="text-xs text-text-muted">The original images are always bundled with the annotations</div>
                 </div>
-                <input
-                  type="checkbox"
-                  checked={includeImages}
-                  onChange={(e) => setIncludeImages(e.target.checked)}
-                  className="w-5 h-5 rounded border-border text-primary focus:ring-primary"
-                />
-              </label>
+              </div>
 
               {/* Summary */}
               <div className="p-4 rounded-xl border border-dashed border-border">

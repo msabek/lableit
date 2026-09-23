@@ -2,100 +2,222 @@
   <img src="assets/logo.svg" alt="Lableit" width="540" />
 </p>
 
-<p align="center"><strong>SAM3-powered vision annotation platform for images and videos.</strong></p>
+<p align="center"><strong>Describe what you want. Let SAM3 label it. Review, correct, export.</strong></p>
 
 <p align="center">
-  Upload media, describe objects with natural-language text prompts, review the
-  detections on an interactive canvas, and export annotations in 8 dataset
-  formats (COCO, YOLO detect/segment, Pascal VOC, PNG masks, CreateML, TFRecord, LabelMe).
+  Lableit is a self-hosted annotation platform for images and video. Type
+  <code>car, person, wheel</code>, and Meta's <strong>SAM3</strong> finds and outlines every
+  match on your media. You review the results on an interactive canvas and export
+  the dataset in <strong>8 formats</strong>, including COCO, YOLO and Pascal VOC.
 </p>
 
 <p align="center">
-  <a href="./LICENSE"><img alt="License: Academic use only" src="https://img.shields.io/badge/license-academic%20use%20only-6366f1"></a>
+  <a href="./LICENSE"><img alt="License: academic use only" src="https://img.shields.io/badge/license-academic%20use%20only-6366f1"></a>
+  <img alt="Version 1.0.0" src="https://img.shields.io/badge/version-1.0.0-4f46e5">
   <img alt="Runtime: Bun 1.3" src="https://img.shields.io/badge/runtime-Bun%201.3-14151a">
   <img alt="Model: SAM3" src="https://img.shields.io/badge/model-SAM3-8b5cf6">
-  <img alt="Python 3.11" src="https://img.shields.io/badge/python-3.11-22d3ee">
+  <img alt="Python 3.11+" src="https://img.shields.io/badge/python-3.11%2B-22d3ee">
+  <img alt="CUDA, Apple Silicon or CPU" src="https://img.shields.io/badge/runs%20on-CUDA%20%7C%20Apple%20Silicon%20%7C%20CPU-0ea5e9">
 </p>
 
-> **License at a glance.** Lableit is **free for academic use** (teaching,
-> learning, and non-commercial research at universities and non-profit research
-> institutes) under the [Lableit Academic Research License](./LICENSE). **Any
-> other use, including commercial use, needs our written permission first.**
-> See [`PERMISSIONS.md`](./PERMISSIONS.md) for how to ask. The SAM3 model is
-> governed separately by **Meta's SAM License** (see
-> [Models & AI license](#models--ai-license)).
+<p align="center">
+  <img src="assets/screenshots/app-detection.jpg" alt="SAM3 text-prompt detection on the Lableit canvas: one car, four wheels and six windows found from a single prompt" width="900">
+</p>
+<p align="center"><em>One prompt, eleven objects found and outlined. You review and correct, instead of drawing.</em></p>
 
-## About this project
+> **License in one line.** Lableit is **free for academic use** (teaching, learning
+> and non-commercial research at universities and non-profit research institutes)
+> under the [Lableit Academic Research License](./LICENSE). **Every other use needs
+> written permission first**, see [`PERMISSIONS.md`](./PERMISSIONS.md). The SAM3 model
+> itself is covered by **Meta's separate SAM License**.
 
-Lableit was developed by **Mohamed Sabek** as part of his research at the
-**IHT Lab**, Department of Civil and Environmental Engineering, **University of
-Alberta**, Edmonton, Canada.
+---
 
-Labeling images and videos by hand is one of the slowest parts of building a
-computer-vision dataset. Lableit lets you describe what you want in plain words
-(for example `person, car, bicycle`), lets SAM3 find and outline every match,
-and leaves you to review and correct the results instead of drawing every box
-yourself. We used this technology, together with other tools, to build our
-**CIVAD** dataset, and we are releasing Lableit because we believe it can save
-a lot of labeling time for other researchers too.
+## Why this exists
+
+Hand-labeling is the slowest, most expensive part of building a computer-vision
+dataset. Drawing thousands of boxes by hand takes weeks, and it is the kind of work
+that quietly eats a research schedule.
+
+Lableit flips the job around:
+
+| Traditional labeling | With Lableit |
+|---|---|
+| Draw every box and outline by hand | Type the objects you want in plain words |
+| Repeat for every image | Run one prompt across the whole project |
+| Quality depends on stamina | The model proposes, **you stay the judge** |
+| Format conversion is a separate chore | Export to 8 dataset formats in one click |
+
+Lableit was built by **Mohamed Sabek** during his PhD research at the **IHT Lab**
+(Infrastructure and Human Tech Lab), Department of Civil and Environmental
+Engineering, **University of Alberta**, Edmonton, Canada.
+
+This class of semi-automatic labeling technology, alongside other tools, is what
+made the **CIVAD** dataset practical: the **Construction Industry Vision Alberta
+Dataset**, over 50 object classes across more than 86,905 images of construction
+tools, machinery, safety equipment and materials
+([ISARC 2025 paper](https://doi.org/10.22260/ISARC2025/0124)). We are releasing
+Lableit because labeling effort is a problem every vision researcher shares.
 
 ---
 
 ## Table of contents
 
-- [About this project](#about-this-project)
-- [Screenshots](#screenshots)
-- [Features](#features)
+- [Why this exists](#why-this-exists)
+- [The workflow, in pictures](#the-workflow-in-pictures)
+- [What Lableit can do](#what-lableit-can-do)
+- [Access control and admin approval](#access-control-and-admin-approval)
 - [Architecture](#architecture)
 - [Prerequisites](#prerequisites)
 - [Quickstart (local development)](#quickstart-local-development)
 - [Configuration (environment variables)](#configuration-environment-variables)
 - [Downloading the SAM3 model](#downloading-the-sam3-model)
-- [Devices (CUDA / Apple Silicon / CPU)](#devices-cuda--apple-silicon--cpu)
+- [Devices (CUDA, Apple Silicon, CPU)](#devices-cuda-apple-silicon-cpu)
+- [Keyboard shortcuts](#keyboard-shortcuts)
 - [Deployment](#deployment)
 - [Documentation](#documentation)
-- [Export formats](#export-formats)
 - [Security](#security)
-- [Models & AI license](#models--ai-license)
+- [Models and AI license](#models-and-ai-license)
 - [License](#license)
 - [Citation](#citation)
 - [Acknowledgements](#acknowledgements)
 
 ---
 
-## Screenshots
+## The workflow, in pictures
 
-The application running locally end-to-end (captured on Apple Silicon, SAM3 on CPU):
+Four steps: **Upload, Label, Review, Export.** Every screenshot below is the real
+application running on Apple Silicon with SAM3 loaded.
 
-| Projects dashboard | SAM3 detection on the canvas | Export (8 formats) |
-|:---:|:---:|:---:|
-| <img src="assets/screenshots/app-projects.png" alt="Projects dashboard" width="280"> | <img src="assets/screenshots/app-labeling-detection.png" alt="SAM3 text-prompt detection" width="280"> | <img src="assets/screenshots/app-export.png" alt="Export formats" width="280"> |
+### 1. Create a project and bring your media
+
+<table>
+<tr>
+<td width="50%"><img src="assets/screenshots/app-projects.jpg" alt="Projects dashboard listing projects with asset and class counts"></td>
+<td width="50%"><img src="assets/screenshots/app-wizard-upload.jpg" alt="Project creation wizard, step one: name the project and upload images or video"></td>
+</tr>
+<tr>
+<td><strong>Projects dashboard.</strong> Every project shows its assets, classes and progress at a glance.</td>
+<td><strong>Creation wizard, step 1.</strong> Name the project and drop in images or video. Video is sliced into frames for you.</td>
+</tr>
+</table>
+
+### 2. Define your classes
 
 <p align="center">
-  <img src="assets/screenshots/app-labeling-grid.png" alt="Labeling workspace — Device: cpu, SAM3 Ready" width="760" />
+  <img src="assets/screenshots/app-wizard-classes.jpg" alt="Project creation wizard, step two: adding the classes car, wheel and window" width="820">
 </p>
 
-Landing page:
+Add classes by hand, or import a class list from CSV. Each class carries its own
+colour and confidence threshold.
+
+### 3. Label with a text prompt
 
 <p align="center">
-  <img src="assets/screenshots/lableit-landing-hero.png" alt="Lableit landing — AI-powered image labeling" width="820" />
+  <img src="assets/screenshots/app-workspace.jpg" alt="Labeling workspace showing the four-step bar, inference health with device mps, model settings and the asset list" width="900">
 </p>
 
-| Features | Try-it demo | Export showcase |
-|:---:|:---:|:---:|
-| <img src="assets/screenshots/lableit-landing-features.png" alt="Features" width="260"> | <img src="assets/screenshots/lableit-landing-demo.png" alt="Interactive demo" width="260"> | <img src="assets/screenshots/lableit-landing-exports.png" alt="Export showcase" width="260"> |
+The workspace is where the work happens:
 
-## Features
+- **Inference health** shows the model state and the device in use (`mps`, `cuda` or `cpu`).
+- **Model settings** choose the output: **boxes only**, **boxes plus masks**, or **masks only**.
+- **Run Preview (3 samples)** tries your prompt on a few assets first, so you can tune
+  it before spending time on the whole set.
+- **Run Batch (all assets)** queues the full project as a background job.
 
-- **Text-prompt object detection** — type `person, car, dog` and SAM3 segments all instances.
-- **Interactive canvas** — draw/adjust boxes, render masks, per-class confidence thresholds.
-- **4-step workflow** — Upload → Prompt → Review → Export.
-- **Image & video** — extract video frames (ffmpeg) on a timeline; annotate frames.
-- **8 export formats** — COCO, YOLO (detect + segment), Pascal VOC, PNG masks, CreateML, TFRecord, LabelMe.
-- **Projects, classes, tags** — organize assets; CSV import/export of class definitions.
-- **Clerk authentication** — sign in with Google OAuth.
-- **Theming** — light/dark/system + palette styles (indigo, ocean, sunset, forest).
-- **Background jobs** — video slicing, batch inference, and export run on a BullMQ/Redis worker.
+### 4. Review and correct
+
+<p align="center">
+  <img src="assets/screenshots/app-detection.jpg" alt="Review canvas with per-object masks, boxes, labels, confidence scores and a deletable annotation list" width="900">
+</p>
+
+Every detection arrives with a class, a confidence score and a mask. Delete what is
+wrong, draw what is missing, move or resize a box that is close but not right.
+**Nothing lands in your dataset that you did not approve.**
+
+### 5. Export your dataset
+
+<table>
+<tr>
+<td width="50%"><img src="assets/screenshots/app-export-formats.jpg" alt="Export dialog showing all eight dataset formats"></td>
+<td width="50%"><img src="assets/screenshots/app-export-done.jpg" alt="Export complete screen with the download ready"></td>
+</tr>
+<tr>
+<td><strong>Pick a format.</strong> Eight of them, each with a plain description of what it is for.</td>
+<td><strong>Download.</strong> Images plus annotation files, bundled into one timestamped ZIP.</td>
+</tr>
+</table>
+
+---
+
+## What Lableit can do
+
+### Labeling and AI
+
+| Capability | Detail |
+|---|---|
+| **Text-prompt detection** | Type the objects you want (`car, person, wheel`). SAM3 finds every instance, no per-class model training. |
+| **Three output modes** | Bounding boxes only, boxes plus segmentation masks, or masks only. |
+| **Preview before batch** | Test a prompt on 3 sample assets before running the whole project. |
+| **Batch inference** | Runs across every asset as a background job, with progress and retries. |
+| **Per-class confidence** | Each class carries its own threshold, so noisy classes can be tightened independently. |
+| **Manual annotation** | Draw a box by dragging on the canvas, move or resize it with its handles, and delete any annotation. |
+| **Mask rendering** | Masks drawn over the image with an adjustable opacity slider. |
+
+### Media and datasets
+
+| Capability | Detail |
+|---|---|
+| **Images and video** | Video is sliced into frames with ffmpeg at a frame interval you choose (one frame every N seconds), then annotated frame by frame. |
+| **Projects and classes** | Organise assets per project, filter labeled vs unlabeled, page through large sets. Tags can be applied to files as you upload them. |
+| **CSV class lists** | Import and export class definitions, so a class scheme can be reused across projects. |
+| **8 export formats** | `coco`, `yolo_detect`, `yolo_segment`, `voc`, `png_masks`, `createml`, `tfrecord_meta`, `labelme`. |
+| **One ZIP per export** | Your images plus the format-specific annotation files, timestamped, behind a single-use download link. |
+
+Two honest notes: `png_masks` currently exports a per-class colour map and
+per-image mask metadata, not rendered PNG masks; and `tfrecord_meta` ships
+metadata plus a Python script that writes the `.tfrecord` file when you run it.
+Full details and directory layouts: [`docs/EXPORT_FORMATS.md`](./docs/EXPORT_FORMATS.md).
+
+### Platform
+
+| Capability | Detail |
+|---|---|
+| **Runs on your hardware** | NVIDIA CUDA, Apple Silicon GPU (MPS) or plain CPU. Nothing is sent to a third-party labeling service. |
+| **Background jobs** | Video slicing, batch inference and exports run on a Redis / BullMQ worker, so the browser is never blocked. |
+| **Sign-in** | Google sign-in through Clerk. |
+| **Admin approval gate** | New accounts are pending until an admin approves them. |
+| **Themes** | Light (default), dark or follow-the-system, plus four colour palettes: indigo, ocean, sunset and forest. |
+| **Keyboard shortcuts** | For upload, selection, inference and export, see the table below. |
+
+<p align="center">
+  <img src="assets/screenshots/app-theme.jpg" alt="Theme menu with light, dark and system modes plus four colour palettes" width="820">
+</p>
+
+---
+
+## Access control and admin approval
+
+Lableit is built for a lab, not for anonymous public sign-ups. After signing in,
+a new account cannot use the app until an administrator approves it.
+
+<table>
+<tr>
+<td width="50%"><img src="assets/screenshots/app-access-gate.jpg" alt="Access request form asking for name, email, institution, phone and intended use"></td>
+<td width="50%"><img src="assets/screenshots/app-admin.jpg" alt="Admin page listing pending access requests with approve and deny actions"></td>
+</tr>
+<tr>
+<td><strong>The request form.</strong> A pending user sees this instead of the app, and submits who they are and what they plan to use it for.</td>
+<td><strong>The admin page.</strong> The admin reviews requests and approves or denies them. The API blocks pending accounts directly, so the gate cannot be bypassed by calling the API.</td>
+</tr>
+</table>
+
+Set `ADMIN_EMAIL` to the account that should receive and approve requests. There is
+**no built-in default**, so a deployment without it simply has no admin. Add a
+[Resend](https://resend.com) key (`RESEND_API_KEY`) to be emailed when a request
+arrives; without it, requests still appear on the admin page.
+
+---
 
 ## Architecture
 
@@ -117,39 +239,47 @@ Landing page:
 
 | Service | Stack | Path |
 |---------|-------|------|
-| Web | Bun + Vite 8 + React 18 + Clerk + GSAP + Tailwind | `apps/web` |
+| Web | Bun + Vite + React 18 + Clerk + GSAP + Tailwind | `apps/web` |
 | API | Bun + Fastify 5 + Prisma + BullMQ + AWS SDK v3 (S3) | `apps/api` |
 | Inference | FastAPI + SAM3 (Python) | `apps/inference` |
-| Shared | TypeScript types/schemas | `packages/shared` |
+| Shared | TypeScript types and schemas | `packages/shared` |
 | Infra | Docker Compose: Postgres, Redis, MinIO | `infra` |
 
-The API is the only public surface. All inference requests are proxied API → inference;
-the inference service is **not** meant to be exposed directly (see [Security](#security)).
+- **Postgres** stores users, projects, assets, tags, class definitions, annotations and jobs.
+- **Redis** carries the job queue (video slicing, batch inference, exports).
+- **MinIO** (or any S3-compatible storage) holds the media, served to the browser through time-limited presigned links.
+
+The API is the only public surface. All inference requests are proxied from the API
+to the inference service, which is **not** meant to be exposed directly, see
+[Security](#security).
+
+---
 
 ## Prerequisites
 
 | Tool | Version | Needed for |
 |------|---------|-----------|
-| **Bun** | 1.3.12+ | runtime + package manager for web & API |
-| **Node.js** | 20.19+ or 22.12+ | optional — only if you run Vite under Node instead of Bun |
-| **Python** | 3.11 | inference service |
+| **Bun** | 1.3.12+ | runtime and package manager for web and API |
+| **Node.js** | 20.19+ or 22.12+ | optional, only if you run Vite under Node instead of Bun |
+| **Python** | 3.11+ | inference service (the macOS setup script builds a 3.12 environment) |
 | **uv** | latest | Python dependency installer |
-| **Docker** | Compose v2 | local Postgres/Redis/MinIO (and full self-host) |
+| **Docker** | Compose v2 | local Postgres 16, Redis 7 and MinIO, and full self-hosting |
 | **ffmpeg** | any recent | slicing videos into frames |
-| **NVIDIA GPU + CUDA** | — | Recommended for fast SAM3 inference. **Not required on Apple Silicon** — SAM3 runs on CPU there (see below). |
+| **NVIDIA GPU + CUDA** | optional | fastest SAM3 inference. Not required: Apple Silicon and CPU both work. |
 
-Install ffmpeg: `brew install ffmpeg` (macOS) · `sudo apt install ffmpeg` (Debian/Ubuntu) ·
-`winget install Gyan.FFmpeg` (Windows).
+Install ffmpeg: `brew install ffmpeg` (macOS), `sudo apt install ffmpeg`
+(Debian/Ubuntu), `winget install Gyan.FFmpeg` (Windows).
+
+---
 
 ## Quickstart (local development)
 
-> Run each service in its **own terminal** — they are long-running processes.
-> Commands are cross-platform unless a line is marked for a specific OS.
+> Run each service in its **own terminal**, they are long-running processes.
 >
-> **macOS one-click:** after the one-time setup (steps 1, 3, 4, 5 below), just
-> double-click **`run.command`** in Finder (or run `./run.command`). It starts
-> infra (Postgres, Redis, MinIO) and all three services, opens the app, and
-> stops everything on Ctrl+C. The manual steps below are the cross-platform path.
+> **macOS one-click:** after the one-time setup (steps 1, 3, 4 and 5 below), just
+> double-click **`run.command`** in Finder. It starts the infrastructure and all
+> three services, opens the app, and stops everything on Ctrl+C.
+> **Windows:** `run.bat` gives you a guided menu for the same thing.
 
 ### 1. Clone and configure
 
@@ -169,7 +299,7 @@ docker compose -f infra/docker-compose.yml up -d
 
 This also creates the MinIO bucket automatically.
 
-### 3. Install JS dependencies (web + API + shared)
+### 3. Install JS dependencies (web, API, shared)
 
 ```bash
 bun install
@@ -180,36 +310,32 @@ bun install
 ```bash
 cd apps/api
 bunx prisma generate
-bunx prisma migrate deploy   # applies the committed migration to your local DB
-cd ..
+bunx prisma migrate deploy   # applies the committed migrations to your local DB
+cd ../..
 ```
 
 ### 5. Install Python / SAM3 dependencies
 
-SAM3 is written for CUDA, so install differs slightly per platform. SAM3 is always
-installed with `--no-deps` (its pinned `numpy<2` conflicts with the stack, and
-`triton` has no macOS build); the launchers handle this for you.
+SAM3 is written for CUDA, so the install differs slightly per platform. SAM3 is
+always installed with `--no-deps` (its pinned `numpy<2` conflicts with the stack,
+and `triton` has no macOS build); the launchers handle this for you.
 
 **macOS / Apple Silicon (or Linux CPU):**
 
 ```bash
 cd apps/inference
-bash setup_mac.sh     # creates .venv (3.12), installs torch+deps+SAM3, patches triton
+bash setup_mac.sh     # creates .venv, installs torch + deps + SAM3, patches triton
 cd ../..
 ```
 
-SAM3 runs on **CPU** by default on Apple Silicon (no CUDA needed). Metal/MPS is
-available as an experimental opt-in via `LABLEIT_DEVICE=mps`.
-
-**Windows / Linux with an NVIDIA GPU:** use the `run.bat` launcher (Windows), or:
+**Windows / Linux with an NVIDIA GPU:** use `run.bat` (Windows), or:
 
 ```bash
 cd apps/inference
 python3.11 -m venv .venv
-.venv\Scripts\activate                  # Windows (PowerShell/cmd)   — or: source .venv/bin/activate
+.venv\Scripts\activate                  # Windows, or: source .venv/bin/activate
 uv pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu128
 uv pip install -r requirements.txt
-# triton (Windows wheel) + SAM3 with --no-deps:
 uv pip install triton-windows
 uv pip install --no-deps "sam3 @ git+https://github.com/facebookresearch/sam3.git@c97c893969003d3e6803fd5d679f21e515aef5ce"
 cd ../..
@@ -218,21 +344,17 @@ cd ../..
 ### 6. Run the services (three terminals)
 
 ```bash
-# Terminal 1 — API (http://localhost:3001)
+# Terminal 1 - API (http://localhost:3001)
 bun run dev:api
 
-# Terminal 2 — Inference (http://localhost:8001)
-cd apps/inference && source .venv/bin/activate && uvicorn main:app --reload --host 0.0.0.0 --port 8001
+# Terminal 2 - Inference (http://localhost:8001)
+cd apps/inference && ./.venv/bin/python -m uvicorn main:app --reload --host 0.0.0.0 --port 8001
 
-# Terminal 3 — Web (http://localhost:3000)
+# Terminal 3 - Web (http://localhost:3000)
 bun run dev:web
 ```
 
 Open <http://localhost:3000>.
-
-> **Windows users:** `run.bat` provides a guided menu to start/stop infra, API,
-> web, and inference and to install ffmpeg. It is Windows-only; on macOS/Linux
-> use the `bun run dev:*` commands above.
 
 ### Clerk setup
 
@@ -243,79 +365,120 @@ Open <http://localhost:3000>.
 4. Put them in the root `.env`:
    - `VITE_CLERK_PUBLISHABLE_KEY=pk_test_...`
    - `CLERK_SECRET_KEY=sk_test_...`
+5. Set `ADMIN_EMAIL` to the address that should approve new accounts, otherwise
+   nobody can be approved.
+
+---
 
 ## Configuration (environment variables)
 
 Templates: root [`.env.example`](./.env.example) (full local stack),
-[`apps/api/.env.example`](./apps/api/.env.example) (API-only),
+[`apps/api/.env.example`](./apps/api/.env.example) (API only),
 [`.env.production`](./.env.production) and [`.env.railway.example`](./.env.railway.example)
 (deployment).
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `VITE_CLERK_PUBLISHABLE_KEY` | — | Clerk publishable key (frontend) |
-| `CLERK_SECRET_KEY` | — | Clerk secret key (backend) |
+| `VITE_CLERK_PUBLISHABLE_KEY` | none | Clerk publishable key (frontend) |
+| `CLERK_SECRET_KEY` | none | Clerk secret key (backend) |
+| `ADMIN_EMAIL` | none (**required in practice**) | The account that approves access requests. No default: unset means no admin. |
+| `RESEND_API_KEY` | none | Optional. Emails the admin when an access request arrives. |
+| `RESEND_FROM` | `Lableit <onboarding@resend.dev>` | Sender address for those emails. The default only delivers to the Resend account owner. |
+| `ALLOWED_ORIGINS` | none | Comma-separated browser origins allowed to call the API cross-origin. |
 | `DATABASE_URL` | `postgresql://lableit:lableit@localhost:5433/lableit` | Postgres connection |
 | `REDIS_URL` | `redis://localhost:6380` | Redis (BullMQ) |
 | `INFERENCE_URL` | `http://localhost:8001` | Inference service base URL |
-| `S3_ENDPOINT` / `S3_ACCESS_KEY` / `S3_SECRET_KEY` / `S3_BUCKET` | MinIO defaults | S3-compatible object storage |
-| `JWT_SECRET` | — (**required**) | Signing secret; the API fails fast in production if unset |
+| `S3_ENDPOINT` / `S3_ACCESS_KEY` / `S3_SECRET_KEY` / `S3_BUCKET` | MinIO defaults | S3-compatible object storage. Must be reachable from the browser, because media is served through presigned links. |
+| `JWT_SECRET` | none (**required**) | Signing secret. The API fails fast in production if unset. |
 | `INFERENCE_ALLOWED_ORIGINS` | `*` | CORS allowlist for the inference service |
-| `INFERENCE_SHARED_SECRET` | — | Optional shared secret required between API and inference |
+| `INFERENCE_SHARED_SECRET` | none | Reserved. The API does not send this header yet, so leave it unset and keep inference on a private network. |
 | `INFERENCE_TIMEOUT_MS` | `60000` | Per-request inference timeout |
 | `INFERENCE_BATCH_TIMEOUT_MS` | `300000` | Per-asset batch inference timeout |
 | `INFERENCE_MAX_RETRIES` | `3` | Inference retry attempts |
-| `WORKER_MODE` | `false` | `true` = standalone BullMQ worker (no HTTP listener) |
-| `RUN_WORKER` | dev only | embed a worker in the API process |
+| `WORKER_MODE` | `false` | `true` runs a standalone BullMQ worker with no HTTP listener |
+| `RUN_WORKER` | dev only | Embeds a worker in the API process |
 | `RUN_HTTP_SERVER` | `true` | `false` disables the API HTTP listener |
-| `FFMPEG_PATH` | `ffmpeg` | path to the ffmpeg binary |
-| `HF_TOKEN` | — | optional HuggingFace token (model-download fallback) |
+| `FFMPEG_PATH` | `ffmpeg` | Path to the ffmpeg binary |
+| `LABLEIT_DEVICE` | auto | Force the inference device: `cuda`, `mps` or `cpu` |
+| `HF_TOKEN` | none | Hugging Face token. `facebook/sam3` is a gated model, so a token with access is needed for the Hugging Face download path. |
+
+---
 
 ## Downloading the SAM3 model
 
-The SAM3 weights (~2–4 GB) are **not** bundled — download them yourself and
-accept Meta's SAM License:
+The SAM3 weights (about 2.5 GB) are **not** bundled. You download them
+yourself and accept Meta's SAM License:
 
 - **ModelScope** (primary, no authentication)
-- **HuggingFace** (fallback, needs `HF_TOKEN`)
+- **Hugging Face** (fallback, gated: needs `HF_TOKEN`)
 
-Download via the **Settings** panel in the UI, or:
+Download from the **Settings** panel in the UI, or:
 
 ```bash
 python apps/inference/download_models.py
 ```
 
-A `model_config.json` is generated locally on first download (it is gitignored;
-see [`model_config.example.json`](./apps/inference/model_config.example.json)).
+A `model_config.json` is generated locally on first download (it is gitignored, see
+[`model_config.example.json`](./apps/inference/model_config.example.json)).
 
-## Devices (CUDA / Apple Silicon / CPU)
+---
 
-The inference service auto-selects a device; override with `LABLEIT_DEVICE=cuda|mps|cpu`.
+## Devices (CUDA, Apple Silicon, CPU)
+
+The inference service picks a device automatically (`cuda`, then `mps`, then `cpu`).
+Override it with `LABLEIT_DEVICE`.
 
 | Host | Default device | Notes |
 |------|----------------|-------|
 | NVIDIA GPU | `cuda` | Fastest. bf16 autocast enabled. |
-| Apple Silicon (Mac) | `mps` | Uses the Mac's GPU automatically. A compatibility shim adapts SAM3's CUDA-only code to run in float32; some SAM3 ops fall back to CPU (`PYTORCH_ENABLE_MPS_FALLBACK=1`), so MPS is not always faster than CPU. |
-| Apple Silicon, CPU only | `cpu` | Set `LABLEIT_DEVICE=cpu`. Works out of the box (~6 s/image for SAM3 text-prompt detection). |
-| No accelerator / cloud CPU | `cpu` | Functional but slow/memory-heavy on large images. Railway has no GPUs. |
+| Apple Silicon (Mac) | `mps` | Uses the Mac's GPU. A compatibility shim adapts SAM3's CUDA-only code to float32; some operations fall back to CPU (`PYTORCH_ENABLE_MPS_FALLBACK=1`), so MPS is not always faster than CPU. |
+| Apple Silicon, CPU only | `cpu` | Set `LABLEIT_DEVICE=cpu`. Works out of the box, roughly 6 s per image. |
+| No accelerator / cloud CPU | `cpu` | Functional, but slow and memory-heavy on large images. Railway has no GPUs. |
 
-Manual annotation (drawing boxes/polygons), projects, assets, and all 8 exports work
-regardless of device. See [`docs/TROUBLESHOOTING.md`](./docs/TROUBLESHOOTING.md).
+Manual annotation, projects, assets and all 8 exports work regardless of device.
+See [`docs/TROUBLESHOOTING.md`](./docs/TROUBLESHOOTING.md).
+
+---
+
+## Keyboard shortcuts
+
+These are the shortcuts that are wired up in the labeling workspace today:
+
+| Keys | Action |
+|---|---|
+| `U` | Upload files |
+| `A` / `D` | Select or deselect all assets |
+| `Ctrl` + `Shift` + `P` | Run preview on 3 sample assets |
+| `Ctrl` + `Enter` | Run batch inference on every asset |
+| `Ctrl` + `E` | Open the export wizard |
+| `Esc` | Close the preview, or leave the project |
+| `←` `→` | Move between assets while the preview is open |
+| `Del` / `Backspace` | Delete the selected annotation (on the canvas) |
+| `?` | Show the in-app shortcut list |
+
+The in-app list (`?`) is currently broader than what is implemented: undo and redo,
+class assignment by number, and the `G` chords are listed there but not yet wired.
+Annotations save as you make them, so there is no save shortcut to press.
+
+---
 
 ## Deployment
 
 - **Docker Compose (self-hosted):** [`DEPLOYMENT.md`](./DEPLOYMENT.md)
 
   ```bash
-  cp .env.production .env   # then edit with real values (incl. Clerk keys)
+  cp .env.production .env   # then edit with real values (Clerk keys, ADMIN_EMAIL, S3 credentials)
   docker compose -f docker-compose.prod.yml up -d --build
   ```
 
   The API container runs `prisma migrate deploy` on startup.
 
-- **Railway (cloud):** [`RAILWAY_DEPLOYMENT.md`](./RAILWAY_DEPLOYMENT.md). Railway
-  detects the monorepo and builds a service per app; configure the variables from
-  [`.env.railway.example`](./.env.railway.example).
+- **Railway (cloud):** [`RAILWAY_DEPLOYMENT.md`](./RAILWAY_DEPLOYMENT.md). Build each
+  service from the repository root with its own Dockerfile path, and run the worker
+  as its own service: background jobs do not run without it. Railway has no GPUs, so
+  host inference elsewhere if you need speed.
+
+---
 
 ## Documentation
 
@@ -323,60 +486,86 @@ regardless of device. See [`docs/TROUBLESHOOTING.md`](./docs/TROUBLESHOOTING.md)
 |-----|----------|
 | [`docs/USER_GUIDE.md`](./docs/USER_GUIDE.md) | End-to-end annotation workflow |
 | [`docs/API.md`](./docs/API.md) | REST API reference (every route) |
-| [`docs/EXPORT_FORMATS.md`](./docs/EXPORT_FORMATS.md) | Each export format + directory layout |
-| [`docs/TROUBLESHOOTING.md`](./docs/TROUBLESHOOTING.md) | GPU, model download, ffmpeg, DB, ports |
-| [`CONTRIBUTING.md`](./CONTRIBUTING.md) | Dev setup & contribution workflow |
-| [`SECURITY.md`](./SECURITY.md) | Vulnerability reporting & hardening |
+| [`docs/EXPORT_FORMATS.md`](./docs/EXPORT_FORMATS.md) | Each export format and its directory layout |
+| [`docs/TROUBLESHOOTING.md`](./docs/TROUBLESHOOTING.md) | GPU, model download, ffmpeg, database, ports |
+| [`CHANGELOG.md`](./CHANGELOG.md) / [`CHANGELOG.html`](./CHANGELOG.html) | What changed, in text and in pictures |
+| [`CONTRIBUTING.md`](./CONTRIBUTING.md) | Dev setup and contribution workflow |
+| [`SECURITY.md`](./SECURITY.md) | Vulnerability reporting and hardening |
 | [`structure.md`](./structure.md) | Repository layout reference |
 
-## Export formats
-
-8 selectable format IDs (`GET /export/formats`): `coco`, `yolo_detect`,
-`yolo_segment`, `voc`, `png_masks`, `createml`, `tfrecord_meta`, `labelme`.
-Exports bundle the project images plus the format-specific annotation files into a
-single timestamped ZIP. Details: [`docs/EXPORT_FORMATS.md`](./docs/EXPORT_FORMATS.md).
+---
 
 ## Security
 
 - The **inference service ships with no authentication** and trusts its network
-  boundary. **Run it on a private network behind the API only** — never expose it
-  publicly. Optionally set `INFERENCE_SHARED_SECRET` to require a shared header
-  between API and inference, and `INFERENCE_ALLOWED_ORIGINS` to restrict CORS.
-- The API enforces Clerk JWT auth, per-resource ownership checks, input
-  validation, security headers (helmet), and time-limited export tokens.
-- Report vulnerabilities privately — see [`SECURITY.md`](./SECURITY.md).
+  boundary. **Run it on a private network behind the API only**, never expose it
+  publicly. It will also fetch any image URL it is handed, which is a second
+  reason to keep it off the public internet. `INFERENCE_ALLOWED_ORIGINS` restricts
+  its CORS.
+- The API enforces Clerk JWT auth, the access-approval gate, per-resource ownership
+  checks, input validation, security headers (helmet), and single-use, time-limited
+  export download tokens.
+- Report vulnerabilities privately, see [`SECURITY.md`](./SECURITY.md).
 
-## Models & AI license
+---
+
+## Models and AI license
 
 Lableit builds on **SAM3** by Meta. **Both** the SAM3 model weights **and** the
-`sam3` Python package are licensed under Meta's **SAM License** — a custom,
-non-OSI license with restrictions (including acceptable-use, redistribution, and
-trade-control terms). Lableit does **not** redistribute the weights; you download
-and accept Meta's license yourself. Lableit's own license does not extend to SAM
-Materials. See [`NOTICE`](./NOTICE) and
-[`THIRD-PARTY-LICENSES.md`](./THIRD-PARTY-LICENSES.md).
+`sam3` Python package are licensed under Meta's **SAM License**, a custom, non-OSI
+license with restrictions (acceptable use, redistribution and trade-control terms).
+Lableit does **not** redistribute the weights: you download them and accept Meta's
+license yourself. Lableit's own license does not extend to SAM materials. See
+[`NOTICE`](./NOTICE) and [`THIRD-PARTY-LICENSES.md`](./THIRD-PARTY-LICENSES.md).
+
+---
 
 ## License
 
 Lableit is released under the **[Lableit Academic Research License 1.0](./LICENSE)**:
 
-- **Academic use:** free. Use, study, modify, and share Lableit for teaching,
-  learning, and non-commercial research, keeping the notices and citing it.
-- **Any other use** (commercial, industrial, client work, hosted services for
-  others, government operational use): **written permission is required
-  first**. See [`PERMISSIONS.md`](./PERMISSIONS.md).
+- **Academic use: free.** Use, study, modify and share Lableit for teaching,
+  learning and non-commercial research, keeping the notices and citing it.
+- **Every other use** (commercial, industrial, client work, hosted services for
+  other people, government operational use) **needs written permission first**.
+  See [`PERMISSIONS.md`](./PERMISSIONS.md). We are happy to say yes, we just want
+  to be asked.
 
-Third-party components retain their own licenses, see [`THIRD-PARTY-LICENSES.md`](./THIRD-PARTY-LICENSES.md).
+Third-party components keep their own licenses, see
+[`THIRD-PARTY-LICENSES.md`](./THIRD-PARTY-LICENSES.md).
+
+---
 
 ## Citation
 
-If you use Lableit in academic work, please cite it (and SAM3). Citation metadata:
+If Lableit helps your research, please cite it. Machine-readable metadata lives in
 [`CITATION.cff`](./CITATION.cff).
+
+Please also cite **SAM 3** (arXiv:2511.16719), which does the segmentation, and the
+**CIVAD** paper if you refer to the dataset:
+
+> Sabek, M., Mei, Q., Lee, G., Golabchi, A., and Gonzalez, V. (2025).
+> *Construction Industry Vision Alberta Dataset (CIVAD): Developing a Comprehensive
+> Object Detection Dataset for Diverse Construction Applications.*
+> Proceedings of the 42nd International Symposium on Automation and Robotics in
+> Construction (ISARC 2025), Montreal, Canada, pp. 956-963.
+> <https://doi.org/10.22260/ISARC2025/0124>
+
+---
 
 ## Acknowledgements
 
-Created by **Mohamed Sabek** during his research at the **IHT Lab**, Department
-of Civil and Environmental Engineering, **University of Alberta**, Edmonton,
-Canada. Thanks to the lab's supervisors and colleagues for their support.
-Parts of this technology were used, alongside other tools, to build the
-**CIVAD** dataset. Built on [SAM3](https://ai.meta.com/sam) by Meta AI.
+<p align="center">
+  <img src="assets/screenshots/landing-attribution.jpg" alt="IHT Lab attribution on the Lableit landing page" width="620">
+</p>
+
+Created by **Mohamed Sabek** during his PhD research at the **IHT Lab**
+(Infrastructure and Human Tech Lab), Department of Civil and Environmental
+Engineering, **University of Alberta**, Edmonton, Canada.
+
+With thanks to the supervisors and colleagues who made the research, and the CIVAD
+dataset it supported, possible: **Qipei Mei**, **Gaang Lee**, **Ali Golabchi** and
+**Vicente Gonzalez**, and to everyone at the IHT Lab who tested, questioned and
+improved this tool.
+
+Built on [SAM3](https://ai.meta.com/sam) by Meta AI.

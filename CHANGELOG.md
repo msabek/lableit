@@ -7,11 +7,18 @@
 - **FIXED**: Copyright holder name spelled "Mohamed Sabek" consistently in LICENSE, NOTICE, and third-party notices.
 
 ### Docs
+- **CHANGED**: **README rewritten** as the main description of the system: new hero and positioning, a "why this exists" comparison, a picture-led walkthrough of all five workflow steps, capability tables (labeling and AI, media and datasets, platform), an access-control section, keyboard shortcuts, and refreshed setup, configuration and deployment sections. All 12 screenshots are current in-app captures (the old set predated the creation wizard, the honest landing copy and the light-theme default) and were recompressed from 3.8 MB of PNGs to 1.5 MB of JPEGs.
+- **ADDED**: **CIVAD** is now spelled out wherever it appears: the **Construction Industry Vision Alberta Dataset** (over 50 classes, more than 86,905 images), with the ISARC 2025 citation (Sabek, Mei, Lee, Golabchi, Gonzalez; doi:10.22260/ISARC2025/0124). Co-authors are acknowledged by name in the README.
+- **NOTE**: The README capability list was checked line by line against the code before publishing. Claims that did not survive were removed rather than shipped: number-key class assignment, undo/redo (the buttons exist but `recordAction` is never called), canvas zoom and pan, and most of the in-app shortcut list. The README now documents only the shortcuts that are wired, and says plainly that the in-app list is broader than the implementation.
+- **ADDED**: `docs/API.md` now documents the access-approval gate and the four access-control routes (`/auth/access-status`, `/access-requests`, `/admin/access-requests`, `/admin/access-requests/:userId/decision`), which were entirely missing.
 - **ADDED**: README "About this project": developed by Mohamed Sabek during his research at the IHT Lab, University of Alberta; used alongside other tools to build the CIVAD dataset.
 - **FIXED**: README device table now says Apple Silicon uses MPS (the GPU) by default.
 - **CHANGED**: Public contact changed from a personal Gmail to **Sabek@ualberta.ca** in `PERMISSIONS.md` and `SECURITY.md` (the `SECURITY.md` contact TODO is resolved).
 
 ### Web (app screens)
+- **FIXED**: The "Multi-Layer Annotations" feature card claimed users can "create bounding boxes, segmentation masks, and polygon annotations". There is no polygon tool: SAM3 returns masks, and manual drawing is boxes only. The card now says that.
+- **FIXED**: The export dialog advertised `png_masks` as "PNG mask images with class-specific coloring" and offered a `.png` extension, but that exporter writes a per-class colour map and mask metadata JSON, no PNG files. The description now says what it actually produces.
+- **FIXED**: The export dialog's "Include images" checkbox did nothing: the wizard never sent it and the exporter always bundles the images. It is now a plain statement that images are included, instead of a control that pretends to be a choice.
 - **FIXED**: The theme menu in the floating dock (bottom-right; the dock is hidden on `/projects` and `/labeling/*`, so this affects `/admin` and other pages that show it) always opened downwards, so at 1440x900 the whole Light / Dark / System panel rendered below the viewport and was unreachable. It now flips upwards when there is less than ~230 px below. Measured after the fix: button bottom 880, panel top 638 / bottom 834, fully on screen; the header version on `/projects` still opens downwards.
 - **FIXED**: The finished-export screen said "Step 4 of 3" in the wizard header; it now says "Done".
 
@@ -34,6 +41,9 @@
 - **FIXED**: `.gitignore` now ignores `.devstack` and `apps/inference/models` when they are symlinks; `.evidence/` (local test screenshots) is ignored.
 
 ### Deployment
+- **FIXED**: The API Docker image had no **ffmpeg**, which the API shells out to for video frame extraction, so every `slice_video` job would have failed on any Docker or Railway deployment (`apps/inference` had it, `apps/api` did not). Added to `apps/api/Dockerfile`.
+- **FIXED**: In `docker-compose.prod.yml` the api and worker containers did not share the exports directory, and exports are written to local disk by whichever process runs the job (the worker) then served over HTTP by the api. Every export download would have 404'd. Both services now mount a shared `exports_data` volume at `/app/apps/api/exports`.
+- **FIXED**: Pascal VOC exports wrote `<folder>images</folder>` while the exporter creates `JPEGImages/`. The XML now matches the directory.
 - **FIXED**: Deployment templates and guides updated for production (see `DEPLOYMENT.md`, `RAILWAY_DEPLOYMENT.md`, `docker-compose.prod.yml`, env templates): access-control variables, Railway build context (repo root + Dockerfile path), API runs `/start.sh` so migrations apply, worker start command fixed (`bun --cwd apps/api run start`; the old root `bun run start` did not exist) and marked required, web container gets the Clerk key and API URL, S3 credentials required (no `minioadmin` fallback), bucket no longer public, `S3_ENDPOINT` overridable, `HF_TOKEN` passed to inference, Clerk production setup documented.
 
 ### Verification (2026-09-21)

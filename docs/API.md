@@ -31,6 +31,14 @@ definitions directly from the source.
 Ownership is enforced: project/asset/class/tag/annotation routes only operate on
 resources owned by the authenticated user.
 
+- **Access-approval gate:** a valid token is not sufficient. New accounts start
+  with `accessStatus: "pending"` and receive `403 { error: "pending_approval",
+  accessStatus }` on **every** authenticated route except
+  `GET /auth/access-status` and `POST /access-requests`, until an admin approves
+  them. The admin is the account whose email matches `ADMIN_EMAIL`; with that
+  variable unset there is no admin and nobody can be approved. Routes under
+  `/admin` return `403 { error: "Forbidden" }` for non-admins.
+
 ---
 
 ## Health
@@ -48,6 +56,17 @@ resources owned by the authenticated user.
 | POST | `/auth/register` | No | `{ email, password }` (password >= 6 chars) | `{ user, token }`; `400` if invalid/exists |
 | POST | `/auth/login` | No | `{ email, password }` | `{ user, token }`; `401` on bad credentials |
 | GET | `/auth/me` | Yes | — | Current user `{ id, email, createdAt }`; `404` if not found |
+
+---
+
+## Access control and admin
+
+| Method | Path | Auth | Params (body) | Response |
+|--------|------|------|---------------|----------|
+| GET | `/auth/access-status` | Yes (allowed while pending) | - | `{ status, isAdmin, email, requested }` |
+| POST | `/access-requests` | Yes (allowed while pending) | `{ name?, institution, phone?, useCase }` (`institution` and `useCase` required) | `{ status: "pending", emailSent, emailReason }`; sets the account to `pending` and notifies the admin when `RESEND_API_KEY` is set |
+| GET | `/admin/access-requests` | Yes (admin only) | - | Accounts that requested access or are not approved, pending first |
+| POST | `/admin/access-requests/:userId/decision` | Yes (admin only) | `{ decision: "approve" \| "deny" }` | Updated account; `400` on an invalid decision, `404` unknown user, `403` when denying the admin account |
 
 ---
 

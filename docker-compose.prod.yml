@@ -125,6 +125,11 @@ services:
         condition: service_healthy
       minio:
         condition: service_healthy
+    volumes:
+      # Exports are written to local disk by whichever process runs the export
+      # job, and served over HTTP by the api. The worker runs those jobs, so both
+      # containers must share this directory or downloads 404.
+      - exports_data:/app/apps/api/exports
     restart: unless-stopped
     networks:
       - lableit-network
@@ -283,6 +288,9 @@ services:
         condition: service_healthy
       api:
         condition: service_healthy
+    volumes:
+      # Same exports directory as the api service, see the note there.
+      - exports_data:/app/apps/api/exports
     restart: unless-stopped
     networks:
       - lableit-network
@@ -297,6 +305,8 @@ services:
 
 volumes:
   postgres_data:
+    driver: local
+  exports_data:
     driver: local
   minio_data:
     driver: local

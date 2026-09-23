@@ -2788,7 +2788,7 @@ function getFormatDescription(format: ExportFormat): string {
     'yolo_detect': 'YOLO format for object detection with normalized bounding boxes',
     'yolo_segment': 'YOLO format for instance segmentation with polygon points',
     'voc': 'Pascal VOC XML format for object detection',
-    'png_masks': 'PNG mask images with class-specific coloring',
+    'png_masks': 'Per-class colour map plus per-image mask metadata (JSON). Mask PNG files are not generated.',
     'createml': 'Apple CreateML JSON format for training on iOS/macOS',
     'tfrecord_meta': 'TensorFlow TFRecord metadata with Python conversion script',
     'labelme': 'LabelMe JSON format for polygon annotations'

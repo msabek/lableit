@@ -530,7 +530,7 @@ export async function exportToVOC(
     const fileName = exportFileName(asset);
     const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <annotation>
-    <folder>images</folder>
+    <folder>JPEGImages</folder>
     <filename>${fileName}</filename>
     <path>${asset.uri}</path>
     <source>

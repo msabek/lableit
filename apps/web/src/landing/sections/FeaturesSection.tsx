@@ -19,8 +19,8 @@ const features = [
   },
   {
     icon: Layers,
-    title: 'Multi-Layer Annotations',
-    description: 'Create bounding boxes, segmentation masks, and polygon annotations all in one unified interface.',
+    title: 'Boxes and Masks',
+    description: 'SAM3 returns boxes and segmentation masks together; draw or adjust boxes yourself, with mask opacity you control.',
     color: 'purple'
   },
   {

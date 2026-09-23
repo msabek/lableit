@@ -6,11 +6,14 @@
 
 FROM oven/bun:1.3.12 AS base
 # openssl is required by Prisma's query engine at runtime.
+# ffmpeg is required at runtime to slice uploaded videos into frames
+# (apps/api/src/index.ts, FFMPEG_PATH). Without it, every slice_video job fails.
 RUN apt-get update && apt-get install -y \
     python3 \
     make \
     g++ \
     openssl \
+    ffmpeg \
     && rm -rf /var/lib/apt/lists/*
 
 # --- Dependencies stage --------------------------------------------------------

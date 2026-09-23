@@ -10,17 +10,18 @@ definitions directly from the source.
 - All request/response bodies are JSON unless noted (CSV import/export and file
   upload use `multipart/form-data`).
 - **Authentication:** every route requires a `Bearer` token **except** the
-  public routes listed below. The token may be a **Clerk** session JWT
-  (verified first) or a legacy `@fastify/jwt` token issued by
-  `/auth/register` / `/auth/login`.
+  public routes listed below. The token is a **Clerk** session JWT. A legacy
+  `@fastify/jwt` verification path is still accepted for tokens issued out of
+  band; the password registration and login routes that used to mint them were
+  removed before the public release (they were unauthenticated and could claim
+  the `ADMIN_EMAIL` address).
 
   ```
   Authorization: Bearer <token>
   ```
 
-- **Public (no auth) routes:** `GET /health`, `POST /auth/register`,
-  `POST /auth/login`, `GET /inference/models/status`, `GET /inference/gpu`,
-  `GET /inference/config`.
+- **Public (no auth) routes:** `GET /health`, `GET /inference/models/status`,
+  `GET /inference/gpu`, `GET /inference/config`.
 - **Export file downloads** (`GET /exports/<file>`) are not Bearer-authenticated;
   they require a single-use `?token=` query parameter (the export download
   token). The export **status** endpoint uses normal Bearer auth.
@@ -53,8 +54,6 @@ resources owned by the authenticated user.
 
 | Method | Path | Auth | Params (body) | Response |
 |--------|------|------|---------------|----------|
-| POST | `/auth/register` | No | `{ email, password }` (password >= 6 chars) | `{ user, token }`; `400` if invalid/exists |
-| POST | `/auth/login` | No | `{ email, password }` | `{ user, token }`; `401` on bad credentials |
 | GET | `/auth/me` | Yes | — | Current user `{ id, email, createdAt }`; `404` if not found |
 
 ---

@@ -510,8 +510,11 @@ these. Annotations save as you make them, so there is no save shortcut to press.
   its CORS.
 - The API enforces Clerk JWT auth, the access-approval gate, per-resource ownership
   checks, input validation, security headers (helmet), and single-use, time-limited
-  export download tokens. Three read-only status routes are deliberately public
-  (`/health`, `/inference/models/status`, `/inference/gpu`, `/inference/config`).
+  export download tokens. Four read-only status routes are deliberately public
+  (`/health`, `/inference/models/status`, `/inference/gpu`, `/inference/config`);
+  everything else needs a Clerk session. Password registration and login were
+  removed before release, so the admin identity can only come from a verified
+  Clerk sign-in.
 - Report vulnerabilities privately, see [`SECURITY.md`](./SECURITY.md).
 
 ---

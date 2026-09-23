@@ -344,15 +344,9 @@ export interface InferenceModel {
 // ================================
 // Auth API
 // ================================
+// Password login and registration were removed from the API before the public
+// release; sign-in is Clerk only.
 export const auth = {
-  login: async (email: string, password: string): Promise<AuthResponse> => {
-    const response = await api.post('/auth/login', { email, password });
-    return response.data;
-  },
-  register: async (email: string, password: string): Promise<AuthResponse> => {
-    const response = await api.post('/auth/register', { email, password });
-    return response.data;
-  },
   me: async (): Promise<User> => {
     const response = await api.get('/auth/me');
     return response.data;

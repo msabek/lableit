@@ -10,7 +10,6 @@ import { PrismaClient } from '@prisma/client';
 import { Redis } from 'ioredis';
 import { Queue, Worker, Job } from 'bullmq';
 import pino from 'pino';
-import bcrypt from 'bcrypt';
 import {
   DeleteObjectCommand,
   GetObjectCommand,
@@ -496,7 +495,13 @@ if (runWorker) {
 // Job Handlers
 // ================================
 async function handleVideoSlicing(job: Job) {
-  const { videoUri, intervalSec, projectId, dbJobId, tagIds } = job.data;
+  const { videoUri, intervalSec: rawIntervalSec, projectId, dbJobId, tagIds } = job.data;
+  // Re-validate here as well: this value ends up in the ffmpeg filtergraph, and a
+  // job could have been queued before the route-level check existed.
+  const intervalSec = Number(rawIntervalSec);
+  if (!Number.isFinite(intervalSec) || intervalSec <= 0 || intervalSec > 3600) {
+    throw new Error(`Invalid intervalSec: ${String(rawIntervalSec)}`);
+  }
 
   if (!videoUri || !projectId) {
     throw new Error('videoUri and projectId are required for video slicing');
@@ -1083,8 +1088,6 @@ async function deleteExportToken(token: string) {
 app.addHook('preHandler', async (request, reply) => {
   const publicRoutes = [
     '/health',
-    '/auth/register',
-    '/auth/login',
     '/inference/models/status',
     '/inference/gpu',
     '/inference/config'
@@ -1152,10 +1155,13 @@ app.addHook('preHandler', async (request, reply) => {
   // fresh/re-created admin row is never locked out of its own approval screen).
   const account = await prisma.user.findUnique({
     where: { id: userId },
-    select: { email: true, accessStatus: true },
+    select: { email: true, accessStatus: true, externalId: true },
   });
   const email = (account?.email || '').toLowerCase();
-  const isAdmin = isAdminEmail(email);
+  // Defence in depth: the email alone must not confer admin. The row also has to
+  // be linked to a Clerk identity, so an account created by any other means
+  // cannot claim the admin address.
+  const isAdmin = isAdminEmail(email) && !!account?.externalId;
   const approved = isAdmin || account?.accessStatus === 'approved';
   (request as any).user = {
     userId,
@@ -1293,68 +1299,11 @@ app.get('/health', async (request, reply) => {
 // ================================
 // Authentication Routes
 // ================================
-app.post('/auth/register', async (request, reply) => {
-  const { email, password } = request.body as { email: string; password: string };
-
-  // Input validation
-  if (!email || !password) {
-    return reply.status(400).send({ error: 'Email and password are required' });
-  }
-
-  if (typeof email !== 'string' || typeof password !== 'string') {
-    return reply.status(400).send({ error: 'Email and password must be strings' });
-  }
-
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  if (!emailRegex.test(email)) {
-    return reply.status(400).send({ error: 'Invalid email format' });
-  }
-
-  if (password.length < 6) {
-    return reply.status(400).send({ error: 'Password must be at least 6 characters long' });
-  }
-
-  const existingUser = await prisma.user.findUnique({ where: { email } });
-  if (existingUser) {
-    return reply.status(400).send({ error: 'User already exists' });
-  }
-
-  const hashedPassword = await bcrypt.hash(password, 10);
-  const user = await prisma.user.create({
-    data: { email, password: hashedPassword },
-    select: { id: true, email: true, createdAt: true }
-  });
-
-  const token = app.jwt.sign({ userId: user.id });
-  return { user, token };
-});
-
-app.post('/auth/login', async (request, reply) => {
-  const { email, password } = request.body as { email: string; password: string };
-
-  // Input validation
-  if (!email || !password) {
-    return reply.status(400).send({ error: 'Email and password are required' });
-  }
-
-  if (typeof email !== 'string' || typeof password !== 'string') {
-    return reply.status(400).send({ error: 'Email and password must be strings' });
-  }
-
-  const user = await prisma.user.findUnique({ where: { email } });
-  if (!user) {
-    return reply.status(401).send({ error: 'Invalid credentials' });
-  }
-
-  const validPassword = await bcrypt.compare(password, user.password);
-  if (!validPassword) {
-    return reply.status(401).send({ error: 'Invalid credentials' });
-  }
-
-  const token = app.jwt.sign({ userId: user.id });
-  return { user: { id: user.id, email: user.email, createdAt: user.createdAt }, token };
-});
-
+// Password registration and login were removed before the public release.
+// Sign-in is Clerk only (see apps/web), and these routes were unauthenticated,
+// unused by the web app, and able to mint an account with any email address,
+// including the ADMIN_EMAIL one, which handed out admin rights. The legacy
+// @fastify/jwt verification below is kept for tokens issued out of band.
 app.get('/auth/me', async (request, reply) => {
   const userId = (request as any).user.userId;
   const user = await prisma.user.findUnique({
@@ -2807,10 +2756,18 @@ app.post('/jobs/batch', async (request, reply) => {
 app.post('/projects/:projectId/slice-video', async (request, reply) => {
   const userId = (request as any).user.userId;
   const { projectId } = request.params as { projectId: string };
-  const { videoUri, intervalSec, tagIds } = request.body as { videoUri: string; intervalSec: number; tagIds?: string[] };
+  const { videoUri, intervalSec, tagIds } = request.body as { videoUri: string; intervalSec: unknown; tagIds?: string[] };
 
   if (!videoUri) {
     return reply.status(400).send({ error: 'Video URI is required' });
+  }
+
+  // intervalSec is interpolated into the ffmpeg filtergraph ("fps=1/<n>"), so it
+  // must be a plain number. A string such as "1,drawtext=textfile=..." would add
+  // filters of the caller's choosing to the command the worker runs.
+  const interval = Number(intervalSec);
+  if (!Number.isFinite(interval) || interval <= 0 || interval > 3600) {
+    return reply.status(400).send({ error: 'intervalSec must be a number greater than 0 and at most 3600' });
   }
 
   const project = await prisma.project.findFirst({
@@ -2839,13 +2796,13 @@ app.post('/projects/:projectId/slice-video', async (request, reply) => {
     data: {
       kind: 'slice_video',
       status: 'queued',
-      params: { videoUri, intervalSec, projectId, tagIds: tagIdList }
+      params: { videoUri, intervalSec: interval, projectId, tagIds: tagIdList }
     }
   });
 
   await jobQueue.add(
     'slice_video',
-    { videoUri, intervalSec, projectId, dbJobId: dbJob.id, tagIds: tagIdList },
+    { videoUri, intervalSec: interval, projectId, dbJobId: dbJob.id, tagIds: tagIdList },
     { jobId: dbJob.id }
   );
 

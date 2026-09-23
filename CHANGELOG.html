@@ -35,6 +35,7 @@
   <nav class="toc">
     <strong>On this page</strong>
     <ol>
+      <li><a href="#release-blockers">Two release blockers found by the pre-publication security review</a> <span>2026-09-23</span></li>
       <li><a href="#hardening">Authorization gaps closed, dead controls removed</a> <span>2026-09-23</span></li>
       <li><a href="#readme">README rebuilt as the front door, and the claims behind it checked</a> <span>2026-09-22</span></li>
       <li><a href="#app-screens">Signed-in screens photographed, and two bugs they exposed</a> <span>2026-09-21</span></li>
@@ -46,6 +47,21 @@
     </ol>
     <p>Everything above is part of the <strong>1.0.0 public academic release</strong> (released 2026-09-21).</p>
   </nav>
+
+  <article>
+    <h2 id="release-blockers">Two release blockers found by the pre-publication security review</h2>
+    <time datetime="2026-09-23">2026-09-23</time>
+    <ul>
+      <li><strong>Anyone could have made themselves the admin.</strong> An old password sign-up route, unused by the app but still open to the internet, let a stranger register using the admin's own email address. The server then treated them as the admin: every applicant's email, institution and phone, and the power to approve or reject anyone. Changing one letter to a capital defeated the "email already taken" check, so it worked even with the real admin in place, and the fake admin could not be removed from inside the app. Both legacy routes are deleted, and admin now additionally requires a Google-verified identity.</li>
+      <li><strong>The video frame interval was passed to ffmpeg unchecked.</strong> It is placed directly into the command the server runs, so a crafted value could add extra instructions, for example rendering a server configuration file onto the extracted frames, which land in the requester's own project where they can be viewed. It is now validated as a number at the request and again in the worker.</li>
+      <li>Both were found by an independent security review of the branch and each was confirmed by a second, adversarial check before being fixed.</li>
+    </ul>
+    <h3>References</h3>
+    <ul>
+      <li>File: <a href="apps/api/src/index.ts">apps/api/src/index.ts</a>; docs updated in <a href="docs/API.md">docs/API.md</a> and <a href="README.md">README.md</a>; dead client helpers removed from <a href="apps/web/src/api.ts">apps/web/src/api.ts</a></li>
+      <li>Verification: <a href=".evidence/2026-09-23/security-fix-verify/">.evidence/2026-09-23/security-fix-verify/</a></li>
+    </ul>
+  </article>
 
   <article>
     <h2 id="hardening">Authorization gaps closed, dead controls removed</h2>

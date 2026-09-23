@@ -170,7 +170,7 @@ export const ExportWizard: React.FC<ExportWizardProps> = ({
 </annotation>`;
 
       case 'png_masks':
-        return `# PNG Masks format\n# Each annotation saved as a separate PNG file\n# Mask pixels: white (255) = object, black (0) = background\n# Filename: image_001_annotation_0.png`;
+        return `# PNG Masks format\n# class_colors.txt  -> "car: rgb(239, 68, 68)" per class\n# masks/mask_metadata.json -> per-image mask entries (RLE and/or polygon)\n# Note: mask PNG files are not generated; use the metadata to render them.`;
 
       case 'createml':
         return JSON.stringify({

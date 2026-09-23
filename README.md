@@ -276,10 +276,13 @@ Install ffmpeg: `brew install ffmpeg` (macOS), `sudo apt install ffmpeg`
 
 > Run each service in its **own terminal**, they are long-running processes.
 >
-> **macOS one-click:** after the one-time setup (steps 1, 3, 4 and 5 below), just
-> double-click **`run.command`** in Finder. It starts the infrastructure and all
-> three services, opens the app, and stops everything on Ctrl+C.
-> **Windows:** `run.bat` gives you a guided menu for the same thing.
+> **macOS one-click:** **`run.command`** starts everything (local database, cache,
+> storage, then the API, inference and web services), opens the app, and stops it
+> all on Ctrl+C. It does **not** use Docker: it expects native tooling and a
+> prepared `.devstack` folder, namely `brew install postgresql@16 redis`, a MinIO
+> binary at `.devstack/bin/minio`, and an initialised `.devstack/pg` data
+> directory. If you would rather use Docker, follow the numbered steps below
+> instead. **Windows:** `run.bat` gives you a guided menu.
 
 ### 1. Clone and configure
 
@@ -389,7 +392,7 @@ Templates: root [`.env.example`](./.env.example) (full local stack),
 | `REDIS_URL` | `redis://localhost:6380` | Redis (BullMQ) |
 | `INFERENCE_URL` | `http://localhost:8001` | Inference service base URL |
 | `S3_ENDPOINT` / `S3_ACCESS_KEY` / `S3_SECRET_KEY` / `S3_BUCKET` | MinIO defaults | S3-compatible object storage. Must be reachable from the browser, because media is served through presigned links. |
-| `JWT_SECRET` | none (**required**) | Signing secret. The API fails fast in production if unset. |
+| `JWT_SECRET` | none (**required in production**) | Signing secret. Production fails fast if unset; development generates a throwaway one per restart. |
 | `INFERENCE_ALLOWED_ORIGINS` | `*` | CORS allowlist for the inference service |
 | `INFERENCE_SHARED_SECRET` | none | Reserved. The API does not send this header yet, so leave it unset and keep inference on a private network. |
 | `INFERENCE_TIMEOUT_MS` | `60000` | Per-request inference timeout |
@@ -400,6 +403,10 @@ Templates: root [`.env.example`](./.env.example) (full local stack),
 | `RUN_HTTP_SERVER` | `true` | `false` disables the API HTTP listener |
 | `FFMPEG_PATH` | `ffmpeg` | Path to the ffmpeg binary |
 | `LABLEIT_DEVICE` | auto | Force the inference device: `cuda`, `mps` or `cpu` |
+| `INFERENCE_USE_AUTOCAST` | off | `1` enables bf16 autocast on CUDA |
+| `VITE_API_URL` | `http://localhost:3001` in dev, `/api` otherwise | Where the web app looks for the API |
+| `PORT` / `API_HOST` | `3001` / `0.0.0.0` | API listener |
+| `S3_REGION` / `LOG_LEVEL` | `us-east-1` / `info` | Storage region and log verbosity |
 | `HF_TOKEN` | none | Hugging Face token. `facebook/sam3` is a gated model, so a token with access is needed for the Hugging Face download path. |
 
 ---
@@ -430,7 +437,7 @@ Override it with `LABLEIT_DEVICE`.
 
 | Host | Default device | Notes |
 |------|----------------|-------|
-| NVIDIA GPU | `cuda` | Fastest. bf16 autocast enabled. |
+| NVIDIA GPU | `cuda` | Fastest. bf16 autocast is **off by default**; enable it with `INFERENCE_USE_AUTOCAST=1`. |
 | Apple Silicon (Mac) | `mps` | Uses the Mac's GPU. A compatibility shim adapts SAM3's CUDA-only code to float32; some operations fall back to CPU (`PYTORCH_ENABLE_MPS_FALLBACK=1`), so MPS is not always faster than CPU. |
 | Apple Silicon, CPU only | `cpu` | Set `LABLEIT_DEVICE=cpu`. Works out of the box, roughly 6 s per image. |
 | No accelerator / cloud CPU | `cpu` | Functional, but slow and memory-heavy on large images. Railway has no GPUs. |
@@ -504,7 +511,8 @@ Annotations save as you make them, so there is no save shortcut to press.
   its CORS.
 - The API enforces Clerk JWT auth, the access-approval gate, per-resource ownership
   checks, input validation, security headers (helmet), and single-use, time-limited
-  export download tokens.
+  export download tokens. Three read-only status routes are deliberately public
+  (`/health`, `/inference/models/status`, `/inference/gpu`, `/inference/config`).
 - Report vulnerabilities privately, see [`SECURITY.md`](./SECURITY.md).
 
 ---

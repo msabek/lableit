@@ -55,6 +55,7 @@
       <li><strong>Claims checked against the code:</strong> the export dialog described <code>png_masks</code> as producing PNG images (it produces a colour map and metadata JSON), and its "Include images" checkbox did nothing. Both now tell the truth.</li>
       <li><strong>Production bug found on the way:</strong> the api and worker containers did not share the exports folder, so every export download would have failed on a self-hosted deployment. They now share a volume.</li>
       <li><strong>Docs:</strong> the four access-control and admin routes were missing from the API reference. Added, along with the approval gate's behaviour.</li>
+      <li><strong>Second accuracy pass:</strong> a fresh read of the code caught four more wrong statements, two of them in the new README: bf16 autocast is off by default on CUDA, and the macOS one-click launcher does not use Docker (it needs Homebrew Postgres 16, Redis and a MinIO binary). Also corrected: the security note now lists the deliberately public status routes, and the export wizard's PNG-masks preview no longer claims to write PNG files.</li>
     </ul>
     <h3>The new README, in the shots it now uses</h3>
     <div class="grid">

@@ -58,7 +58,7 @@ Repo layout
       - Modal preview with previous/next asset navigation and keyboard shortcuts
       - Sidebar logo click can navigate back to projects/home
     - src/components/labeling/AssetGrid.tsx: paginates large asset sets and prefetches signed URLs only for the visible page
-    - src/ExportPanel.tsx: Export dialog with format selection
+    - src/components/ExportWizard.tsx: Export dialog: choose one of 8 formats, preview, then export
       - Real-time progress bar with percentage and status messages
       - Descriptive filenames: YYYY-MM-DD_HHMM_format_Nimages.zip
     - src/contexts/SettingsContext.tsx: Theme and settings state management (dark/light/system + palette themes: indigo/ocean/sunset/forest)

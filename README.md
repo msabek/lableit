@@ -458,14 +458,13 @@ These are the shortcuts that are wired up in the labeling workspace today:
 | `Ctrl` + `Shift` + `P` | Run preview on 3 sample assets |
 | `Ctrl` + `Enter` | Run batch inference on every asset |
 | `Ctrl` + `E` | Open the export wizard |
-| `Esc` | Close the preview, or leave the project |
+| `Esc` | Close the preview, or leave the project (a no-op while a dialog is open) |
 | `←` `→` | Move between assets while the preview is open |
 | `Del` / `Backspace` | Delete the selected annotation (on the canvas) |
 | `?` | Show the in-app shortcut list |
 
-The in-app list (`?`) is currently broader than what is implemented: undo and redo,
-class assignment by number, and the `G` chords are listed there but not yet wired.
-Annotations save as you make them, so there is no save shortcut to press.
+The in-app list (press `?`, or the Shortcuts button in the sidebar) shows exactly
+these. Annotations save as you make them, so there is no save shortcut to press.
 
 ---
 

@@ -1209,6 +1209,15 @@ app.post('/access-requests', async (request, reply) => {
   if (current?.accessStatus === 'approved') {
     return { status: 'approved' };
   }
+  // A denied account must not be able to re-open its own request, otherwise the
+  // admin's decision can be undone from the outside. Only the admin can move a
+  // denied account back to approved.
+  if (current?.accessStatus === 'denied') {
+    return reply.status(403).send({
+      status: 'denied',
+      error: 'Your access request was declined. Contact the administrator to have it reconsidered.',
+    });
+  }
   const name = (body.name || '').trim();
   const updated = await prisma.user.update({
     where: { id: userId },
@@ -1803,6 +1812,30 @@ app.post('/projects/:projectId/classes/import', async (request, reply) => {
 });
 
 // ================================
+// Project-scope guards
+// ================================
+// Owning the asset is not enough: a class or tag id that arrives in a request
+// body must also live in the same project as the thing it is being attached to.
+// Without this a caller can point their own data at another project's (or
+// another user's) class or tag. Duplicate ids are collapsed so a repeated but
+// valid id still passes the count check.
+async function classesBelongToProjects(classIds: string[], projectIds: string[]): Promise<boolean> {
+  const ids = [...new Set(classIds)];
+  if (ids.length === 0) return true;
+  const found = await prisma.classDef.count({
+    where: { id: { in: ids }, projectId: { in: projectIds } }
+  });
+  return found === ids.length;
+}
+
+async function tagsBelongToProject(tagIds: string[], projectId: string): Promise<boolean> {
+  const ids = [...new Set(tagIds)];
+  if (ids.length === 0) return true;
+  const found = await prisma.tag.count({ where: { id: { in: ids }, projectId } });
+  return found === ids.length;
+}
+
+// ================================
 // Tag Routes
 // ================================
 app.get('/projects/:projectId/tags', async (request, reply) => {
@@ -2305,6 +2338,13 @@ app.post('/upload', async (request, reply) => {
       return reply.status(404).send({ error: 'Project not found' });
     }
 
+    // Scope the tags to the target project before anything is written, so a bad
+    // tagId cannot leave an orphaned asset row and S3 object behind.
+    const tagIdArray = (tagIds || '').split(',').map(t => t.trim()).filter(Boolean);
+    if (!(await tagsBelongToProject(tagIdArray, projectId))) {
+      return reply.status(400).send({ error: 'One or more tags not found in this project' });
+    }
+
     const data = await request.file();
     if (!data) {
       return reply.status(400).send({ error: 'File required' });
@@ -2408,19 +2448,16 @@ app.post('/upload', async (request, reply) => {
 
     app.log.info(`Created asset: ${asset.id} (${asset.sourceType})`);
 
-    // Apply tags if provided
-    if (tagIds) {
-      const tagIdArray = tagIds.split(',').filter(id => id.trim());
-      if (tagIdArray.length > 0) {
-        await prisma.assetTag.createMany({
-          data: tagIdArray.map(tagId => ({
-            assetId: asset.id,
-            tagId: tagId.trim()
-          })),
-          skipDuplicates: true
-        });
-        app.log.info(`Applied ${tagIdArray.length} tags to asset ${asset.id}`);
-      }
+    // Apply tags if provided (already scoped to this project above)
+    if (tagIdArray.length > 0) {
+      await prisma.assetTag.createMany({
+        data: tagIdArray.map(tagId => ({
+          assetId: asset.id,
+          tagId
+        })),
+        skipDuplicates: true
+      });
+      app.log.info(`Applied ${tagIdArray.length} tags to asset ${asset.id}`);
     }
 
     return { asset, filename, bucket: S3_BUCKET };
@@ -2469,6 +2506,10 @@ app.post('/assets/:assetId/annotations', async (request, reply) => {
     return reply.status(404).send({ error: 'Asset not found' });
   }
 
+  if (!classId || !(await classesBelongToProjects([classId], [asset.projectId]))) {
+    return reply.status(400).send({ error: 'classId not found in this project' });
+  }
+
   const annotation = await prisma.annotation.create({
     data: {
       assetId,
@@ -2497,10 +2538,15 @@ app.put('/annotations/:id', async (request, reply) => {
   };
 
   const annotation = await prisma.annotation.findFirst({
-    where: { id, asset: { project: { ownerId: userId } } }
+    where: { id, asset: { project: { ownerId: userId } } },
+    include: { asset: { select: { projectId: true } } }
   });
   if (!annotation) {
     return reply.status(404).send({ error: 'Annotation not found' });
+  }
+
+  if (classId && !(await classesBelongToProjects([classId], [annotation.asset.projectId]))) {
+    return reply.status(400).send({ error: 'classId not found in this project' });
   }
 
   return await prisma.annotation.update({
@@ -2664,9 +2710,13 @@ app.get('/jobs/:id', async (request, reply) => {
   };
 });
 
-// Validate that every supplied assetId belongs to a project owned by the caller.
+// Validate that every supplied assetId belongs to a project owned by the caller,
+// and that every supplied class id lives in one of those same projects. The
+// worker matches a detection by class name and writes classMatch.id straight into
+// annotation.classId, so an unchecked id attaches the caller's detections to
+// another project's class.
 // Returns null when valid, or an error message when validation should reject.
-async function validateAssetOwnership(userId: string, assetIds: unknown): Promise<string | null> {
+async function validateJobTargets(userId: string, assetIds: unknown, classes: unknown): Promise<string | null> {
   if (!Array.isArray(assetIds) || assetIds.length === 0) {
     return 'assetIds array is required';
   }
@@ -2674,21 +2724,44 @@ async function validateAssetOwnership(userId: string, assetIds: unknown): Promis
   if (ids.length !== assetIds.length || ids.length === 0) {
     return 'assetIds must be a non-empty array of strings';
   }
-  const ownedCount = await prisma.asset.count({
-    where: { id: { in: ids }, project: { ownerId: userId } }
+  const owned = await prisma.asset.findMany({
+    where: { id: { in: ids }, project: { ownerId: userId } },
+    select: { projectId: true }
   });
-  if (ownedCount !== ids.length) {
+  if (owned.length !== ids.length) {
     return 'One or more assets do not belong to you';
+  }
+
+  if (classes === undefined) {
+    return null;
+  }
+  if (!Array.isArray(classes)) {
+    return 'classes must be an array';
+  }
+  const classIds = classes
+    .map((c: any) => c?.id)
+    .filter((c: unknown): c is string => typeof c === 'string');
+  if (classIds.length !== classes.length) {
+    return 'classes must be an array of objects with a string id';
+  }
+  // One project per job, so "the assets' project" is unambiguous and a class from
+  // a second project cannot ride along on a mixed batch.
+  const projectIds = [...new Set(owned.map(a => a.projectId))];
+  if (projectIds.length !== 1) {
+    return 'assetIds must all belong to one project';
+  }
+  if (!(await classesBelongToProjects(classIds, projectIds))) {
+    return 'One or more classes do not belong to the assets project';
   }
   return null;
 }
 
 app.post('/jobs/preview', async (request, reply) => {
   const userId = (request as any).user.userId;
-  const body = request.body as { assetIds?: unknown };
+  const body = request.body as { assetIds?: unknown; classes?: unknown };
 
-  // IDOR guard: only enqueue inference for assets the caller owns.
-  const ownershipError = await validateAssetOwnership(userId, body.assetIds);
+  // IDOR guard: only enqueue inference for assets and classes the caller owns.
+  const ownershipError = await validateJobTargets(userId, body.assetIds, body.classes);
   if (ownershipError) {
     return reply.status(403).send({ error: ownershipError });
   }
@@ -2710,10 +2783,10 @@ app.post('/jobs/preview', async (request, reply) => {
 
 app.post('/jobs/batch', async (request, reply) => {
   const userId = (request as any).user.userId;
-  const body = request.body as { assetIds?: unknown };
+  const body = request.body as { assetIds?: unknown; classes?: unknown };
 
-  // IDOR guard: only enqueue inference for assets the caller owns.
-  const ownershipError = await validateAssetOwnership(userId, body.assetIds);
+  // IDOR guard: only enqueue inference for assets and classes the caller owns.
+  const ownershipError = await validateJobTargets(userId, body.assetIds, body.classes);
   if (ownershipError) {
     return reply.status(403).send({ error: ownershipError });
   }
@@ -2747,17 +2820,32 @@ app.post('/projects/:projectId/slice-video', async (request, reply) => {
     return reply.status(404).send({ error: 'Project not found' });
   }
 
+  // The worker downloads videoUri from S3 verbatim and deletes that key once
+  // slicing finishes, so it must stay inside the prefix the upload route writes.
+  const projectPrefix = `projects/${projectId}/`;
+  if (!videoUri.startsWith(projectPrefix) || videoUri.split('/').includes('..')) {
+    return reply.status(400).send({ error: 'videoUri must be a file in this project' });
+  }
+
+  const tagIdList = tagIds ?? [];
+  if (!Array.isArray(tagIdList) || tagIdList.some(t => typeof t !== 'string')) {
+    return reply.status(400).send({ error: 'tagIds must be an array of strings' });
+  }
+  if (!(await tagsBelongToProject(tagIdList, projectId))) {
+    return reply.status(400).send({ error: 'One or more tags not found in this project' });
+  }
+
   const dbJob = await prisma.job.create({
     data: {
       kind: 'slice_video',
       status: 'queued',
-      params: { videoUri, intervalSec, projectId, tagIds: tagIds || [] }
+      params: { videoUri, intervalSec, projectId, tagIds: tagIdList }
     }
   });
 
   await jobQueue.add(
     'slice_video',
-    { videoUri, intervalSec, projectId, dbJobId: dbJob.id, tagIds: tagIds || [] },
+    { videoUri, intervalSec, projectId, dbJobId: dbJob.id, tagIds: tagIdList },
     { jobId: dbJob.id }
   );
 

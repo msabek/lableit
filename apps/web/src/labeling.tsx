@@ -11,7 +11,6 @@ import {
 } from './api';
 import { TagManager } from './components/labeling/TagManager';
 import AnnotationCanvas from './components/AnnotationCanvas';
-import ExportPanel from './ExportPanel';
 import ExportWizard from './components/ExportWizard';
 import VideoSliceDialog from './components/VideoSliceDialog';
 import ConfirmationModal from './components/ConfirmationModal';
@@ -22,19 +21,17 @@ import { useProjectData } from './hooks/useProjectData';
 import { useJobPolling } from './hooks/useJobPolling';
 import { useUploader } from './hooks/useUploader';
 import { useAssetAnnotation } from './hooks/useAssetAnnotation';
-import { useAnnotationHistory } from './hooks/useUndoRedo';
 // New UI components
 import { Sidebar } from './components/ui/Sidebar';
 import { EmptyState } from './components/ui/EmptyState';
 import { WorkflowStepperInline, WorkflowStep } from './components/ui/WorkflowStepper';
 import { KeyboardShortcutsModal, useKeyboardShortcuts, KeyHint } from './components/ui/KeyboardShortcuts';
 import { DragDropOverlay } from './components/ui/DragDropOverlay';
-import { FilterPresets, FilterState } from './components/labeling/FilterPresets';
 import { ThemeDropdown } from './components/ThemeToggle';
 import {
   Upload, Play, Settings, ChevronLeft, ChevronRight, Loader2,
   Download, RefreshCw, Check, AlertCircle, Video, Trash2, XCircle, Trash,
-  Undo2, Redo2, Home, Tag as TagIcon, Layers, Eye, FolderOpen
+  Home, Tag as TagIcon, Layers, Eye, FolderOpen
 } from 'lucide-react';
 
 interface LabelingProps {
@@ -90,7 +87,6 @@ export default function LabelingInterface({ onBack, projectId }: LabelingProps) 
   const [model, setModel] = useState('sam3');
   const [inferenceMode, setInferenceMode] = useState<InferenceMode>('boxes_and_masks');
   const [maskOpacity, setMaskOpacity] = useState(30); // Default 30% opacity for masks
-  const [showExport, setShowExport] = useState(false);
   const [clearingAnnotations, setClearingAnnotations] = useState(false);
   
   // Confirmation modal state
@@ -126,48 +122,26 @@ export default function LabelingInterface({ onBack, projectId }: LabelingProps) 
     return 'review';
   };
 
-  // Filter state
-  const [filterState, setFilterState] = useState<FilterState>({
-    annotationStatus: 'all',
-    classes: [],
-    dateRange: 'all',
-    confidenceMin: 0,
-    confidenceMax: 1
-  });
-
-  // Undo/Redo history
-  const annotationHistory = useAnnotationHistory();
-
-  // Keyboard shortcuts
-  const handleUndo = useCallback(() => {
-    const action = annotationHistory.undo();
-    if (action) {
-      refreshAssets();
-    }
-  }, [annotationHistory, refreshAssets]);
-
-  const handleRedo = useCallback(() => {
-    const action = annotationHistory.redo();
-    if (action) {
-      refreshAssets();
-    }
-  }, [annotationHistory, refreshAssets]);
+  // Removed: undo/redo history (useAnnotationHistory). Nothing ever recorded an
+  // action, so the stacks were always empty and the buttons permanently disabled;
+  // the hook could not restore previous annotation state through the API either.
 
   // Note: Functions like runPreview, runBatch, handleSelectAll, handleDeselectAll
   // are defined later in this component. We wrap them in arrow functions for lazy evaluation
   // to avoid Temporal Dead Zone (TDZ) errors during component initialization.
   const keyboardHandlers = {
-    'ctrl+z': handleUndo,
-    'ctrl+shift+z': handleRedo,
     'ctrl+e': () => setShowExportWizard(true),
     'ctrl+shift+p': () => runPreview(),
     'ctrl+enter': () => runBatch(),
     'escape': () => {
+      // Never navigate out of the project while a modal is on screen: each modal
+      // closes itself on Escape, so the global handler must stay out of the way.
+      if (anyModalOpen()) return;
       if (showPreviewModal) {
         setShowPreviewModal(false);
-      } else {
-        onBack();
+        return;
       }
+      onBack();
     },
     'u': () => document.getElementById('file-upload')?.click(),
     'a': () => handleSelectAll(),
@@ -175,6 +149,13 @@ export default function LabelingInterface({ onBack, projectId }: LabelingProps) 
   };
 
   const { showShortcuts, setShowShortcuts, closeShortcuts } = useKeyboardShortcuts(keyboardHandlers);
+
+  // True while any modal is on screen. Each modal handles its own Escape, so the
+  // global Escape handler must not navigate away from the project underneath them.
+  const anyModalOpen = () =>
+    showShortcuts || showExportWizard || showVideoSliceDialog || showClearConfirm ||
+    showDeleteAssetConfirm || showDeleteAllConfirm || showDeleteClassConfirm ||
+    showDeleteSelectedConfirm;
 
   // Handle drag-drop anywhere
   const handleGlobalFileDrop = useCallback((files: FileList) => {
@@ -562,7 +543,7 @@ export default function LabelingInterface({ onBack, projectId }: LabelingProps) 
 
   // Sidebar navigation items
   const sidebarItems = [
-    { id: 'projects', label: 'Projects', icon: <Home className="w-5 h-5" />, shortcut: 'G P', onClick: onBack },
+    { id: 'projects', label: 'Projects', icon: <Home className="w-5 h-5" />, onClick: onBack },
     { id: 'assets', label: 'Assets', icon: <Layers className="w-5 h-5" />, active: activeSection === 'assets', badge: projectAssets.length, onClick: () => scrollToSection(assetsRef, 'assets') },
     { id: 'classes', label: 'Classes', icon: <TagIcon className="w-5 h-5" />, active: activeSection === 'classes', badge: project?.classes.length, onClick: () => scrollToSection(classesRef, 'classes') },
     { id: 'preview', label: 'Preview', icon: <Eye className="w-5 h-5" />, active: showPreviewModal, onClick: () => selectedAsset ? setShowPreviewModal(true) : scrollToSection(assetsRef, 'assets') },
@@ -587,6 +568,7 @@ export default function LabelingInterface({ onBack, projectId }: LabelingProps) 
         onToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
         onItemClick={setActiveSection}
         onLogoClick={onBack}
+        onShortcutsClick={() => setShowShortcuts(true)}
       />
 
       {/* Main Content - adjusted for sidebar */}
@@ -615,27 +597,8 @@ export default function LabelingInterface({ onBack, projectId }: LabelingProps) 
                 </div>
               </div>
             <div className="flex items-center gap-3">
-              {/* Undo/Redo Buttons */}
-              {project && (
-                <div className="flex items-center gap-1 mr-2">
-                  <button
-                    onClick={handleUndo}
-                    disabled={!annotationHistory.canUndo}
-                    className="icon-button-glass disabled:opacity-30"
-                    title={`Undo (Ctrl+Z) - ${annotationHistory.undoCount} actions`}
-                  >
-                    <Undo2 className="w-4 h-4" />
-                  </button>
-                  <button
-                    onClick={handleRedo}
-                    disabled={!annotationHistory.canRedo}
-                    className="icon-button-glass disabled:opacity-30"
-                    title={`Redo (Ctrl+Shift+Z) - ${annotationHistory.redoCount} actions`}
-                  >
-                    <Redo2 className="w-4 h-4" />
-                  </button>
-                </div>
-              )}
+              {/* Removed: undo/redo buttons - no annotation action was ever recorded,
+                  so both were permanently disabled. */}
 
               {/* Selection Mode Toggle */}
               {project && projectAssets.length > 0 && (
@@ -1065,7 +1028,8 @@ export default function LabelingInterface({ onBack, projectId }: LabelingProps) 
 
             {/* Asset Grid with Filters */}
             <div ref={assetsRef} className="glass-card rounded-2xl p-6">
-              {/* Filter Bar */}
+              {/* Removed: FilterPresets - the filter it produced was never applied to
+                  the asset list. AssetGrid's All/Labeled/Unlabeled tabs do the real filtering. */}
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-lg font-semibold text-text flex items-center gap-2">
                   <div className="p-2 rounded-lg bg-indigo-500/20">
@@ -1073,14 +1037,6 @@ export default function LabelingInterface({ onBack, projectId }: LabelingProps) 
                   </div>
                   Assets ({projectAssets.length})
                 </h2>
-                {project && (
-                  <FilterPresets
-                    currentFilter={filterState}
-                    onFilterChange={setFilterState}
-                    availableClasses={project.classes.map(c => ({ id: c.id, name: c.name, color: c.color }))}
-                    projectId={project.id}
-                  />
-                )}
               </div>
 
               {/* Empty State or Asset Grid */}
@@ -1261,16 +1217,6 @@ export default function LabelingInterface({ onBack, projectId }: LabelingProps) 
           annotationCount={totalAnnotations}
           labeledAssetCount={projectAssets.filter(a => a.annotations && a.annotations.length > 0).length}
           onClose={() => setShowExportWizard(false)}
-        />
-      )}
-
-      {/* Legacy Export Panel Modal (fallback) */}
-      {showExport && project && (
-        <ExportPanel
-          datasetId={project.id}
-          datasetName={project.name}
-          classes={project.classes}
-          onClose={() => setShowExport(false)}
         />
       )}
 

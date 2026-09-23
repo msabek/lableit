@@ -109,17 +109,23 @@ export function useAssetAnnotation(project: Project | null) {
     }
   }, [selectedAsset, project]);
 
-  const handleUpdateDetection = useCallback(async (index: number, box: number[]) => {
+  // `commit` false updates the on-screen box only. The canvas passes false while a
+  // box is being dragged or resized and true once on mouse-up, so one gesture is
+  // one PATCH instead of one per mouse-move.
+  const handleUpdateDetection = useCallback(async (index: number, box: number[], commit = true) => {
     const det = assetDetections[index];
-    if (!det.id) return;
+    if (!det?.id) return;
+
+    setAssetDetections(prev => {
+      const next = [...prev];
+      next[index] = { ...next[index], box: box as Detection['box'] };
+      return next;
+    });
+
+    if (!commit) return;
 
     try {
       await annotationsApi.update(det.id, { box });
-      setAssetDetections(prev => {
-        const next = [...prev];
-        next[index] = { ...next[index], box: box as Detection['box'] };
-        return next;
-      });
     } catch (err) {
       setError('Failed to update annotation');
     }

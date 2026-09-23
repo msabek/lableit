@@ -7,34 +7,28 @@ interface Shortcut {
   category: string;
 }
 
+// Only shortcuts that are actually wired up belong in this list. Removed entries
+// (G P, G S, B, 1-9, Ctrl+S, Ctrl+Z, Ctrl+Shift+Z) were never implemented.
 const shortcuts: Shortcut[] = [
   // Navigation
-  { keys: ['Esc'], description: 'Go back / Close modal', category: 'Navigation' },
+  { keys: ['Esc'], description: 'Close preview / back to projects', category: 'Navigation' },
   { keys: ['?'], description: 'Show keyboard shortcuts', category: 'Navigation' },
-  { keys: ['G', 'P'], description: 'Go to Projects', category: 'Navigation' },
-  { keys: ['G', 'S'], description: 'Open Settings', category: 'Navigation' },
 
   // Asset Management
   { keys: ['U'], description: 'Upload files', category: 'Assets' },
-  { keys: ['Del'], description: 'Delete selected asset', category: 'Assets' },
   { keys: ['A'], description: 'Select all assets', category: 'Assets' },
   { keys: ['D'], description: 'Deselect all assets', category: 'Assets' },
-  { keys: ['\u2190', '\u2192'], description: 'Navigate between assets', category: 'Assets' },
+  { keys: ['\u2190', '\u2192'], description: 'Previous / next asset in preview', category: 'Assets' },
 
   // Annotation
-  { keys: ['Ctrl', 'Z'], description: 'Undo', category: 'Annotation' },
-  { keys: ['Ctrl', 'Shift', 'Z'], description: 'Redo', category: 'Annotation' },
-  { keys: ['B'], description: 'Draw bounding box', category: 'Annotation' },
-  { keys: ['Backspace'], description: 'Delete selected annotation', category: 'Annotation' },
-  { keys: ['1-9'], description: 'Assign class by number', category: 'Annotation' },
+  { keys: ['Del'], description: 'Delete selected annotation (Backspace works too)', category: 'Annotation' },
 
   // Inference
   { keys: ['Ctrl', 'Enter'], description: 'Run batch inference', category: 'Inference' },
-  { keys: ['Ctrl', 'P'], description: 'Run preview (3 samples)', category: 'Inference' },
+  { keys: ['Ctrl', 'Shift', 'P'], description: 'Run preview (3 samples)', category: 'Inference' },
 
   // Export
-  { keys: ['Ctrl', 'E'], description: 'Open export panel', category: 'Export' },
-  { keys: ['Ctrl', 'S'], description: 'Save annotations', category: 'Export' },
+  { keys: ['Ctrl', 'E'], description: 'Open export wizard', category: 'Export' },
 ];
 
 interface KeyboardShortcutsModalProps {

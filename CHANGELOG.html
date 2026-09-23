@@ -35,6 +35,7 @@
   <nav class="toc">
     <strong>On this page</strong>
     <ol>
+      <li><a href="#hardening">Authorization gaps closed, dead controls removed</a> <span>2026-09-23</span></li>
       <li><a href="#readme">README rebuilt as the front door, and the claims behind it checked</a> <span>2026-09-22</span></li>
       <li><a href="#app-screens">Signed-in screens photographed, and two bugs they exposed</a> <span>2026-09-21</span></li>
       <li><a href="#theme-default">Light theme is now the default</a> <span>2026-09-21</span></li>
@@ -45,6 +46,31 @@
     </ol>
     <p>Everything above is part of the <strong>1.0.0 public academic release</strong> (released 2026-09-21).</p>
   </nav>
+
+  <article>
+    <h2 id="hardening">Authorization gaps closed, dead controls removed</h2>
+    <time datetime="2026-09-23">2026-09-23</time>
+    <ul>
+      <li><strong>Five authorization gaps fixed.</strong> Owning one thing was letting a request reach another project's, or another account's, data: a class id attached to someone else's annotation, unchecked tags on upload, and most sharply, a video-slice request that could name <em>any</em> storage key, which the worker downloads and then deletes. Each was proven with a real request first, then re-tested after the fix. A denied account could also re-open its own access request forever, undoing the admin's decision; it now cannot.</li>
+      <li><strong>945 lines of dead UI removed.</strong> Undo and redo that could never record anything, a filter menu nothing read, and a 339-line export panel that could not be opened. The shortcut list now shows only the keys that work, and the sidebar button that opens it actually opens it.</li>
+      <li><strong>A real performance bug found on the way:</strong> dragging one box fired an API write per mouse-move. Thirty moves, thirty requests, and only about three of them applied, because each waited on its own response. It is now one request per drag, and the whole movement is saved.</li>
+    </ul>
+    <div class="grid">
+      <figure><img src=".evidence/2026-09-23/ui-cleanup/01-labeling-no-undo-redo-no-filterpresets.png" alt="Labeling toolbar without the dead undo, redo and filter controls"><figcaption>The toolbar, with the controls that did nothing removed</figcaption></figure>
+      <figure><img src=".evidence/2026-09-23/ui-cleanup/05-sidebar-shortcuts-button-opens-accurate-list.png" alt="Shortcuts list showing only the shortcuts that work"><figcaption>The shortcut list now matches the app</figcaption></figure>
+      <figure><img src=".evidence/2026-09-23/ui-cleanup/04-escape-in-export-wizard-stays-in-project.png" alt="Escape pressed inside the export wizard, still in the project"><figcaption>Escape inside a modal no longer throws you out of the project</figcaption></figure>
+      <figure><img src=".evidence/2026-09-23/ui-cleanup/06-after-drag-box-moved.png" alt="Box moved after a drag that produced a single API write"><figcaption>One drag, one save, full travel persisted</figcaption></figure>
+    </div>
+    <h3>Evidence</h3>
+    <ul>
+      <li>Before and after request transcripts per gap: <a href=".evidence/2026-09-23/api-security/">.evidence/2026-09-23/api-security/</a>, including a runnable <code>probe.sh</code></li>
+      <li>Drag measurement: <a href=".evidence/2026-09-23/ui-cleanup/06-drag-request-count.txt">06-drag-request-count.txt</a></li>
+    </ul>
+    <h3>References</h3>
+    <ul>
+      <li>Files: <a href="apps/api/src/index.ts">apps/api/src/index.ts</a>, <a href="apps/web/src/labeling.tsx">labeling.tsx</a>, <a href="apps/web/src/components/AnnotationCanvas.tsx">AnnotationCanvas.tsx</a>, <a href="apps/web/src/hooks/useAssetAnnotation.ts">useAssetAnnotation.ts</a>, <a href="apps/web/src/components/ui/KeyboardShortcuts.tsx">KeyboardShortcuts.tsx</a>, <a href="apps/web/src/components/ui/Sidebar.tsx">Sidebar.tsx</a>; deleted: <code>ExportPanel.tsx</code>, <code>FilterPresets.tsx</code>, <code>useUndoRedo.ts</code></li>
+    </ul>
+  </article>
 
   <article>
     <h2 id="readme">README rebuilt as the front door, and the claims behind it checked</h2>

@@ -23,7 +23,7 @@ interface AnnotationCanvasProps {
   selectedDetectionIndex: number | null;
   onSelectDetection: (index: number | null) => void;
   onDeleteDetection?: (index: number) => void;
-  onUpdateDetection?: (index: number, box: number[]) => void;
+  onUpdateDetection?: (index: number, box: number[], commit?: boolean) => void;
   onAddDetection?: (box: number[], className: string) => void;
   activeClass?: string;
   showLabels?: boolean;
@@ -97,6 +97,7 @@ export default function AnnotationCanvas({
   const [startPoint, setStartPoint] = useState<Point | null>(null);
   const [currentBox, setCurrentBox] = useState<Box | null>(null);
   const [resizeHandle, setResizeHandle] = useState<ResizeHandle>(null);
+  const pendingUpdateRef = useRef<{ index: number; box: number[] } | null>(null);
   const [hoveredDetection, setHoveredDetection] = useState<number | null>(null);
   const [showShortcuts, setShowShortcuts] = useState(false);
 
@@ -379,6 +380,16 @@ export default function AnnotationCanvas({
     setCurrentBox({ x1: point.x, y1: point.y, x2: point.x, y2: point.y });
   }, [readonly, screenToImage, selectedDetectionIndex, findResizeHandle, findDetectionAtPoint, onSelectDetection]);
 
+  // Last box produced by the in-progress drag/resize, written to the API once the
+  // gesture ends rather than on every mouse-move.
+  const commitPendingUpdate = useCallback(() => {
+    const pending = pendingUpdateRef.current;
+    pendingUpdateRef.current = null;
+    if (pending && onUpdateDetection) {
+      onUpdateDetection(pending.index, pending.box, true);
+    }
+  }, [onUpdateDetection]);
+
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
     const point = screenToImage(e.clientX, e.clientY);
     
@@ -423,7 +434,8 @@ export default function AnnotationCanvas({
         det.box[3] + dy
       ];
       
-      onUpdateDetection(selectedDetectionIndex, newBox);
+      onUpdateDetection(selectedDetectionIndex, newBox, false);
+      pendingUpdateRef.current = { index: selectedDetectionIndex, box: newBox };
       setStartPoint(point);
     } else if (mode === 'resizing' && selectedDetectionIndex !== null && resizeHandle && onUpdateDetection) {
       const det = detections[selectedDetectionIndex];
@@ -444,11 +456,14 @@ export default function AnnotationCanvas({
       if (box[0] > box[2]) [box[0], box[2]] = [box[2], box[0]];
       if (box[1] > box[3]) [box[1], box[3]] = [box[3], box[1]];
       
-      onUpdateDetection(selectedDetectionIndex, box);
+      onUpdateDetection(selectedDetectionIndex, box, false);
+      pendingUpdateRef.current = { index: selectedDetectionIndex, box };
     }
   }, [screenToImage, readonly, selectedDetectionIndex, findResizeHandle, findDetectionAtPoint, mode, startPoint, detections, resizeHandle, onUpdateDetection]);
 
   const handleMouseUp = useCallback((e: React.MouseEvent) => {
+    commitPendingUpdate();
+
     if (mode === 'drawing' && currentBox && onAddDetection) {
       const width = currentBox.x2 - currentBox.x1;
       const height = currentBox.y2 - currentBox.y1;
@@ -466,15 +481,21 @@ export default function AnnotationCanvas({
     setStartPoint(null);
     setCurrentBox(null);
     setResizeHandle(null);
-  }, [mode, currentBox, onAddDetection, activeClass]);
+  }, [mode, currentBox, onAddDetection, activeClass, commitPendingUpdate]);
 
   const handleMouseLeave = useCallback(() => {
     setHoveredDetection(null);
     if (mode === 'drawing') {
       setMode('none');
       setCurrentBox(null);
+    } else if (mode === 'moving' || mode === 'resizing') {
+      // Mouse-up can land outside the canvas - save the move rather than lose it.
+      commitPendingUpdate();
+      setMode('none');
+      setStartPoint(null);
+      setResizeHandle(null);
     }
-  }, [mode]);
+  }, [mode, commitPendingUpdate]);
 
   // Keyboard handlers
   useEffect(() => {

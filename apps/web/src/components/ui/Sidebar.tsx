@@ -22,6 +22,7 @@ interface SidebarProps {
   onItemClick?: (id: string) => void;
   footer?: React.ReactNode;
   onLogoClick?: () => void;
+  onShortcutsClick?: () => void;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
@@ -30,7 +31,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onToggle,
   onItemClick,
   footer,
-  onLogoClick
+  onLogoClick,
+  onShortcutsClick
 }) => {
   return (
     <aside
@@ -117,10 +119,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
           </div>
         )}
 
-        {/* Help shortcut at bottom */}
+        {/* Help shortcut at bottom - only rendered when it can actually do something */}
+        {onShortcutsClick && (
         <div className="p-2 border-t border-glass-border">
           <button
-            className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-text-muted hover:bg-surface-elevated hover:text-text transition-colors"
+            onClick={onShortcutsClick}
+            className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-text-muted hover:bg-surface-elevated hover:text-text transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
             title={collapsed ? 'Keyboard Shortcuts' : undefined}
           >
             <HelpCircle className="w-5 h-5 flex-shrink-0" />
@@ -134,6 +138,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             )}
           </button>
         </div>
+        )}
       </div>
     </aside>
   );

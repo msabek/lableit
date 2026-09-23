@@ -9,131 +9,96 @@ definitions directly from the source.
 - Local base URL: `http://localhost:3001`
 - All request/response bodies are JSON unless noted (CSV import/export and file
   upload use `multipart/form-data`).
-- **Authentication:** every route requires a `Bearer` token **except** the
-  public routes listed below. The token is a **Clerk** session JWT. A legacy
-  `@fastify/jwt` verification path is still accepted for tokens issued out of
-  band; the password registration and login routes that used to mint them were
-  removed before the public release (they were unauthenticated and could claim
-  the `ADMIN_EMAIL` address).
-
-  ```
-  Authorization: Bearer <token>
-  ```
-
-- **Public (no auth) routes:** `GET /health`, `GET /inference/models/status`,
-  `GET /inference/gpu`, `GET /inference/config`.
-- **Export file downloads** (`GET /exports/<file>`) are not Bearer-authenticated;
-  they require a single-use `?token=` query parameter (the export download
-  token). The export **status** endpoint uses normal Bearer auth.
+- **Authentication: there is none.** Lableit has no login, no accounts and no
+  API keys. **Every route below is open to any client that can reach the
+  server**, and all projects, assets and annotations belong to one implicit
+  local user. Run the API on `localhost`, on a private network, or behind a
+  proxy that authenticates users for it. See
+  [`DEPLOYMENT.md`](../DEPLOYMENT.md).
+- **The only token in the system** is the single-use **export download token**.
+  `GET /exports/<file>` requires a `?token=` query parameter, issued when an
+  export job finishes and valid for one download within one hour. It protects
+  the generated ZIP file only; it is not a session and grants nothing else.
 - **Rate limiting:** 100 requests per minute per IP+route (HTTP 429 on exceed).
-- **Common errors:** `400` validation, `401` unauthorized, `403` access denied,
-  `404` not found, `429` rate limited, `503` inference/service unavailable.
-
-Ownership is enforced: project/asset/class/tag/annotation routes only operate on
-resources owned by the authenticated user.
-
-- **Access-approval gate:** a valid token is not sufficient. New accounts start
-  with `accessStatus: "pending"` and receive `403 { error: "pending_approval",
-  accessStatus }` on **every** authenticated route except
-  `GET /auth/access-status` and `POST /access-requests`, until an admin approves
-  them. The admin is the account whose email matches `ADMIN_EMAIL`; with that
-  variable unset there is no admin and nobody can be approved. Routes under
-  `/admin` return `403 { error: "Forbidden" }` for non-admins.
+- **Common errors:** `400` validation, `401` missing or invalid export download
+  token, `404` not found, `429` rate limited, `503` inference/service
+  unavailable.
 
 ---
 
 ## Health
 
-| Method | Path | Auth | Description |
-|--------|------|------|-------------|
-| GET | `/health` | No | Liveness + DB connectivity. Returns `{ status, timestamp, database }`; `503` if the database is unreachable. |
-
----
-
-## Auth
-
-| Method | Path | Auth | Params (body) | Response |
-|--------|------|------|---------------|----------|
-| GET | `/auth/me` | Yes | — | Current user `{ id, email, createdAt }`; `404` if not found |
-
----
-
-## Access control and admin
-
-| Method | Path | Auth | Params (body) | Response |
-|--------|------|------|---------------|----------|
-| GET | `/auth/access-status` | Yes (allowed while pending) | - | `{ status, isAdmin, email, requested }` |
-| POST | `/access-requests` | Yes (allowed while pending) | `{ name?, institution, phone?, useCase }` (`institution` and `useCase` required) | `{ status: "pending", emailSent, emailReason }`; sets the account to `pending` and notifies the admin when `RESEND_API_KEY` is set |
-| GET | `/admin/access-requests` | Yes (admin only) | - | Accounts that requested access or are not approved, pending first |
-| POST | `/admin/access-requests/:userId/decision` | Yes (admin only) | `{ decision: "approve" \| "deny" }` | Updated account; `400` on an invalid decision, `404` unknown user, `403` when denying the admin account |
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | `/health` | Liveness + DB connectivity. Returns `{ status, timestamp, database }`; `503` if the database is unreachable. |
 
 ---
 
 ## Projects
 
-| Method | Path | Auth | Params | Response |
-|--------|------|------|--------|----------|
-| GET | `/projects` | Yes | — | User's projects with `classes` and asset count, newest first |
-| GET | `/projects/:id` | Yes | path `id` | Project with `assets` (incl. annotations + class) and `classes`; `404` if not owned |
-| POST | `/projects` | Yes | body `{ name }` (1-100 chars) | Created project |
-| PUT | `/projects/:id` | Yes | path `id`, body `{ name }` | Updated project; `404` if not owned |
-| DELETE | `/projects/:id` | Yes | path `id` | `{ success: true }`; cascade-deletes annotations, assets, classes |
+| Method | Path | Params | Response |
+|--------|------|--------|----------|
+| GET | `/projects` | - | All projects with `classes` and asset count, newest first |
+| GET | `/projects/:id` | path `id` | Project with `assets` (incl. annotations + class) and `classes`; `404` if not owned |
+| POST | `/projects` | body `{ name }` (1-100 chars) | Created project |
+| PUT | `/projects/:id` | path `id`, body `{ name }` | Updated project; `404` if not owned |
+| DELETE | `/projects/:id` | path `id` | `{ success: true }`; cascade-deletes annotations, assets, classes |
 
 ---
 
 ## Assets
 
-| Method | Path | Auth | Params | Response |
-|--------|------|------|--------|----------|
-| GET | `/projects/:projectId/assets` | Yes | path `projectId` | Assets with annotations + tags, newest first |
-| DELETE | `/projects/:projectId/assets` | Yes | path `projectId` | Delete **all** assets in project (+ S3 objects, thumbnails); `{ success, deletedCount }` |
-| GET | `/assets/:id` | Yes | path `id` | Asset with annotations, class, and project classes |
-| DELETE | `/assets/:id` | Yes | path `id` | Delete one asset (S3 + DB) |
-| DELETE | `/assets/bulk` | Yes | body `{ assetIds[] }` | Bulk delete assets (S3 deletes 10-concurrent) |
-| GET | `/assets/:id/url` | Yes | path `id` | `{ url, thumbnailUrl }` short-lived signed S3 URLs |
-| POST | `/assets/urls` | Yes | body `{ assetIds[] }` (max 100) | `{ urls: { [assetId]: { url, thumbnailUrl } } }` |
-| POST | `/upload` | Yes | query `projectId`, optional `tagIds` (comma-sep); multipart `file` | Image: `{ asset, filename, bucket }`. Video: `{ asset: null, isVideo: true, videoUri, ... }` (awaits slicing). Validates type (JPG/PNG/MP4/AVI/MOV/MKV/WebM) and 500 MB limit |
+| Method | Path | Params | Response |
+|--------|------|--------|----------|
+| GET | `/projects/:projectId/assets` | path `projectId` | Assets with annotations + tags, newest first |
+| DELETE | `/projects/:projectId/assets` | path `projectId` | Delete **all** assets in project (+ S3 objects, thumbnails); `{ success, deletedCount }` |
+| GET | `/assets/:id` | path `id` | Asset with annotations, class, and project classes |
+| DELETE | `/assets/:id` | path `id` | Delete one asset (S3 + DB) |
+| DELETE | `/assets/bulk` | body `{ assetIds[] }` | Bulk delete assets (S3 deletes 10-concurrent) |
+| GET | `/assets/:id/url` | path `id` | `{ url, thumbnailUrl }` short-lived signed S3 URLs |
+| POST | `/assets/urls` | body `{ assetIds[] }` (max 100) | `{ urls: { [assetId]: { url, thumbnailUrl } } }` |
+| POST | `/upload` | query `projectId`, optional `tagIds` (comma-sep); multipart `file` | Image: `{ asset, filename, bucket }`. Video: `{ asset: null, isVideo: true, videoUri, ... }` (awaits slicing). Validates type (JPG/PNG/MP4/AVI/MOV/MKV/WebM) and 500 MB limit |
 
 ---
 
 ## Classes
 
-| Method | Path | Auth | Params | Response |
-|--------|------|------|--------|----------|
-| GET | `/projects/:projectId/classes` | Yes | path `projectId` | Classes sorted by name |
-| GET | `/classes/:id` | Yes | path `id` | Single class; `404` if not owned |
-| POST | `/projects/:projectId/classes` | Yes | body `{ name, color?, threshold? }` (name <= 50, hex color, threshold 0-1) | Created class; `400` on duplicate/invalid |
-| PUT | `/classes/:id` | Yes | body `{ name?, color?, threshold? }` | Updated class |
-| DELETE | `/classes/:id` | Yes | path `id` | `{ success }`; deletes the class and its annotations |
-| GET | `/projects/:projectId/classes/export` | Yes | path `projectId` | CSV download (`name,color,threshold`) |
-| POST | `/projects/:projectId/classes/import` | Yes | multipart CSV file (`name` column required) | `{ success, imported, errors?, classes }` |
+| Method | Path | Params | Response |
+|--------|------|--------|----------|
+| GET | `/projects/:projectId/classes` | path `projectId` | Classes sorted by name |
+| GET | `/classes/:id` | path `id` | Single class; `404` if not owned |
+| POST | `/projects/:projectId/classes` | body `{ name, color?, threshold? }` (name <= 50, hex color, threshold 0-1) | Created class; `400` on duplicate/invalid |
+| PUT | `/classes/:id` | body `{ name?, color?, threshold? }` | Updated class |
+| DELETE | `/classes/:id` | path `id` | `{ success }`; deletes the class and its annotations |
+| GET | `/projects/:projectId/classes/export` | path `projectId` | CSV download (`name,color,threshold`) |
+| POST | `/projects/:projectId/classes/import` | multipart CSV file (`name` column required) | `{ success, imported, errors?, classes }` |
 
 ---
 
 ## Tags
 
-| Method | Path | Auth | Params | Response |
-|--------|------|------|--------|----------|
-| GET | `/projects/:projectId/tags` | Yes | path `projectId` | Tags with asset counts, sorted by name |
-| POST | `/projects/:projectId/tags` | Yes | body `{ name, color? }` (name <= 50) | Created tag; `400` on duplicate |
-| PUT | `/tags/:id` | Yes | body `{ name?, color? }` | Updated tag |
-| DELETE | `/tags/:id` | Yes | path `id` | `{ success }`; removes tag and its asset associations |
-| POST | `/assets/:assetId/tags` | Yes | body `{ tagId }` | Attach tag to asset |
-| DELETE | `/assets/:assetId/tags/:tagId` | Yes | path | Detach tag from asset |
-| POST | `/assets/bulk/tags` | Yes | body `{ assetIds[], tagIds[] }` | Bulk-attach; `{ success, tagsAdded, assetsAffected, tagsApplied }` |
-| DELETE | `/assets/bulk/tags` | Yes | body `{ assetIds[], tagIds[] }` | Bulk-detach; `{ success, tagsRemoved }` |
+| Method | Path | Params | Response |
+|--------|------|--------|----------|
+| GET | `/projects/:projectId/tags` | path `projectId` | Tags with asset counts, sorted by name |
+| POST | `/projects/:projectId/tags` | body `{ name, color? }` (name <= 50) | Created tag; `400` on duplicate |
+| PUT | `/tags/:id` | body `{ name?, color? }` | Updated tag |
+| DELETE | `/tags/:id` | path `id` | `{ success }`; removes tag and its asset associations |
+| POST | `/assets/:assetId/tags` | body `{ tagId }` | Attach tag to asset |
+| DELETE | `/assets/:assetId/tags/:tagId` | path | Detach tag from asset |
+| POST | `/assets/bulk/tags` | body `{ assetIds[], tagIds[] }` | Bulk-attach; `{ success, tagsAdded, assetsAffected, tagsApplied }` |
+| DELETE | `/assets/bulk/tags` | body `{ assetIds[], tagIds[] }` | Bulk-detach; `{ success, tagsRemoved }` |
 
 ---
 
 ## Annotations
 
-| Method | Path | Auth | Params | Response |
-|--------|------|------|--------|----------|
-| GET | `/assets/:assetId/annotations` | Yes | path `assetId` | Annotations with class, newest first |
-| POST | `/assets/:assetId/annotations` | Yes | body `{ classId, type, box?, geometryRle?, confidence? }` | Created annotation (`source: manual`, default confidence 1.0) |
-| PUT | `/annotations/:id` | Yes | body `{ classId?, box?, geometryRle?, type?, confidence? }` | Updated annotation |
-| DELETE | `/annotations/:id` | Yes | path `id` | `{ success }` |
-| DELETE | `/projects/:projectId/annotations` | Yes | path `projectId` | Clear **all** annotations in the project; `{ success, deletedCount }` |
+| Method | Path | Params | Response |
+|--------|------|--------|----------|
+| GET | `/assets/:assetId/annotations` | path `assetId` | Annotations with class, newest first |
+| POST | `/assets/:assetId/annotations` | body `{ classId, type, box?, geometryRle?, confidence? }` | Created annotation (`source: manual`, default confidence 1.0) |
+| PUT | `/annotations/:id` | body `{ classId?, box?, geometryRle?, type?, confidence? }` | Updated annotation |
+| DELETE | `/annotations/:id` | path `id` | `{ success }` |
+| DELETE | `/projects/:projectId/annotations` | path `projectId` | Clear **all** annotations in the project; `{ success, deletedCount }` |
 
 ---
 
@@ -142,12 +107,12 @@ resources owned by the authenticated user.
 Long-running work (video slicing, inference, export) is queued via BullMQ. These
 endpoints create jobs and report progress.
 
-| Method | Path | Auth | Params | Response |
-|--------|------|------|--------|----------|
-| GET | `/jobs/:id` | Yes | path `id` | `{ ...job, progress, progressMessage }` (DB job + live BullMQ progress) |
-| POST | `/jobs/preview` | Yes | body = inference params | `{ jobId }` (queues `infer_preview`) |
-| POST | `/jobs/batch` | Yes | body = inference params | `{ jobId }` (queues `infer_batch`) |
-| POST | `/projects/:projectId/slice-video` | Yes | body `{ videoUri, intervalSec, tagIds? }` | `{ jobId }` (queues `slice_video`) |
+| Method | Path | Params | Response |
+|--------|------|--------|----------|
+| GET | `/jobs/:id` | path `id` | `{ ...job, progress, progressMessage }` (DB job + live BullMQ progress) |
+| POST | `/jobs/preview` | body = inference params | `{ jobId }` (queues `infer_preview`) |
+| POST | `/jobs/batch` | body = inference params | `{ jobId }` (queues `infer_batch`) |
+| POST | `/projects/:projectId/slice-video` | body `{ videoUri, intervalSec, tagIds? }` | `{ jobId }` (queues `slice_video`) |
 
 Inference job params include `assetIds`, `classes` (`{ id, name, threshold }`),
 optional `thresholds`, and `inferenceMode` (`boxes_only` \| `masks_only` \|
@@ -157,12 +122,12 @@ optional `thresholds`, and `inferenceMode` (`boxes_only` \| `masks_only` \|
 
 ## Exports
 
-| Method | Path | Auth | Params | Response |
-|--------|------|------|--------|----------|
-| GET | `/export/formats` | Yes | — | `{ formats: [{ id, name, description }] }` for all 8 format IDs |
-| POST | `/projects/:projectId/export` | Yes | body `{ format, includeClasses? }` | `{ jobId }`; `400` if `format` missing/unsupported |
-| GET | `/exports/:jobId/status` | Yes | path `jobId` | `{ status, progress, progressMessage, result }`; `403` if not the job owner; `404` if not an export job |
-| GET | `/exports/:file?token=...` | Token | query `token` (single-use) | Streams the export ZIP (static file). `401` if token missing/invalid |
+| Method | Path | Params | Response |
+|--------|------|--------|----------|
+| GET | `/export/formats` | - | `{ formats: [{ id, name, description }] }` for all 8 format IDs |
+| POST | `/projects/:projectId/export` | body `{ format, includeClasses? }` | `{ jobId }`; `400` if `format` missing/unsupported |
+| GET | `/exports/:jobId/status` | path `jobId` | `{ status, progress, progressMessage, result }`; `403` if not the job owner; `404` if not an export job |
+| GET | `/exports/:file?token=...` | query `token` (single-use) | Streams the export ZIP (static file). `401` if token missing/invalid |
 
 Supported format IDs: `coco`, `yolo_detect`, `yolo_segment`, `voc`,
 `png_masks`, `createml`, `tfrecord_meta`, `labelme`. See
@@ -173,23 +138,22 @@ Supported format IDs: `coco`, `yolo_detect`, `yolo_segment`, `voc`,
 ## Inference (SAM3) proxy and model/settings
 
 The API proxies to the FastAPI inference service (`INFERENCE_URL`), adding
-authentication, timeouts, and retries. Detection endpoints require auth; several
-read-only status endpoints are public.
+timeouts and retries.
 
-| Method | Path | Auth | Params | Description / Response |
-|--------|------|------|--------|------------------------|
-| POST | `/inference/text` | Yes | body `{ image_url \| image_base64, prompts[], confidence_threshold?, return_masks?, return_boxes? }` | Text-prompt detection. Proxies `/infer/text`; returns `{ detections[], image_width, image_height, processing_time_ms }`. `408` on timeout, `503` if service down |
-| POST | `/inference/points` | Yes | body with point/box prompts + image | Point/box-prompt detection (proxies `/infer/points`) |
-| GET | `/inference/models` | Yes | — | List models (proxies `/models`) |
-| GET | `/inference/health` | Yes | — | Inference health (proxies `/health`) |
-| GET | `/inference/models/status` | No | — | Detailed model + download state |
-| POST | `/inference/models/:modelId/load` | Yes | path `modelId` | Load a model |
-| POST | `/inference/models/:modelId/unload` | Yes | path `modelId` | Unload a model |
-| POST | `/inference/models/:modelId/download` | Yes | path `modelId` | Start model weight download |
-| GET | `/inference/models/:modelId/download/status` | Yes | path `modelId` | Download progress |
-| GET | `/inference/gpu` | No | — | GPU info (proxies `/gpu/info`) |
-| GET | `/inference/config` | No | — | Current model config |
-| POST | `/inference/config` | Yes | body config | Update model config |
+| Method | Path | Params | Description / Response |
+|--------|------|--------|------------------------|
+| POST | `/inference/text` | body `{ image_url \| image_base64, prompts[], confidence_threshold?, return_masks?, return_boxes? }` | Text-prompt detection. Proxies `/infer/text`; returns `{ detections[], image_width, image_height, processing_time_ms }`. `408` on timeout, `503` if service down |
+| POST | `/inference/points` | body with point/box prompts + image | Point/box-prompt detection (proxies `/infer/points`) |
+| GET | `/inference/models` | - | List models (proxies `/models`) |
+| GET | `/inference/health` | - | Inference health (proxies `/health`) |
+| GET | `/inference/models/status` | - | Detailed model + download state |
+| POST | `/inference/models/:modelId/load` | path `modelId` | Load a model |
+| POST | `/inference/models/:modelId/unload` | path `modelId` | Unload a model |
+| POST | `/inference/models/:modelId/download` | path `modelId` | Start model weight download |
+| GET | `/inference/models/:modelId/download/status` | path `modelId` | Download progress |
+| GET | `/inference/gpu` | - | GPU info (proxies `/gpu/info`) |
+| GET | `/inference/config` | - | Current model config |
+| POST | `/inference/config` | body config | Update model config |
 
 A detection object contains: `class_name`, `confidence`, `box` (`[x1,y1,x2,y2]`),
 and optionally `mask_rle`, `mask_polygon`, and `area`.

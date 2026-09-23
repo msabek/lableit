@@ -19,7 +19,7 @@ but cannot run detection. (Notably, **Railway has no GPUs**, so inference there
 runs in limited/unavailable mode — see `RAILWAY_DEPLOYMENT.md`.)
 
 **What still works without a GPU:**
-- Sign in, projects, classes, tags
+- Projects, classes, tags
 - Upload images/videos, video slicing (ffmpeg, CPU)
 - Manual box/mask annotation on the canvas
 - All export formats
@@ -126,23 +126,6 @@ connection errors.
   uses path-style addressing, which MinIO requires.
 - For external providers (R2/AWS S3), set the matching `S3_ENDPOINT`/`S3_REGION`
   and configure bucket CORS for your web origin.
-
----
-
-## Clerk key issues (can't sign in / 401s)
-
-**Symptom:** The web app won't load the sign-in UI, or every authenticated API
-call returns `401`.
-
-**Fixes:**
-- Frontend: set `VITE_CLERK_PUBLISHABLE_KEY` (the web app's Vite config loads
-  env from the monorepo root `.env`).
-- Backend: set `CLERK_SECRET_KEY`. If it is missing, the API logs a warning and
-  Clerk verification will not work (it then falls back to legacy JWT only).
-- Make sure the publishable and secret keys come from the **same** Clerk
-  instance/environment.
-- For custom/production domains, add the domain to Clerk's allowed origins.
-- Confirm the browser is sending `Authorization: Bearer <token>`.
 
 ---
 

@@ -11,12 +11,15 @@ model User {
   id         String    @id @default(cuid())
   email      String    @unique
   password   String    @default("")
-  externalId String?   @unique // Clerk user ID
+  externalId String?   @unique // Vestigial: kept so existing databases still migrate. Unused now that there is no authentication.
   createdAt  DateTime  @default(now())
   projects   Project[]
 
-  // Access control: new accounts start "pending" and cannot use the app until an
-  // admin approves them. The access-request form fills institution/phone/useCase.
+  // Vestigial access-control columns. Lableit has no authentication any more:
+  // there are no accounts, no approval gate and no admin. They are kept only so
+  // existing databases still migrate. Nothing reads them; the single implicit
+  // local user is just created with accessStatus "approved" to satisfy the
+  // column default.
   accessStatus String    @default("pending") // pending | approved | denied
   institution  String?
   phone        String?

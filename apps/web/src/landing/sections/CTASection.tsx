@@ -58,7 +58,7 @@ export default function CTASection({ onGetStarted }: CTASectionProps) {
           onClick={onGetStarted}
           className="btn-primary-gradient text-xl px-12 py-5 flex items-center gap-3 mx-auto group shadow-lg shadow-indigo-500/25"
         >
-          Get Started for Free
+          Open Lableit
           <ArrowRight className="w-6 h-6 group-hover:translate-x-1 transition-transform" />
         </button>
         <p className="text-sm text-slate-500 dark:text-slate-500">

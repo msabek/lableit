@@ -68,7 +68,7 @@ export default function LandingPage() {
   }, []);
 
   const handleGetStarted = () => {
-    navigate('/auth/sign-in');
+    navigate('/projects');
   };
 
   const navLinks = [
@@ -100,17 +100,11 @@ export default function LandingPage() {
           </div>
 
           <div className="flex items-center gap-3">
-            <a
-              href="/auth/sign-in"
-              className="hidden sm:block px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
-            >
-              Sign In
-            </a>
             <button
               onClick={handleGetStarted}
               className="btn-primary-gradient text-sm px-5 py-2.5"
             >
-              Get Started
+              Open Lableit
             </button>
           </div>
         </div>

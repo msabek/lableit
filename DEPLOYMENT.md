@@ -1,6 +1,26 @@
 # Deployment Guide
 
-This guide covers deploying the Lableit vision labeling platform to production using Docker Compose.
+This guide covers deploying the Lableit vision labeling platform using Docker
+Compose.
+
+> ## ⚠️ Lableit has NO authentication
+>
+> There is no login, no accounts, no admin approval, and no API tokens.
+> **Every API route is open to anyone who can reach the port**, and all
+> projects, media and annotations belong to one implicit local user.
+>
+> This is deliberate: Lableit is built to be downloaded and run locally for
+> academic work. It is **not** built to be put on a public URL.
+>
+> **If you expose this stack to the internet, anyone who finds it can read,
+> download, modify and delete all of your data.**
+>
+> Deploy it one of these ways only:
+> - on your own machine or a lab machine, reachable from `localhost` only;
+> - on a private network or VPN;
+> - behind a reverse proxy that does the authentication itself (for example
+>   HTTP basic auth, SSO, or an identity-aware proxy) in front of **both** the
+>   web and API services.
 
 ## Architecture
 
@@ -54,19 +74,9 @@ Critical variables to update in `.env`:
 ```bash
 # Security
 POSTGRES_PASSWORD=your_secure_db_password
-JWT_SECRET=your_super_secret_jwt_key_at_least_32_chars
 S3_ACCESS_KEY=your_s3_access_key
 S3_SECRET_KEY=your_s3_secret_key
 INFERENCE_BATCH_TIMEOUT_MS=300000
-
-# Clerk (see "Clerk for production" below)
-VITE_CLERK_PUBLISHABLE_KEY=pk_live_...
-CLERK_SECRET_KEY=sk_live_...
-
-# Access control (api + worker)
-ADMIN_EMAIL=you@example.com   # REQUIRED, no default: approves access requests. If unset, nobody can approve new users
-RESEND_API_KEY=               # optional: email the admin on new requests (they still show on /admin without it)
-RESEND_FROM=                  # optional: sender, must use a domain verified in Resend
 ALLOWED_ORIGINS=              # optional: API CORS list, comma-separated, no spaces; only for cross-origin API calls
 
 # Inference: facebook/sam3 is a gated Hugging Face model, so request access on
@@ -79,7 +89,7 @@ WORKER_MODE=false        # API service
 ```
 
 The S3 variables above have no defaults in `docker-compose.prod.yml`; compose
-refuses to start until they (and `ADMIN_EMAIL`) are set.
+refuses to start until they are set.
 
 ### Object storage must be reachable from browsers
 
@@ -89,16 +99,24 @@ works inside the Docker network. In production, point `S3_ENDPOINT` at a public
 MinIO host behind TLS (for example `https://storage.your-domain.com`), or use
 S3 or Cloudflare R2.
 
-### Clerk for production
+### Access control: there is none
 
-1. In the Clerk dashboard, create a **Production** instance (development keys
-   are rate limited and show a banner).
-2. Add your domain and create the DNS records Clerk asks for, then wait for
-   them to verify.
-3. Use the live keys: `pk_live_...` and `sk_live_...`.
-4. Set `VITE_CLERK_PUBLISHABLE_KEY` on the **web** service. It is read when the
-   container starts, so no rebuild is needed to change it.
-5. Set `CLERK_SECRET_KEY` on the **api** and **worker** services.
+Lableit ships no authentication layer, so there is nothing to configure here and
+no keys to set. Whoever reaches the API port has full access to every project,
+asset, annotation and export in the database.
+
+Keep the stack off the public internet:
+
+- Bind the published ports to the loopback address so only the host can reach
+  them, for example `127.0.0.1:3001:3001` instead of `3001:3001` in your compose
+  overrides, and reach the app through an SSH tunnel or locally.
+- Or put the whole stack on a private network or VPN.
+- Or front it with a reverse proxy that authenticates users itself, covering
+  **both** the web app and the API. Protecting only the web app is not enough:
+  the API is a separate service and answers direct requests.
+
+Note that the object-storage endpoint below must still be reachable by the
+browsers you want to serve, so plan those two constraints together.
 
 ## SSL/HTTPS Setup
 
@@ -242,7 +260,9 @@ docker run --rm -v lableit_minio_data:/data -v $(pwd):/backup alpine tar czf /ba
 
 ## Production Considerations
 
-- **Security**: Regularly update dependencies, use strong passwords
+- **Security**: there is no authentication (see the warning at the top). Keep the
+  stack local, on a VPN, or behind an authenticating proxy; regularly update
+  dependencies and use strong database and storage passwords
 - **Monitoring**: Set up alerting for service failures
 - **Backups**: Automate regular database and storage backups
 - **Scaling**: Monitor resource usage and scale as needed

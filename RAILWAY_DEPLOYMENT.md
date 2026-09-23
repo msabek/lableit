@@ -2,6 +2,23 @@
 
 This guide walks you through deploying Lableit to [Railway.com](https://railway.com).
 
+> ## ⚠️ Lableit has NO authentication
+>
+> There is no login, no accounts, no admin approval, and no API tokens. **Every
+> API route is open to anyone who can reach it**, and all projects, media and
+> annotations belong to one implicit local user.
+>
+> **A Railway deployment gets a public URL, so following this guide as written
+> publishes your data and every route to the entire internet.** Anyone who finds
+> the URL can read, download, modify and delete everything in it.
+>
+> Lableit is built to be downloaded and run locally for academic work. If you
+> deploy it to Railway anyway, put an authenticating layer in front of **both**
+> the web and API services (for example an identity-aware proxy or a
+> Cloudflare Access style gateway) before you put any real data in it.
+> Protecting only the web service is not enough: the API is a separate service
+> with its own public URL and answers direct requests.
+
 ## Table of Contents
 - [Architecture Overview](#architecture-overview)
 - [Prerequisites](#prerequisites)
@@ -56,8 +73,7 @@ Before deploying, ensure you have:
 
 1. **Railway Account**: Sign up at [railway.com](https://railway.com)
 2. **GitHub Repository**: Push your code to a GitHub repository
-3. **Clerk Account**: Set up at [clerk.com](https://clerk.com) with Google OAuth enabled
-4. **S3-Compatible Storage**: One of:
+3. **S3-Compatible Storage**: One of:
    - AWS S3
    - Cloudflare R2 (recommended - cheaper egress)
    - Backblaze B2
@@ -130,14 +146,6 @@ S3_REGION=<your-s3-region>
 S3_ACCESS_KEY=<your-access-key>
 S3_SECRET_KEY=<your-secret-key>
 S3_BUCKET=lableit
-JWT_SECRET=<generate-secure-random-string>
-CLERK_SECRET_KEY=<your-clerk-secret-key>
-# Required, no default: email of the account that approves access requests.
-# If unset, nobody can approve new users.
-ADMIN_EMAIL=<admin-email>
-# Optional: email the admin on new access requests (requests still show on /admin without it).
-RESEND_API_KEY=<your-resend-api-key>
-RESEND_FROM=Lableit <access@your-domain.com>
 # Optional: API CORS allow-list, comma-separated, no spaces. Only needed if the
 # browser calls the API from another origin (the web /api proxy is same-origin).
 # ALLOWED_ORIGINS=https://app.your-domain.com
@@ -164,7 +172,6 @@ FFMPEG_PATH=ffmpeg
 RAILWAY_ENVIRONMENT=production
 # Use the API service's internal listening port on Railway (:8080).
 API_URL=http://api.railway.internal:8080
-VITE_CLERK_PUBLISHABLE_KEY=<your-clerk-publishable-key>
 VITE_API_URL=/api
 ```
 
@@ -203,7 +210,7 @@ this service those jobs are queued but never processed.
 - **Start Command**: `bun --cwd apps/api run start` (does not run migrations; the API service does that)
 - **Healthcheck Path**: (leave empty)
 
-**Environment Variables:** (same as API, including `ADMIN_EMAIL`, plus)
+**Environment Variables:** (same as API, plus)
 ```
 WORKER_MODE=true
 RUN_HTTP_SERVER=false
@@ -247,15 +254,10 @@ Or click **"Deploy"** in the Railway dashboard.
 | All | `PORT` | Auto-set by Railway |
 | API | `DATABASE_URL` | Use `${{Postgres.DATABASE_URL}}` |
 | API | `REDIS_URL` | Use `${{Redis.REDIS_URL}}` |
-| API | `CLERK_SECRET_KEY` | From Clerk dashboard |
-| API | `JWT_SECRET` | Generate secure random string |
 | API | `S3_*` | S3 storage credentials |
-| API + Worker | `ADMIN_EMAIL` | Email of the account that approves access requests. No default; if unset, nobody can approve new users |
-| API + Worker | `RESEND_API_KEY`, `RESEND_FROM` | Optional. Emails the admin on new access requests; without them requests still show on `/admin` |
 | API | `ALLOWED_ORIGINS` | Optional. CORS allow-list, comma-separated, no spaces. Only needed for cross-origin API calls |
 | Worker | `WORKER_MODE=true`, `RUN_HTTP_SERVER=false` | Runs the background job worker |
 | Inference | `HF_TOKEN` | Hugging Face token with approved access to the gated `facebook/sam3` model |
-| Web | `VITE_CLERK_PUBLISHABLE_KEY` | From Clerk dashboard |
 | Web | `API_URL` | Internal API URL |
 
 ### Variable References
@@ -379,11 +381,13 @@ For your S3 bucket, configure CORS to allow your Railway domain:
 
 Railway automatically provisions SSL certificates for custom domains.
 
-### Update Clerk
+### A custom domain does not add access control
 
-Add your custom domain to Clerk's allowed origins:
-1. Go to Clerk Dashboard > Configure > Paths
-2. Add your production domain
+Adding a domain and a certificate encrypts the traffic; it does not restrict who
+may send it. Lableit has no authentication, so the domain you add is a public
+front door to every route and every project. Put an authenticating proxy in
+front of the web **and** API services if the domain is reachable from the
+internet (see the warning at the top of this guide).
 
 ## Monitoring & Logs
 
@@ -525,7 +529,7 @@ Railway deployment checklist:
 - [ ] Configure Web service with environment variables
 - [ ] Configure Inference service with volume mount
 - [ ] Configure Worker service (required for background jobs)
-- [ ] Set `ADMIN_EMAIL` on API and worker
+- [ ] Put an authenticating proxy in front of the web and API services (Lableit has no authentication of its own)
 - [ ] Run database migrations
 - [ ] Set up S3 storage (external)
 - [ ] Configure custom domain (optional)

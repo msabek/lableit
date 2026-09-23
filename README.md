@@ -66,7 +66,7 @@ Lableit because labeling effort is a problem every vision researcher shares.
 - [Why this exists](#why-this-exists)
 - [The workflow, in pictures](#the-workflow-in-pictures)
 - [What Lableit can do](#what-lableit-can-do)
-- [Access control and admin approval](#access-control-and-admin-approval)
+- [No accounts, and what that means](#no-accounts-and-what-that-means)
 - [Architecture](#architecture)
 - [Prerequisites](#prerequisites)
 - [Quickstart (local development)](#quickstart-local-development)
@@ -185,8 +185,7 @@ Full details and directory layouts: [`docs/EXPORT_FORMATS.md`](./docs/EXPORT_FOR
 |---|---|
 | **Runs on your hardware** | NVIDIA CUDA, Apple Silicon GPU (MPS) or plain CPU. Nothing is sent to a third-party labeling service. |
 | **Background jobs** | Video slicing, batch inference and exports run on a Redis / BullMQ worker, so the browser is never blocked. |
-| **Sign-in** | Google sign-in through Clerk. |
-| **Admin approval gate** | New accounts are pending until an admin approves them. |
+| **No sign-in** | Clone it, run it, start labeling. No accounts, no API keys for auth, nothing to configure. |
 | **Themes** | Light (default), dark or follow-the-system, plus four colour palettes: indigo, ocean, sunset and forest. |
 | **Keyboard shortcuts** | For upload, selection, inference and export, see the table below. |
 
@@ -196,26 +195,22 @@ Full details and directory layouts: [`docs/EXPORT_FORMATS.md`](./docs/EXPORT_FOR
 
 ---
 
-## Access control and admin approval
+## No accounts, and what that means
 
-Lableit is built for a lab, not for anonymous public sign-ups. After signing in,
-a new account cannot use the app until an administrator approves it.
+**Lableit has no login, no user accounts and no permissions.** It is meant to be
+run by you, on your own machine or on a server you control. Everything you create
+lives in one shared workspace, and the app opens straight into your projects.
 
-<table>
-<tr>
-<td width="50%"><img src="assets/screenshots/app-access-gate.jpg" alt="Access request form asking for name, email, institution, phone and intended use"></td>
-<td width="50%"><img src="assets/screenshots/app-admin.jpg" alt="Admin page listing pending access requests with approve and deny actions"></td>
-</tr>
-<tr>
-<td><strong>The request form.</strong> A pending user sees this instead of the app, and submits who they are and what they plan to use it for.</td>
-<td><strong>The admin page.</strong> The admin reviews requests and approves or denies them. The API blocks pending accounts directly, so the gate cannot be bypassed by calling the API.</td>
-</tr>
-</table>
+That makes it trivial to get started, and it has one consequence worth stating
+plainly:
 
-Set `ADMIN_EMAIL` to the account that should receive and approve requests. There is
-**no built-in default**, so a deployment without it simply has no admin. Add a
-[Resend](https://resend.com) key (`RESEND_API_KEY`) to be emailed when a request
-arrives; without it, requests still appear on the admin page.
+> **Anyone who can reach the app can read, change and delete everything in it.**
+> Run it locally (the default, `localhost`), or put it behind your institution's
+> VPN, an SSH tunnel, or an authenticating reverse proxy before exposing it to a
+> network. Do not put this on the open internet as-is.
+
+If you need multi-user separation, that is a fork-and-build-it situation: the
+database still carries an owner column on every project, so the hook is there.
 
 ---
 
@@ -225,7 +220,7 @@ arrives; without it, requests still appear on the admin page.
 ┌─────────────┐      ┌─────────────┐      ┌─────────────┐
 │   Web UI    │◄────►│  API Server │◄────►│  SAM3       │
 │  (React)    │      │  (Fastify)  │      │  Inference  │
-│  Clerk Auth │      │  Clerk JWT  │      │  (FastAPI)  │
+│  no login   │      │  no auth    │      │  (FastAPI)  │
 │  :3000      │      │  :3001      │      │  :8001      │
 └─────────────┘      └──────┬──────┘      └─────────────┘
                             │
@@ -239,7 +234,7 @@ arrives; without it, requests still appear on the admin page.
 
 | Service | Stack | Path |
 |---------|-------|------|
-| Web | Bun + Vite + React 18 + Clerk + GSAP + Tailwind | `apps/web` |
+| Web | Bun + Vite + React 18 + GSAP + Tailwind | `apps/web` |
 | API | Bun + Fastify 5 + Prisma + BullMQ + AWS SDK v3 (S3) | `apps/api` |
 | Inference | FastAPI + SAM3 (Python) | `apps/inference` |
 | Shared | TypeScript types and schemas | `packages/shared` |
@@ -290,7 +285,7 @@ Install ffmpeg: `brew install ffmpeg` (macOS), `sudo apt install ffmpeg`
 git clone https://github.com/msabek/lableit.git
 cd lableit
 
-# Copy the env template and fill in your values (at minimum the Clerk keys)
+# Copy the env template. The defaults work for a local stack as-is.
 cp .env.example .env
 ```
 
@@ -359,20 +354,6 @@ bun run dev:web
 
 Open <http://localhost:3000>.
 
-### Clerk setup
-
-1. Create a free account at <https://clerk.com> and a new application.
-2. Enable **Google** as a social connection.
-3. From the [Clerk API keys page](https://dashboard.clerk.com/last-active?path=api-keys),
-   copy your **Publishable key** and **Secret key**.
-4. Put them in the root `.env`:
-   - `VITE_CLERK_PUBLISHABLE_KEY=pk_test_...`
-   - `CLERK_SECRET_KEY=sk_test_...`
-5. Set `ADMIN_EMAIL` to the address that should approve new accounts, otherwise
-   nobody can be approved.
-
----
-
 ## Configuration (environment variables)
 
 Templates: root [`.env.example`](./.env.example) (full local stack),
@@ -382,17 +363,11 @@ Templates: root [`.env.example`](./.env.example) (full local stack),
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `VITE_CLERK_PUBLISHABLE_KEY` | none | Clerk publishable key (frontend) |
-| `CLERK_SECRET_KEY` | none | Clerk secret key (backend) |
-| `ADMIN_EMAIL` | none (**required in practice**) | The account that approves access requests. No default: unset means no admin. |
-| `RESEND_API_KEY` | none | Optional. Emails the admin when an access request arrives. |
-| `RESEND_FROM` | `Lableit <onboarding@resend.dev>` | Sender address for those emails. The default only delivers to the Resend account owner. |
 | `ALLOWED_ORIGINS` | none | Comma-separated browser origins allowed to call the API cross-origin. |
 | `DATABASE_URL` | `postgresql://lableit:lableit@localhost:5433/lableit` | Postgres connection |
 | `REDIS_URL` | `redis://localhost:6380` | Redis (BullMQ) |
 | `INFERENCE_URL` | `http://localhost:8001` | Inference service base URL |
 | `S3_ENDPOINT` / `S3_ACCESS_KEY` / `S3_SECRET_KEY` / `S3_BUCKET` | MinIO defaults | S3-compatible object storage. Must be reachable from the browser, because media is served through presigned links. |
-| `JWT_SECRET` | none (**required in production**) | Signing secret. Production fails fast if unset; development generates a throwaway one per restart. |
 | `INFERENCE_ALLOWED_ORIGINS` | `*` | CORS allowlist for the inference service |
 | `INFERENCE_SHARED_SECRET` | none | Reserved. The API does not send this header yet, so leave it unset and keep inference on a private network. |
 | `INFERENCE_TIMEOUT_MS` | `60000` | Per-request inference timeout |
@@ -473,7 +448,7 @@ these. Annotations save as you make them, so there is no save shortcut to press.
 - **Docker Compose (self-hosted):** [`DEPLOYMENT.md`](./DEPLOYMENT.md)
 
   ```bash
-  cp .env.production .env   # then edit with real values (Clerk keys, ADMIN_EMAIL, S3 credentials)
+  cp .env.production .env   # then edit with real values (S3 credentials, database password)
   docker compose -f docker-compose.prod.yml up -d --build
   ```
 
@@ -508,13 +483,13 @@ these. Annotations save as you make them, so there is no save shortcut to press.
   publicly. It will also fetch any image URL it is handed, which is a second
   reason to keep it off the public internet. `INFERENCE_ALLOWED_ORIGINS` restricts
   its CORS.
-- The API enforces Clerk JWT auth, the access-approval gate, per-resource ownership
-  checks, input validation, security headers (helmet), and single-use, time-limited
-  export download tokens. Four read-only status routes are deliberately public
-  (`/health`, `/inference/models/status`, `/inference/gpu`, `/inference/config`);
-  everything else needs a Clerk session. Password registration and login were
-  removed before release, so the admin identity can only come from a verified
-  Clerk sign-in.
+- **There is no authentication.** Every API route is open to whoever can reach the
+  port. This is deliberate for a tool you run yourself, and it is the single most
+  important thing to know before putting it anywhere other than `localhost`.
+- The API still validates input, scopes classes and tags to their project, pins
+  video slicing to the project's own storage prefix, sets security headers
+  (helmet), rate-limits per IP and route, and hands out single-use, time-limited
+  export download tokens.
 - Report vulnerabilities privately, see [`SECURITY.md`](./SECURITY.md).
 
 ---

@@ -38,8 +38,8 @@ COPY --from=builder /app/apps/web/dist /usr/share/nginx/html
 COPY apps/web/nginx.railway.conf /etc/nginx/nginx.conf.template
 
 # Startup script:
-#   - generates /runtime-config.js so VITE_CLERK_PUBLISHABLE_KEY and VITE_API_URL
-#     can be set at container start (no rebuild needed),
+#   - generates /runtime-config.js so VITE_API_URL can be set at container start
+#     (no rebuild needed),
 #   - injects the runtime-config.js <script> into index.html (once),
 #   - renders the nginx config from the template with the dynamic PORT/API_URL.
 RUN apk add --no-cache gettext && \
@@ -48,7 +48,6 @@ RUN apk add --no-cache gettext && \
     echo 'API_URL=${API_URL:-http://api.railway.internal:8080}' >> /start.sh && \
     echo 'cat > /usr/share/nginx/html/runtime-config.js <<EOF' >> /start.sh && \
     echo 'window.__LABLEIT_CONFIG__ = {' >> /start.sh && \
-    echo '  VITE_CLERK_PUBLISHABLE_KEY: "${VITE_CLERK_PUBLISHABLE_KEY:-}",' >> /start.sh && \
     echo '  VITE_API_URL: "${VITE_API_URL:-}"' >> /start.sh && \
     echo '};' >> /start.sh && \
     echo 'EOF' >> /start.sh && \

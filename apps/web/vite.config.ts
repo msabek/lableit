@@ -31,9 +31,6 @@ export default defineConfig({
           if (id.includes('/gsap/') || id.includes('/@gsap/')) {
             return 'vendor-gsap';
           }
-          if (id.includes('/@clerk/')) {
-            return 'vendor-clerk';
-          }
           if (id.includes('/axios/')) {
             return 'vendor-axios';
           }

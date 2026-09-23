@@ -35,6 +35,7 @@
   <nav class="toc">
     <strong>On this page</strong>
     <ol>
+      <li><a href="#no-auth">Sign-in removed: clone it, run it, start labeling</a> <span>2026-09-23</span></li>
       <li><a href="#release-blockers">Two release blockers found by the pre-publication security review</a> <span>2026-09-23</span></li>
       <li><a href="#hardening">Authorization gaps closed, dead controls removed</a> <span>2026-09-23</span></li>
       <li><a href="#readme">README rebuilt as the front door, and the claims behind it checked</a> <span>2026-09-22</span></li>
@@ -47,6 +48,27 @@
     </ol>
     <p>Everything above is part of the <strong>1.0.0 public academic release</strong> (released 2026-09-21).</p>
   </nav>
+
+  <article>
+    <h2 id="no-auth">Sign-in removed: clone it, run it, start labeling</h2>
+    <time datetime="2026-09-23">2026-09-23</time>
+    <ul>
+      <li><strong>Why:</strong> Lableit is being released as a repository people download and run themselves. Making them create an account with a hosted login service, paste two API keys and then wait for an admin to approve them was a wall in front of a research tool. It is all gone: no accounts, no login, no tokens, no approval step.</li>
+      <li><strong>What replaced it:</strong> everything belongs to one built-in local user that is created automatically. The ownership columns stayed exactly as they were, so nothing in the data layer had to be rewritten, and a future fork could put real accounts back on the same hook.</li>
+      <li><strong>Said plainly in the docs:</strong> anyone who can reach the app can read, change and delete everything in it. Run it on your own machine, or behind your own VPN or proxy. The README and SECURITY both lead with that.</li>
+      <li><strong>Kept:</strong> the checks that still protect a single user from a bad request, including the export download tokens, project scoping, the video-slicing path check and the frame-interval validation.</li>
+    </ul>
+    <div class="pair">
+      <figure><img src=".evidence/2026-09-23/no-auth/03-landing-no-signin.jpg" alt="Landing page with an Open Lableit button instead of Sign In"><figcaption>The landing page opens the app directly, no sign-in</figcaption></figure>
+      <figure><img src=".evidence/2026-09-23/no-auth/04-projects-restored.jpg" alt="Projects dashboard reached with no login at all"><figcaption>Straight into the dashboard, no login, no approval screen</figcaption></figure>
+    </div>
+    <h3>Proof</h3>
+    <p>The API was started with the Clerk key, the JWT secret and the admin email all unset, then called with no credentials at all: <a href=".evidence/2026-09-23/no-auth/02-api-no-token.txt">02-api-no-token.txt</a>. Health 200, projects 200, create 200, and 404 from every removed route. Further transcripts from the API work: <a href=".evidence/2026-09-23/no-auth-api/">.evidence/2026-09-23/no-auth-api/</a>.</p>
+    <h3>References</h3>
+    <ul>
+      <li>Files: <a href="apps/api/src/index.ts">apps/api/src/index.ts</a>, <a href="apps/web/src/App.tsx">App.tsx</a>, <a href="apps/web/src/main.tsx">main.tsx</a>, <a href="apps/web/src/api.ts">api.ts</a>, <a href="README.md">README.md</a>, <a href="SECURITY.md">SECURITY.md</a>, <a href="docs/API.md">docs/API.md</a>; deleted: <code>auth.tsx</code>, <code>AccessGate.tsx</code>, <code>AdminAccessRequests.tsx</code>, <code>ClerkTokenProvider.tsx</code></li>
+    </ul>
+  </article>
 
   <article>
     <h2 id="release-blockers">Two release blockers found by the pre-publication security review</h2>

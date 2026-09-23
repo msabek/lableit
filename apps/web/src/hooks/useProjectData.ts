@@ -1,32 +1,23 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useAuth } from '@clerk/clerk-react';
 import { projects as projectsApi, assets as assetsApi, Project, Asset } from '../api';
 
 export function useProjectData(projectId?: string) {
-  const { isLoaded: isAuthLoaded, isSignedIn } = useAuth();
   const [project, setProject] = useState<Project | null>(null);
   const [projectAssets, setProjectAssets] = useState<Asset[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const loadAssets = useCallback(async (projId: string) => {
-    // Don't load if auth isn't ready or user isn't signed in
-    if (!isAuthLoaded || !isSignedIn) return;
     try {
       const assetList = await assetsApi.getAll(projId);
       setProjectAssets(assetList);
     } catch (err: any) {
       console.error('Failed to load assets:', err);
-      // Don't set error for 401 - auth will handle it
-      if (err.response?.status !== 401) {
-        setError('Failed to load assets');
-      }
+      setError('Failed to load assets');
     }
-  }, [isAuthLoaded, isSignedIn]);
+  }, []);
 
   const loadProject = useCallback(async (id: string) => {
-    // Don't load if auth isn't ready or user isn't signed in
-    if (!isAuthLoaded || !isSignedIn) return;
     setLoading(true);
     try {
       const proj = await projectsApi.get(id);
@@ -39,19 +30,14 @@ export function useProjectData(projectId?: string) {
         loadAssets(id);
       }
     } catch (err: any) {
-      // Don't set error for 401 - auth will handle it
-      if (err.response?.status !== 401) {
-        setError('Failed to load project');
-      }
+      console.error('Failed to load project:', err);
+      setError('Failed to load project');
     } finally {
       setLoading(false);
     }
-  }, [loadAssets, isAuthLoaded, isSignedIn]);
+  }, [loadAssets]);
 
   useEffect(() => {
-    // Only fetch data when auth is loaded and user is signed in
-    if (!isAuthLoaded || !isSignedIn) return;
-    
     if (projectId) {
       loadProject(projectId);
     } else {
@@ -68,7 +54,7 @@ export function useProjectData(projectId?: string) {
       };
       setProject(mockProject);
     }
-  }, [projectId, loadProject, isAuthLoaded, isSignedIn]);
+  }, [projectId, loadProject]);
 
   const refreshAssets = useCallback(() => {
     if (projectId) {

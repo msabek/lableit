@@ -126,10 +126,10 @@ export default function HowItWorksSection() {
             </p>
           </div>
           <a
-            href="/auth/sign-in"
+            href="/projects"
             className="btn-primary-gradient flex items-center gap-2 whitespace-nowrap"
           >
-            Get Started
+            Open Lableit
             <ArrowRight className="w-4 h-4" />
           </a>
         </div>

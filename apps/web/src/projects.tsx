@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useUser, useAuth, UserButton } from '@clerk/clerk-react';
-import { projects, classes as classesApi, assets as assetsApi, Project, ClassDef, Asset, subscribeToServiceStatus, ServiceStatus, getProjectAssetCount, access } from './api';
+import { projects, classes as classesApi, assets as assetsApi, Project, ClassDef, Asset, subscribeToServiceStatus, ServiceStatus, getProjectAssetCount } from './api';
 import SettingsModal from './components/SettingsModal';
 import { ThemeDropdown } from './components/ThemeToggle';
 import ServiceStatusIndicator from './components/ServiceStatusIndicator';
@@ -11,7 +10,7 @@ import VideoSliceDialog from './components/VideoSliceDialog';
 import ProjectCreateWizard from './components/ProjectCreateWizard';
 import { DragDropOverlay } from './components/ui/DragDropOverlay';
 import {
-  Plus, FolderOpen, Tag, Settings, Search, Grid, List, ShieldCheck,
+  Plus, FolderOpen, Tag, Settings, Search, Grid, List,
   Trash2, Edit3, X, Check, ChevronRight, Image, Film, Download, Upload,
   AlertCircle, Loader2, MoreHorizontal, Palette, ArrowLeft, RefreshCw
 } from 'lucide-react';
@@ -664,8 +663,6 @@ function ProjectDetailView({
 
 export default function Projects() {
   const navigate = useNavigate();
-  const { user } = useUser();
-  const { isLoaded: isAuthLoaded, isSignedIn } = useAuth();
   const { effectiveTheme, colorTheme } = useSettings();
 
   const [projectsList, setProjectsList] = useState<Project[]>([]);
@@ -677,17 +674,12 @@ export default function Projects() {
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [retrying, setRetrying] = useState(false);
-  const [isAdmin, setIsAdmin] = useState(false);
 
   // Track if we had a connection error and need to auto-retry
   const hadConnectionError = useRef(false);
   const lastApiStatus = useRef<'connected' | 'disconnected' | 'checking'>('checking');
 
   const loadProjects = useCallback(async (isAutoRetry = false) => {
-    if (!isAuthLoaded || !isSignedIn) {
-      console.log('[Projects] Skipping load - auth not ready or not signed in');
-      return;
-    }
     try {
       if (isAutoRetry) {
         setRetrying(true);
@@ -702,22 +694,20 @@ export default function Projects() {
       hadConnectionError.current = false; // Successfully loaded, clear the flag
     } catch (err: any) {
       console.error('[Projects] Failed to load:', err);
-      if (err.response?.status !== 401) {
-        // Use more descriptive error message for network errors
-        const isNetworkError = err.code === 'ERR_NETWORK';
-        const errorMsg = isNetworkError
-          ? 'Cannot connect to server. Please ensure the API is running.'
-          : err.response?.data?.error || err.message || 'Failed to load projects';
-        setError(errorMsg);
-        if (isNetworkError) {
-          hadConnectionError.current = true; // Mark that we need to auto-retry
-        }
+      // Use more descriptive error message for network errors
+      const isNetworkError = err.code === 'ERR_NETWORK';
+      const errorMsg = isNetworkError
+        ? 'Cannot connect to server. Please ensure the API is running.'
+        : err.response?.data?.error || err.message || 'Failed to load projects';
+      setError(errorMsg);
+      if (isNetworkError) {
+        hadConnectionError.current = true; // Mark that we need to auto-retry
       }
     } finally {
       setLoading(false);
       setRetrying(false);
     }
-  }, [isAuthLoaded, isSignedIn]);
+  }, []);
 
   // Subscribe to service status and auto-retry when API comes online
   useEffect(() => {
@@ -727,34 +717,18 @@ export default function Projects() {
       lastApiStatus.current = status.api;
 
       // Auto-retry if we had a connection error and API just came online
-      if (wasDisconnected && isNowConnected && hadConnectionError.current && isAuthLoaded && isSignedIn) {
+      if (wasDisconnected && isNowConnected && hadConnectionError.current) {
         console.log('[Projects] API reconnected, auto-retrying...');
         loadProjects(true);
       }
     });
 
     return unsubscribe;
-  }, [loadProjects, isAuthLoaded, isSignedIn]);
+  }, [loadProjects]);
 
   useEffect(() => {
-    if (isAuthLoaded && isSignedIn) {
-      loadProjects();
-    }
-  }, [isAuthLoaded, isSignedIn, loadProjects]);
-
-  // Surface the Admin link only for the admin account.
-  useEffect(() => {
-    if (!isAuthLoaded || !isSignedIn) return;
-    access.getStatus().then((s) => setIsAdmin(!!s.isAdmin)).catch(() => {});
-  }, [isAuthLoaded, isSignedIn]);
-  
-  if (!isAuthLoaded) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-[var(--color-background)]">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
-      </div>
-    );
-  }
+    loadProjects();
+  }, [loadProjects]);
 
   const filteredProjects = useMemo(() => {
     if (!searchQuery) return projectsList;
@@ -825,8 +799,6 @@ export default function Projects() {
   const totalAssets = projectsList.reduce((acc, p) => acc + getProjectAssetCount(p), 0);
   const totalClasses = projectsList.reduce((acc, p) => acc + (p.classes?.length || 0), 0);
 
-  const greetingName = user?.firstName || user?.username || 'there';
-
   return (
     <div className="min-h-screen bg-[var(--color-background)] bg-mesh-gradient">
       {/* Header */}
@@ -849,15 +821,6 @@ export default function Projects() {
 
           <div className="flex items-center gap-3">
             <ServiceStatusIndicator />
-            {isAdmin && (
-              <button
-                onClick={() => navigate('/admin')}
-                className="icon-button-glass"
-                title="Access requests (admin)"
-              >
-                <ShieldCheck className="w-5 h-5" />
-              </button>
-            )}
             <ThemeDropdown />
             <button
               onClick={() => setShowSettings(true)}
@@ -865,7 +828,6 @@ export default function Projects() {
             >
               <Settings className="w-5 h-5" />
             </button>
-            <UserButton afterSignOutUrl="/auth/sign-in" />
           </div>
         </div>
       </header>
@@ -891,7 +853,7 @@ export default function Projects() {
                 <div>
                   <p className="text-xs uppercase tracking-[0.2em] text-text-muted mb-2">Project Control Center</p>
                   <h1 className="text-2xl sm:text-3xl font-bold text-text mb-2">
-                    Welcome back, <span className="gradient-text capitalize">{greetingName}</span>
+                    Welcome to <span className="gradient-text">Lableit</span>
                   </h1>
                   <p className="text-sm sm:text-base text-text-muted max-w-2xl">
                     Build datasets faster with modern glass panels, stronger visual hierarchy, and global color themes.

@@ -193,7 +193,7 @@ export default function UseCasesSection() {
 
               {/* CTA */}
               <a
-                href="/auth/sign-in"
+                href="/projects"
                 className="inline-flex items-center gap-2 text-indigo-600 dark:text-indigo-400 font-medium hover:gap-3 transition-all"
               >
                 Start labeling for {activeCase.title.toLowerCase()}

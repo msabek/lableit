@@ -3,7 +3,6 @@ import axios, { AxiosError } from 'axios';
 declare global {
   interface Window {
     __LABLEIT_CONFIG__?: {
-      VITE_CLERK_PUBLISHABLE_KEY?: string;
       VITE_API_URL?: string;
     };
   }
@@ -21,20 +20,6 @@ export const api = axios.create({
   baseURL: API_BASE_URL,
   timeout: 30000, // 30 second timeout
 });
-
-// Token getter function - will be set by ClerkTokenProvider
-let getClerkToken: (() => Promise<string | null>) | null = null;
-let tokenGetterReady = false;
-
-export function setClerkTokenGetter(getter: () => Promise<string | null>) {
-  getClerkToken = getter;
-  tokenGetterReady = true;
-}
-
-// Check if the token getter has been set up
-export function isAuthReady(): boolean {
-  return tokenGetterReady;
-}
 
 // Service status tracking
 export interface ServiceStatus {
@@ -103,12 +88,7 @@ async function retryRequest(fn: () => Promise<any>, maxRetries: number = 3, base
       if (error.response?.status >= 400 && error.response?.status < 500 && error.response?.status !== 429) {
         throw error;
       }
-      
-      // Don't retry for auth errors
-      if (error.response?.status === 401 || error.response?.status === 403) {
-        throw error;
-      }
-      
+
       // Calculate delay with exponential backoff
       const delay = baseDelay * Math.pow(2, attempt);
       console.log(`Request failed (attempt ${attempt + 1}/${maxRetries}), retrying in ${delay}ms...`);
@@ -143,29 +123,6 @@ export function getErrorMessage(error: any): string {
   return error.message || 'An unexpected error occurred';
 }
 
-// Add auth token to requests
-api.interceptors.request.use(async (config: any) => {
-  // Try to get Clerk token first
-  if (getClerkToken) {
-    try {
-      const token = await getClerkToken();
-      if (token) {
-        config.headers.Authorization = `Bearer ${token}`;
-        return config;
-      }
-    } catch (e) {
-      console.warn('Failed to get Clerk token:', e);
-    }
-  }
-  
-  // Fallback to localStorage token (for backwards compatibility)
-  const storedToken = localStorage.getItem('token');
-  if (storedToken) {
-    config.headers.Authorization = `Bearer ${storedToken}`;
-  }
-  return config;
-});
-
 // Handle responses with retry for network errors
 api.interceptors.response.use(
   (response: any) => {
@@ -176,32 +133,6 @@ api.interceptors.response.use(
     return response;
   },
   async (error: any) => {
-    // Handle 401 responses - but don't redirect if:
-    // 1. Already on auth page
-    // 2. Auth hasn't been initialized yet (to avoid redirect loops during startup)
-    // 3. It's an export-related error (let the component handle it)
-    if (error.response?.status === 401) {
-      const currentPath = window.location.pathname;
-      const isAuthPage = currentPath.startsWith('/auth/');
-      const requestUrl = error.config?.url || '';
-      const isExportRequest = requestUrl.includes('/export') || requestUrl.includes('/exports/');
-
-      // Don't redirect for export requests - let the component handle the error
-      if (isExportRequest) {
-        return Promise.reject(error);
-      }
-
-      // Only redirect if:
-      // - Not already on an auth page
-      // - Auth has been initialized (token getter is ready)
-      // If auth isn't ready, the ClerkTokenProvider will handle showing loading state
-      if (!isAuthPage && tokenGetterReady) {
-        // Use replace to avoid polluting browser history
-        window.location.replace('/auth/sign-in');
-      }
-      return Promise.reject(error);
-    }
-
     // Update service status on network errors
     if (error.code === 'ERR_NETWORK' || error.code === 'ECONNABORTED') {
       updateServiceStatus({ api: 'disconnected', error: getErrorMessage(error) });
@@ -214,17 +145,6 @@ api.interceptors.response.use(
 // ================================
 // Types
 // ================================
-export interface User {
-  id: string;
-  email: string;
-  createdAt: string;
-}
-
-export interface AuthResponse {
-  user: User;
-  token: string;
-}
-
 export interface Project {
   id: string;
   name: string;
@@ -340,18 +260,6 @@ export interface InferenceModel {
   loaded: boolean;
   device: string;
 }
-
-// ================================
-// Auth API
-// ================================
-// Password login and registration were removed from the API before the public
-// release; sign-in is Clerk only.
-export const auth = {
-  me: async (): Promise<User> => {
-    const response = await api.get('/auth/me');
-    return response.data;
-  },
-};
 
 // ================================
 // Projects API
@@ -890,55 +798,6 @@ export const inference = {
   },
   updateConfig: async (config: { model_path?: string; device?: string }): Promise<any> => {
     const response = await api.post('/inference/config', config);
-    return response.data;
-  },
-};
-
-// ================================
-// Access control
-// ================================
-export type AccessStatus = 'pending' | 'approved' | 'denied';
-
-export interface AccessStatusResponse {
-  status: AccessStatus;
-  isAdmin: boolean;
-  email?: string;
-  requested?: boolean;
-}
-
-export interface AccessRequestItem {
-  id: string;
-  email: string;
-  institution: string | null;
-  phone: string | null;
-  useCase: string | null;
-  accessStatus: AccessStatus;
-  requestedAt: string | null;
-  decidedAt: string | null;
-  createdAt: string;
-}
-
-export const access = {
-  // Current account's access status (used to gate the UI after sign-in).
-  getStatus: async (): Promise<AccessStatusResponse> => {
-    const response = await api.get('/auth/access-status');
-    return response.data;
-  },
-  // Submit an access request (institution + intended use required).
-  submitRequest: async (data: {
-    name?: string; institution: string; phone?: string; useCase: string;
-  }): Promise<{ status: AccessStatus; emailSent?: boolean; emailReason?: string }> => {
-    const response = await api.post('/access-requests', data);
-    return response.data;
-  },
-  // Admin: list all access requests.
-  adminList: async (): Promise<{ requests: AccessRequestItem[] }> => {
-    const response = await api.get('/admin/access-requests');
-    return response.data;
-  },
-  // Admin: approve or deny an account.
-  adminDecide: async (userId: string, decision: 'approve' | 'deny'): Promise<{ id: string; status: AccessStatus }> => {
-    const response = await api.post(`/admin/access-requests/${userId}/decision`, { decision });
     return response.data;
   },
 };

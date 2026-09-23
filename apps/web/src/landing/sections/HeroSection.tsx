@@ -90,7 +90,7 @@ export default function HeroSection({ onGetStarted }: HeroSectionProps) {
           onClick={onGetStarted}
           className="btn-primary-gradient text-lg px-8 py-4 flex items-center gap-2 group shadow-lg"
         >
-          Start Labeling Free
+          Start Labeling
           <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
         </button>
         <a

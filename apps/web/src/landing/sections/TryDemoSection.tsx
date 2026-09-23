@@ -182,7 +182,7 @@ export default function TryDemoSection() {
         </h2>
         <p className="animate-on-scroll body-lg text-slate-600 dark:text-slate-400 max-w-2xl mx-auto">
           Get a feel for the workflow: upload an image and pick the objects to find.
-          This preview draws <strong>example boxes at random</strong>; sign in to run the real SAM3 model on your images.
+          This preview draws <strong>example boxes at random</strong>; open Lableit to run the real SAM3 model on your images.
         </p>
       </div>
 
@@ -450,11 +450,11 @@ export default function TryDemoSection() {
               </div>
             )}
 
-            {/* CTA to sign up */}
+            {/* CTA into the app */}
             {showDetections && (
               <div className="p-4 rounded-2xl bg-gradient-to-r from-indigo-500/10 to-purple-500/10 border border-indigo-200 dark:border-indigo-500/20">
                 <p className="text-sm text-slate-700 dark:text-slate-300 mb-3">
-                  <strong>Like what you see?</strong> Sign up for free to unlock:
+                  <strong>Like what you see?</strong> Open Lableit to unlock:
                 </p>
                 <ul className="text-sm text-slate-600 dark:text-slate-400 space-y-1 mb-4">
                   <li className="flex items-center gap-2">
@@ -471,10 +471,10 @@ export default function TryDemoSection() {
                   </li>
                 </ul>
                 <a
-                  href="/auth/sign-in"
+                  href="/projects"
                   className="btn-primary-gradient w-full flex items-center justify-center gap-2"
                 >
-                  Get Started Free
+                  Open Lableit
                   <Sparkles className="w-4 h-4" />
                 </a>
               </div>

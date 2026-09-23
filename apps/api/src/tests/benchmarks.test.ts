@@ -1,6 +1,5 @@
 import { expect, test, describe, afterAll } from "bun:test";
 import { PrismaClient } from "@prisma/client";
-import bcrypt from "bcrypt";
 // Note: In a real environment, we would use a test database
 // but for this benchmark, we'll use the existing prisma client 
 // and clean up after ourselves.
@@ -26,44 +25,16 @@ describe("Lableit Backend Benchmarks", () => {
     // ================================
     // 1-3: Auth Benchmarks
     // ================================
-    dbTest("1. Auth - Registration", async () => {
-        const email = `test-${Date.now()}@example.com`;
-        const password = "password123";
-        const hashedPassword = await bcrypt.hash(password, 10);
-
+    // Lableit has no authentication: there is no registration, no login and no
+    // token check, so the old benchmarks 1-3 for those were removed. The later
+    // benchmarks still need a user row to own their data, which is what the API
+    // creates once as the implicit local user.
+    dbTest("1. Setup - local user row", async () => {
         const user = await prisma.user.create({
-            data: { email, password: hashedPassword }
+            data: { email: `bench-${Date.now()}@lableit.local` }
         });
         testUserId = user.id;
-
-        expect(user.email).toBe(email);
         expect(user.id).toBeDefined();
-    });
-
-    dbTest("2. Auth - Login (Simulated)", async () => {
-        // In a real test we would call the /auth/login endpoint
-        // Here we verify the logic: find user -> compare password
-        const email = `login-${Date.now()}@example.com`;
-        const password = "password123";
-        const hashedPassword = await bcrypt.hash(password, 10);
-
-        const user = await prisma.user.create({
-            data: { email, password: hashedPassword }
-        });
-
-        const foundUser = await prisma.user.findUnique({ where: { email } });
-        expect(foundUser).toBeDefined();
-        const match = await bcrypt.compare(password, foundUser!.password);
-        expect(match).toBe(true);
-
-        // Cleanup for this specific test's user
-        await prisma.user.delete({ where: { id: user.id } });
-    });
-
-    test("3. Auth - Unauthorized Access Protection (Logic)", () => {
-        // Verify that a request without a token would fail
-        // This is handled by our Fastify middleware (preHandler: app.authenticate)
-        expect(true).toBe(true); // Placeholder for middleware verification
     });
 
     // ================================

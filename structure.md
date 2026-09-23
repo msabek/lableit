@@ -4,7 +4,7 @@ Repo layout
   - Repairs stale absolute paths in `apps/inference/model_config.json` before SAM3 setup/start
 - infra/: docker-compose.yml (Postgres on 5433, Redis on 6380, MinIO on 9000/9001) for local infra
 - apps/
-  - api/ (Bun 1.3 + Fastify 5 + BullMQ worker mode, Prisma, AWS SDK v3 S3 client) - loads .env from monorepo root for Clerk keys
+  - api/ (Bun 1.3 + Fastify 5 + BullMQ worker mode, Prisma, AWS SDK v3 S3 client) - loads .env from the monorepo root, then its own local .env
     - Production startup now fails fast on missing required env vars (`DATABASE_URL`, `REDIS_URL`, `INFERENCE_URL`, `S3_*`)
     - Docker startup runs `prisma migrate deploy` before launching API
     - Railway build/deploy uses app-local Docker context (`apps/api`) and local `Dockerfile` path
@@ -12,7 +12,7 @@ Repo layout
       - DELETE /projects/:projectId/annotations - Clear all annotations from project
       - POST /assets/urls - Batch fetch signed URLs for multiple assets
       - GET /assets/:id/url - Returns both url and thumbnailUrl
-      - POST /inference/text, /inference/points - Auth-protected SAM3 endpoints
+      - POST /inference/text, /inference/points - SAM3 detection proxy endpoints
     - src/exportService.ts: All 8 export formats (COCO, YOLO, VOC, PNG masks, CreateML, TFRecord, LabelMe)
       - Now includes actual images in exports (downloaded from S3)
       - ZIP archives are created in-process with `yazl` instead of shell commands
@@ -20,9 +20,12 @@ Repo layout
       - YOLO data.yaml uses relative paths for portability
     - Thumbnail generation: 300x300 JPEG thumbnails created on upload (using Sharp)
     - Security:
-      - Clerk JWT validation, input sanitization, file type validation
-      - Auth required for inference endpoints
-      - Secure export downloads with time-limited tokens (1-hour expiry)
+      - No authentication: there are no accounts and no login, and every route is
+        open to whoever can reach the port. Run it locally, on a private network,
+        or behind a proxy that authenticates users for it
+      - Input sanitization and file type validation
+      - Export downloads use single-use, time-limited tokens (1-hour expiry); this
+        is the only token in the system
       - Input validation for classes (name length, color format, threshold range)
     - Error handling: Proper cleanup, comprehensive error responses
     - Database: Simplified schema (Projects contain assets directly, no datasets)
@@ -38,12 +41,11 @@ Repo layout
   - web/ (Bun 1.3 + Vite 8 + React SPA) - runs on port 3000
     - Railway build/deploy uses app-local Docker context (`apps/web`) and local `Dockerfile` path
     - Startup script generates `runtime-config.js` and injects it into `index.html` so runtime env values are available before the app bundle loads
-      - Includes `VITE_CLERK_PUBLISHABLE_KEY` and `VITE_API_URL`
+      - Includes `VITE_API_URL`
     - Docker image now uses `nginx.railway.conf` template and runtime substitution for `PORT` + `API_URL`
     - Glassmorphism UI with semi-transparent panels and gradient effects
-    - src/main.tsx: ClerkProvider wrapper (official Clerk setup pattern)
-    - src/App.tsx: Route configuration with ErrorBoundary
-    - src/auth.tsx: Clerk SignIn/SignUp components with Google OAuth
+    - src/main.tsx: React root render (no auth provider)
+    - src/App.tsx: Route configuration with ErrorBoundary; routes are `/` (landing), `/projects`, `/labeling/:projectId`, and a catch-all redirect to `/projects`. No sign-in, gate or admin routes
     - src/projects.tsx: Redesigned dashboard with class management, search, grid/list views
       - Full-width project detail view expands when clicking a project
       - Asset preview thumbnails with lazy-loaded signed URLs (8-column grid in detail view)
@@ -108,10 +110,9 @@ Repo layout
       - Resets image loading state on source change to avoid missing-image flashes during asset navigation
     - src/components/ThemeToggle.tsx: Theme mode + color style selector component
     - src/components/ServiceStatusIndicator.tsx: Connection status display with health checks
-    - src/components/ClerkTokenProvider.tsx: Clerk token integration (waits for auth before rendering children)
     - src/components/SettingsPanel.tsx: Comprehensive settings UI (Model, Inference, Display, Export, Storage)
     - src/components/InferenceStatus.tsx: Unified status indicator (compact/detailed/banner variants)
-    - src/api.ts: API client with Clerk auth, retry logic, error handling, service status
+    - src/api.ts: API client with retry logic, error handling, service status (sends no auth header; the API requires none)
       - URL caching with 50-minute expiry to reduce API calls
       - Batch URL fetching via getBatchUrls()
     - src/landing/: Interactive landing page with GSAP vertical section animations
@@ -160,12 +161,15 @@ Default ports:
 - Redis: localhost:6380
 
 Authentication:
-- Clerk for user authentication (Google OAuth)
-- ClerkProvider in main.tsx (official Clerk + Vite pattern)
-- VITE_CLERK_PUBLISHABLE_KEY in root .env (Vite envDir configured to load from monorepo root)
-- CLERK_SECRET_KEY in root .env (for backend)
-- Clerk JWT verification on protected routes
-- afterSignOutUrl configured for proper sign-out redirect
+- None. Lableit is an open-source tool meant to be downloaded and run locally for
+  academic use, so authentication was removed before release.
+- No login, no accounts, no admin-approval gate, no session tokens
+- Every API route is open to whoever can reach the port; all data belongs to one
+  implicit local user
+- The only token left is the single-use export download token (1-hour expiry)
+- Consequence for deployment: a public URL would expose every route and all data.
+  Run it on localhost, on a private network/VPN, or behind an authenticating
+  proxy covering both the web and API services (see DEPLOYMENT.md)
 
 Theme System:
 - Three modes: light, dark, system (follows OS preference)
@@ -174,7 +178,7 @@ Theme System:
 - Theme persisted in localStorage
 
 Database Schema:
-- User: id, email, password (empty for Clerk users), externalId (Clerk user ID)
+- User: id, email, plus vestigial columns (password, externalId, accessStatus, institution, phone, useCase, requestedAt, decidedAt) kept only so existing databases still migrate; nothing reads them now that there is no authentication
 - Project: id, name, ownerId, assets[], classes[] (indexed by ownerId)
 - Asset: id, projectId, uri (unique), width, height, sourceType, annotations[] (indexed by projectId, sourceType)
 - ClassDef: id, projectId, name, color, threshold (unique on [projectId, name], indexed by projectId)
@@ -205,8 +209,7 @@ FFmpeg Requirements (for video slicing):
 - The system will auto-detect FFmpeg in common installation locations
 
 Environment Variables (optional):
-- VITE_CLERK_PUBLISHABLE_KEY: Clerk publishable key for frontend
-- CLERK_SECRET_KEY: Clerk secret key for backend
+- VITE_API_URL: API base URL for the frontend (injected at container start via runtime-config.js)
 - INFERENCE_TIMEOUT_MS: Timeout for inference requests (default: 60000)
 - INFERENCE_BATCH_TIMEOUT_MS: Timeout for per-asset batch inference calls (default: 300000)
 - INFERENCE_MAX_RETRIES: Max retry attempts (default: 3)

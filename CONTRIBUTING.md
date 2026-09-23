@@ -21,7 +21,7 @@ cannot agree to this, please open an issue to discuss before contributing.
 Lableit is a monorepo:
 
 - `apps/api` — Bun + Fastify + Prisma + BullMQ + AWS SDK v3 (S3) backend
-- `apps/web` — Vite 8 + React 18 + Clerk + GSAP + Tailwind frontend
+- `apps/web` - Vite 8 + React 18 + GSAP + Tailwind frontend
 - `apps/inference` — FastAPI + SAM3 Python inference service
 - `packages/shared` — shared TypeScript types
 - `infra/docker-compose.yml` — local Postgres, Redis, MinIO
@@ -70,8 +70,11 @@ existing local PostgreSQL/Redis installs (notably on Windows).
    ```
 
 2. **Configure environment:** copy `.env.example` to `.env` at the repo root and
-   fill in Clerk keys and any overrides. The API loads `.env` from the monorepo
-   root first, then local `.env`.
+   adjust any overrides. The API loads `.env` from the monorepo root first, then
+   local `.env`. There are no third-party accounts or API keys to sign up for:
+   the whole stack runs locally, and Lableit has no authentication of its own.
+   The only external credential is an optional Hugging Face token (`HF_TOKEN`)
+   for downloading the gated SAM3 weights.
 
 3. **Install JS/TS dependencies** (from the repo root):
 
@@ -153,7 +156,7 @@ A formal automated test suite is still **work in progress**. `apps/web` includes
 verify changes manually:
 
 - Exercise the affected API routes (see [`docs/API.md`](./docs/API.md)).
-- Run an end-to-end flow in the web app where relevant (sign in, create project,
-  upload, annotate, export).
+- Run an end-to-end flow in the web app where relevant (create project, upload,
+  annotate, export).
 
 Contributions that add tests are very welcome.

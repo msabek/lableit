@@ -31,44 +31,71 @@ You can also use GitHub's private **Report a vulnerability** button on the
 repository's Security tab, if it is enabled. Please do not open a public issue
 for security problems.
 
+## The most important thing to know
+
+**Lableit has no authentication.** There are no accounts, no login and no
+permissions: every API route and every screen is open to whoever can reach the
+port. That is deliberate. Lableit is a research tool you run yourself, and
+requiring a hosted identity provider just to label images on your own laptop was
+friction without benefit for that use.
+
+The consequence is simple and absolute:
+
+> **Anyone who can reach the app can read, modify and delete everything in it,
+> and can drive the SAM3 service behind it.**
+
+Run it the way it is designed to be run:
+
+- On `localhost`, which is the default for every service.
+- Or on a machine only you can reach, for example behind your institution's VPN,
+  over an SSH tunnel, or behind a reverse proxy that does the authenticating.
+- **Never put it on the open internet as it ships.** If you need to, put a real
+  authenticating proxy in front of it, and treat the API and the inference
+  service as an internal network.
+
+Reports that amount to "there is no authentication" are therefore not
+vulnerabilities, they are this design. Reports that an *authenticated-equivalent*
+boundary inside the app can be crossed, or that a request can reach outside its
+own project, read arbitrary files, or execute code, absolutely are: please send
+those through the private channel above.
+
 ## Scope and Hardening Notes
 
 ### Inference service must run on a private network
 
 The inference service (`apps/inference`, FastAPI + SAM3) ships with **zero
-authentication by default** — every endpoint is open to any caller that can
-reach the service. It is designed to sit on a **private network only** (for
-example, Docker Compose's internal network or Railway private networking via
-`*.railway.internal`) and to be reached exclusively by the API service.
+authentication** as well, and it will fetch any image URL it is handed. It is
+designed to sit on a **private network only** (for example Docker Compose's
+internal network) and to be reached exclusively by the API service.
 
-- **Never expose the inference service directly to the public internet.**
-- Keep `INFERENCE_URL` pointed at a private/internal address (e.g.
-  `http://inference.railway.internal:8080` or `http://inference:8001`).
-- The API service is the authenticated front door: its inference proxy routes
-  (`POST /inference/text`, `POST /inference/points`) require a valid Clerk or
-  JWT session before forwarding to the inference service.
+- **Never expose the inference service directly to a public network.**
+- Keep `INFERENCE_URL` pointed at a private address (e.g. `http://inference:8001`).
+- `INFERENCE_ALLOWED_ORIGINS` restricts its CORS; `INFERENCE_SHARED_SECRET` is
+  read by the inference service but the API does not send the header, so leave it
+  unset and rely on network isolation.
 
-> **TODO (maintainer):** A shared-secret guard for the inference service
-> (e.g. an `INFERENCE_SHARED_SECRET` header checked on every inference request)
-> is recommended as defense-in-depth but is **not yet implemented**. Until then,
-> rely strictly on network isolation. If/when implemented, the API would attach
-> the secret and the inference service would reject requests lacking it.
+### What the API does still enforce
 
-### Other security-relevant defaults
+Even with no accounts, these protect a single user from a malformed or hostile
+request:
 
-- **Authentication:** The API uses Clerk JWT verification (with a legacy
-  `@fastify/jwt` fallback) on all non-public routes. Public routes are limited
-  to `/health`, `/auth/register`, `/auth/login`, and a few read-only inference
-  status endpoints.
-- **Secrets:** `JWT_SECRET`, `CLERK_SECRET_KEY`, and `S3_*` credentials must be
-  set via environment variables. In production the API **fails fast** if
-  required secrets are missing; do not ship the development fallback secret.
-- **Object storage:** Assets are served via short-lived (1-hour) signed S3 URLs.
-  Export downloads use single-use, time-limited tokens (1-hour TTL in Redis).
-- **CORS:** In production, set `ALLOWED_ORIGINS` to your exact web origin(s).
-- **Rate limiting:** A simple in-memory per-IP/route rate limit is enabled
-  (100 requests/minute/route). For multi-instance deployments use an external
-  rate limiter or gateway.
+- **Project scoping:** classes and tags must belong to the project they are
+  attached to; inference jobs must target assets from one project; video slicing
+  is pinned to that project's own storage prefix and rejects `..` segments.
+- **Input validation:** the video frame interval is validated as a bounded number
+  before it reaches ffmpeg, names and colours are checked, and uploads are capped
+  at 500 MB with an extension allowlist.
+- **Object storage:** assets are served through short-lived (1-hour) signed S3
+  URLs; export downloads use single-use, time-limited tokens held in Redis.
+- **Security headers** via helmet, and a simple in-memory per-IP/route rate limit
+  (100 requests per minute). For multi-instance setups use an external limiter.
+- **CORS:** set `ALLOWED_ORIGINS` if a browser on another origin must call the API.
+
+### Secrets that still matter
+
+`S3_ACCESS_KEY` / `S3_SECRET_KEY`, the database password and any `HF_TOKEN` are
+real credentials: keep them in your local `.env`, which is gitignored, and never
+commit them.
 
 Please report any deviation from these expectations through the private channel
 above.

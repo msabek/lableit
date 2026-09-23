@@ -76,8 +76,8 @@ Permissively licensed components (MIT / BSD / ISC / MPL-2.0, etc.)
 
 Numerous additional components are licensed under permissive licenses (MIT, BSD,
 ISC) including but not limited to Fastify and plugins, React and React DOM,
-Clerk SDKs, BullMQ, ioredis, pino, axios, react-router-dom, lucide-react,
-FastAPI, uvicorn, Pydantic, NumPy, Pillow, OpenCV, requests, and others. PyTorch
+BullMQ, ioredis, pino, axios, react-router-dom, lucide-react, FastAPI, uvicorn,
+Pydantic, NumPy, Pillow, OpenCV, requests, and others. PyTorch
 (torch / torchvision / torchaudio) is distributed under a BSD-style license.
 Full per-component license identifiers and links are listed in
 THIRD-PARTY-LICENSES.md.

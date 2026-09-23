@@ -149,9 +149,7 @@ required citation is provided in [`CITATION.cff`](./CITATION.cff):
 |-----------|---------|
 | `@aws-sdk/*` | Apache-2.0 (see §1) |
 | `@prisma/client`, `prisma` | Apache-2.0 (see §1) |
-| `@clerk/backend` | MIT |
-| `fastify`, `@fastify/cors`, `@fastify/jwt`, `@fastify/multipart`, `@fastify/static` | MIT |
-| `bcrypt` | MIT |
+| `fastify`, `@fastify/cors`, `@fastify/multipart`, `@fastify/static` | MIT |
 | `bullmq` | MIT |
 | `dotenv` | BSD-2-Clause |
 | `ioredis` | MIT |
@@ -166,7 +164,6 @@ required citation is provided in [`CITATION.cff`](./CITATION.cff):
 | Component | License |
 |-----------|---------|
 | `react`, `react-dom` | MIT |
-| `@clerk/clerk-react` | MIT |
 | `react-router-dom` | MIT |
 | `axios` | MIT |
 | `follow-redirects` | MIT |

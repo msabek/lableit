@@ -1,6 +1,5 @@
 import Fastify from 'fastify';
 import multipart from '@fastify/multipart';
-import jwt from '@fastify/jwt';
 import cors from '@fastify/cors';
 import helmet from '@fastify/helmet';
 import fastifyStatic from '@fastify/static';
@@ -23,10 +22,9 @@ import fs from 'fs';
 import path from 'path';
 import { exportDataset, createExportArchive, ExportFormat, setS3Client, setPrismaClient } from './exportService.js';
 import sharp from 'sharp';
-import { createClerkClient, verifyToken } from '@clerk/backend';
 
-// Load environment variables from monorepo root first (for Clerk keys, etc.)
-// Then load from local .env to allow overrides
+// Load environment variables from the monorepo root first, then from the local
+// .env to allow overrides.
 const rootEnvPath = path.resolve(process.cwd(), '../../.env');
 if (fs.existsSync(rootEnvPath)) {
   dotenv.config({ path: rootEnvPath });
@@ -41,19 +39,6 @@ const runWorker =
   workerMode ||
   process.env.RUN_WORKER === 'true' ||
   (!isProduction && process.env.RUN_WORKER !== 'false');
-
-// In production we fail fast for required secrets. In development we generate
-// an ephemeral secret so there is no weak hardcoded fallback to leak.
-if (!process.env.JWT_SECRET) {
-  if (isProduction) {
-    throw new Error('JWT_SECRET must be set in production');
-  }
-  // Generate a strong, random per-process secret for local development only.
-  // Tokens won't survive a restart in dev, which is acceptable and far safer
-  // than shipping a guessable hardcoded fallback.
-  process.env.JWT_SECRET = crypto.randomBytes(48).toString('hex');
-  console.warn('JWT_SECRET not set. Generated an ephemeral development secret (tokens reset on restart).');
-}
 
 const PORT = Number(process.env.PORT || 3001);
 const HOST = process.env.API_HOST || '0.0.0.0';
@@ -78,88 +63,6 @@ if (isProduction && missingRequiredEnv.length > 0) {
   throw new Error(
     `Missing required environment variables: ${missingRequiredEnv.map(([name]) => name).join(', ')}`
   );
-}
-
-// Clerk configuration
-const CLERK_SECRET_KEY = process.env.CLERK_SECRET_KEY;
-const CLERK_PUBLISHABLE_KEY = process.env.CLERK_PUBLISHABLE_KEY;
-
-// Log Clerk configuration status
-if (CLERK_SECRET_KEY) {
-  console.log('[Clerk] Secret key configured (length: ' + CLERK_SECRET_KEY.length + ')');
-} else {
-  console.warn('[Clerk] WARNING: CLERK_SECRET_KEY not set - Clerk authentication will not work!');
-}
-
-// Initialize Clerk client if keys are available
-const clerkClient = CLERK_SECRET_KEY ? createClerkClient({ secretKey: CLERK_SECRET_KEY }) : null;
-
-// ================================
-// Access control / admin configuration
-// ================================
-// The admin receives access requests and can approve/deny accounts. This email
-// is always treated as admin + approved at runtime (never locked out).
-// No default: a fork deployed without ADMIN_EMAIL has no admin rather than
-// silently making someone else's address the admin.
-const ADMIN_EMAIL = (process.env.ADMIN_EMAIL || '').trim().toLowerCase();
-if (!ADMIN_EMAIL) {
-  console.warn('[Access] WARNING: ADMIN_EMAIL not set - nobody can approve new accounts!');
-}
-const isAdminEmail = (email?: string | null): boolean =>
-  !!ADMIN_EMAIL && (email || '').toLowerCase() === ADMIN_EMAIL;
-// Resend (https://resend.com) transactional email. If unset, requests are still
-// stored and visible on the admin page; only the email notification is skipped.
-const RESEND_API_KEY = process.env.RESEND_API_KEY || '';
-const RESEND_FROM = process.env.RESEND_FROM || 'Lableit <onboarding@resend.dev>';
-
-function escapeHtml(s: string): string {
-  return String(s).replace(/[&<>"']/g, (c) => (
-    { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c] as string
-  ));
-}
-
-// Email the admin about a new access request. Returns whether the email was sent
-// so the caller can surface "saved, email skipped" honestly.
-async function sendAccessRequestEmail(req: {
-  name: string; email: string; institution: string; phone: string; useCase: string;
-}): Promise<{ sent: boolean; reason?: string }> {
-  if (!ADMIN_EMAIL) return { sent: false, reason: 'no_admin_email' };
-  if (!RESEND_API_KEY) {
-    logger.warn('RESEND_API_KEY not set — access request stored but email notification skipped');
-    return { sent: false, reason: 'no_api_key' };
-  }
-  const html = `
-    <h2>New Lableit access request</h2>
-    <table cellpadding="6" style="font-family:sans-serif;font-size:14px">
-      <tr><td><b>Name</b></td><td>${escapeHtml(req.name)}</td></tr>
-      <tr><td><b>Email</b></td><td>${escapeHtml(req.email)}</td></tr>
-      <tr><td><b>Institution</b></td><td>${escapeHtml(req.institution)}</td></tr>
-      <tr><td><b>Phone</b></td><td>${escapeHtml(req.phone)}</td></tr>
-      <tr><td><b>Intended use</b></td><td>${escapeHtml(req.useCase)}</td></tr>
-    </table>
-    <p style="font-family:sans-serif;font-size:13px;color:#555">Approve or deny from the Lableit admin page.</p>`;
-  try {
-    const res = await fetch('https://api.resend.com/emails', {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${RESEND_API_KEY}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        from: RESEND_FROM,
-        to: [ADMIN_EMAIL],
-        reply_to: req.email,
-        subject: `Lableit access request: ${req.name || req.email}`,
-        html,
-      }),
-    });
-    if (!res.ok) {
-      const body = await res.text();
-      logger.error({ status: res.status, body }, 'Resend email failed');
-      return { sent: false, reason: 'send_failed' };
-    }
-    return { sent: true };
-  } catch (err) {
-    logger.error({ err }, 'Resend email threw');
-    return { sent: false, reason: 'exception' };
-  }
 }
 
 const execFileAsync = promisify(execFile);
@@ -905,15 +808,14 @@ async function handleExport(job: Job) {
 // Fastify Plugins
 // ================================
 // Security headers. Registered early so it applies to all routes. CSP and the
-// cross-origin isolation policies are disabled to avoid interfering with CORS,
-// Clerk, and signed-URL/image responses served from other origins.
+// cross-origin isolation policies are disabled to avoid interfering with CORS
+// and signed-URL/image responses served from other origins.
 await app.register(helmet, {
   contentSecurityPolicy: false,
   crossOriginEmbedderPolicy: false,
   crossOriginResourcePolicy: false,
 });
 await app.register(multipart, { limits: { fileSize: 500 * 1024 * 1024 } }); // 500MB max
-await app.register(jwt, { secret: process.env.JWT_SECRET as string });
 await app.register(cors, {
   origin: process.env.NODE_ENV === 'production'
     ? process.env.ALLOWED_ORIGINS?.split(',') || false
@@ -972,94 +874,27 @@ app.addHook('preHandler', async (request, reply) => {
 });
 
 // ================================
-// Authentication Middleware
+// Local user
 // ================================
-// Helper to verify Clerk JWT
-async function verifyClerkToken(token: string): Promise<{ userId: string; email?: string } | null> {
-  if (!CLERK_SECRET_KEY) return null;
-  
-  try {
-    const payload = await verifyToken(token, {
-      secretKey: CLERK_SECRET_KEY,
-    });
-    
-    return {
-      userId: payload.sub,
-      email: payload.email as string | undefined,
-    };
-  } catch (err) {
-    logger.debug({ err }, 'Clerk token verification failed');
-    return null;
-  }
-}
+// This build has no authentication: it is meant to be run locally by one person
+// and everyone who can reach it shares one dataset space. Every request is
+// resolved to a single implicit user row so the existing `ownerId` filters keep
+// working unchanged and all data belongs to that one account.
+const LOCAL_USER_EMAIL = 'local@lableit.local';
+let localUserId: string | null = null;
 
-// Helper to get or create user from Clerk ID
-async function getOrCreateUserFromClerk(
-  clerkUserId: string,
-  tokenEmail?: string
-): Promise<{ id: string; email: string; accessStatus: string }> {
-  // Try to find existing user by clerk ID (stored in externalId) FIRST, so the
-  // common case (returning user, real email already stored) makes zero calls to
-  // the Clerk API.
-  let user = await prisma.user.findFirst({ where: { externalId: clerkUserId } });
-
-  // Clerk session JWTs usually omit the email claim. Resolve the verified primary
-  // email from the Clerk API ONLY when we actually need it — a brand-new account,
-  // or a stored `@lableit.local` fallback that hasn't been replaced yet. This is
-  // what the admin check + request notifications rely on (a stale fallback would
-  // otherwise lock the admin out of their own approval screen). Avoiding the call
-  // on every request keeps the hot path off Clerk's backend rate limits.
-  let email = tokenEmail;
-  const needsEmailLookup = !email && !!clerkClient && (!user || user.email.includes('@lableit.local'));
-  if (needsEmailLookup && clerkClient) {
-    try {
-      const cu = await clerkClient.users.getUser(clerkUserId);
-      email = cu.primaryEmailAddress?.emailAddress
-        || cu.emailAddresses?.[0]?.emailAddress
-        || undefined;
-    } catch (err) {
-      logger.debug({ err }, 'Could not fetch Clerk user email');
-    }
-  }
-
-  if (!user && email) {
-    // Try to find by email and link to Clerk
-    user = await prisma.user.findUnique({ where: { email } });
-    if (user) {
-      await prisma.user.update({ where: { id: user.id }, data: { externalId: clerkUserId } });
-    }
-  }
-
-  if (!user) {
-    const isAdmin = isAdminEmail(email);
-    user = await prisma.user.create({
-      data: {
-        email: email || `clerk_${clerkUserId}@lableit.local`,
-        password: '', // No password for Clerk users
-        externalId: clerkUserId,
-        // Admin is auto-approved; everyone else must be approved by the admin.
-        accessStatus: isAdmin ? 'approved' : 'pending',
-      },
-    });
-    logger.info({ userId: user.id, clerkUserId }, 'Created new user from Clerk');
-  }
-
-  // Refresh a stale fallback email once the real one is known, and ensure the
-  // admin account is always approved (runtime rule, not just migrated data).
-  const updates: { email?: string; accessStatus?: string } = {};
-  if (email && email !== user.email) updates.email = email;
-  if (isAdminEmail(email) && user.accessStatus !== 'approved') {
-    updates.accessStatus = 'approved';
-  }
-  if (Object.keys(updates).length > 0) {
-    try {
-      user = await prisma.user.update({ where: { id: user.id }, data: updates });
-    } catch (err) {
-      logger.warn({ err, userId: user.id }, 'User email/status refresh failed');
-    }
-  }
-
-  return { id: user.id, email: user.email, accessStatus: user.accessStatus };
+async function getLocalUser(): Promise<string> {
+  if (localUserId) return localUserId;
+  // upsert compiles to INSERT ... ON CONFLICT, so two concurrent first requests
+  // cannot race into a unique-constraint error.
+  const user = await prisma.user.upsert({
+    where: { email: LOCAL_USER_EMAIL },
+    update: {},
+    create: { email: LOCAL_USER_EMAIL, accessStatus: 'approved' },
+    select: { id: true },
+  });
+  localUserId = user.id;
+  return localUserId;
 }
 
 // Export token helpers using Redis (auto-expires via TTL, persists across restarts)
@@ -1086,15 +921,8 @@ async function deleteExportToken(token: string) {
 }
 
 app.addHook('preHandler', async (request, reply) => {
-  const publicRoutes = [
-    '/health',
-    '/inference/models/status',
-    '/inference/gpu',
-    '/inference/config'
-  ];
   const routePath = request.routeOptions?.url || request.url.split('?')[0];
   const actualUrl = request.url.split('?')[0];
-  if (publicRoutes.includes(routePath)) return;
 
   // Export file downloads require a valid export token (not status checks)
   // Status endpoint uses normal authentication
@@ -1126,151 +954,12 @@ app.addHook('preHandler', async (request, reply) => {
     return;
   }
 
-  const authHeader = request.headers.authorization;
-  if (!authHeader?.startsWith('Bearer ')) {
-    return reply.status(401).send({ error: 'Unauthorized' });
-  }
-  
-  const token = authHeader.substring(7);
+  // /health reports whether the database is reachable, so it must stay
+  // answerable when it is not. It never reads request.user.
+  if (routePath === '/health') return;
 
-  // Resolve the authenticated user id (Clerk first, then legacy JWT).
-  let userId: string | null = null;
-  const clerkPayload = await verifyClerkToken(token);
-  if (clerkPayload) {
-    const u = await getOrCreateUserFromClerk(clerkPayload.userId, clerkPayload.email);
-    userId = u.id;
-  } else {
-    try {
-      await request.jwtVerify();
-      userId = (request as any).user?.userId || null;
-    } catch (err) {
-      return reply.status(401).send({ error: 'Unauthorized' });
-    }
-  }
-  if (!userId) {
-    return reply.status(401).send({ error: 'Unauthorized' });
-  }
-
-  // Load access status and resolve admin (runtime rule keyed on ADMIN_EMAIL so a
-  // fresh/re-created admin row is never locked out of its own approval screen).
-  const account = await prisma.user.findUnique({
-    where: { id: userId },
-    select: { email: true, accessStatus: true, externalId: true },
-  });
-  const email = (account?.email || '').toLowerCase();
-  // Defence in depth: the email alone must not confer admin. The row also has to
-  // be linked to a Clerk identity, so an account created by any other means
-  // cannot claim the admin address.
-  const isAdmin = isAdminEmail(email) && !!account?.externalId;
-  const approved = isAdmin || account?.accessStatus === 'approved';
-  (request as any).user = {
-    userId,
-    email: account?.email,
-    isAdmin,
-    accessStatus: account?.accessStatus || 'pending',
-  };
-
-  // Admin-only routes.
-  if (routePath?.startsWith('/admin')) {
-    if (!isAdmin) return reply.status(403).send({ error: 'Forbidden' });
-    return;
-  }
-
-  // Access gate: an unapproved account may only reach the access endpoints
-  // (check its own status, submit a request). Everything else is 403 until the
-  // admin approves it. This is an allowlist so new routes are gated by default.
-  const accessAllowlist = ['/auth/access-status', '/access-requests'];
-  if (!approved && !accessAllowlist.includes(routePath || '')) {
-    return reply
-      .status(403)
-      .send({ error: 'pending_approval', accessStatus: account?.accessStatus || 'pending' });
-  }
-});
-
-// ================================
-// Access control routes
-// ================================
-// Current account's access status — the web app calls this to gate the UI.
-app.get('/auth/access-status', async (request) => {
-  const u = (request as any).user;
-  const row = await prisma.user.findUnique({
-    where: { id: u.userId },
-    select: { requestedAt: true },
-  });
-  return { status: u.accessStatus, isAdmin: !!u.isAdmin, email: u.email, requested: !!row?.requestedAt };
-});
-
-// Submit / update an access request: stores the details on the account, marks it
-// pending, and emails the admin via Resend. Reachable while unapproved.
-app.post('/access-requests', async (request, reply) => {
-  const userId = (request as any).user.userId;
-  const body = (request.body || {}) as { name?: string; institution?: string; phone?: string; useCase?: string };
-  const institution = (body.institution || '').trim();
-  const phone = (body.phone || '').trim();
-  const useCase = (body.useCase || '').trim();
-  if (!institution || !useCase) {
-    return reply.status(400).send({ error: 'institution and useCase are required' });
-  }
-  const current = await prisma.user.findUnique({ where: { id: userId }, select: { accessStatus: true } });
-  if (current?.accessStatus === 'approved') {
-    return { status: 'approved' };
-  }
-  // A denied account must not be able to re-open its own request, otherwise the
-  // admin's decision can be undone from the outside. Only the admin can move a
-  // denied account back to approved.
-  if (current?.accessStatus === 'denied') {
-    return reply.status(403).send({
-      status: 'denied',
-      error: 'Your access request was declined. Contact the administrator to have it reconsidered.',
-    });
-  }
-  const name = (body.name || '').trim();
-  const updated = await prisma.user.update({
-    where: { id: userId },
-    data: { institution, phone, useCase, accessStatus: 'pending', requestedAt: new Date() },
-    select: { email: true },
-  });
-  const emailResult = await sendAccessRequestEmail({
-    name: name || updated.email,
-    email: updated.email,
-    institution,
-    phone,
-    useCase,
-  });
-  return { status: 'pending', emailSent: emailResult.sent, emailReason: emailResult.reason };
-});
-
-// Admin: list access requests (pending first, then most recently requested).
-app.get('/admin/access-requests', async (request) => {
-  const requests = await prisma.user.findMany({
-    where: { OR: [{ requestedAt: { not: null } }, { accessStatus: { not: 'approved' } }] },
-    select: {
-      id: true, email: true, institution: true, phone: true, useCase: true,
-      accessStatus: true, requestedAt: true, decidedAt: true, createdAt: true,
-    },
-    orderBy: [{ accessStatus: 'asc' }, { requestedAt: 'desc' }],
-  });
-  return { requests };
-});
-
-// Admin: approve or deny an account.
-app.post('/admin/access-requests/:userId/decision', async (request, reply) => {
-  const { userId: targetId } = request.params as { userId: string };
-  const { decision } = (request.body || {}) as { decision?: string };
-  if (decision !== 'approve' && decision !== 'deny') {
-    return reply.status(400).send({ error: "decision must be 'approve' or 'deny'" });
-  }
-  const target = await prisma.user.findUnique({ where: { id: targetId }, select: { email: true } });
-  if (!target) return reply.status(404).send({ error: 'User not found' });
-  if (isAdminEmail(target.email) && decision === 'deny') {
-    return reply.status(400).send({ error: 'Cannot deny the admin account' });
-  }
-  const updated = await prisma.user.update({
-    where: { id: targetId },
-    data: { accessStatus: decision === 'approve' ? 'approved' : 'denied', decidedAt: new Date() },
-    select: { id: true, accessStatus: true },
-  });
-  return { id: updated.id, status: updated.accessStatus };
+  // No authentication: every request runs as the single local user.
+  (request as any).user = { userId: await getLocalUser() };
 });
 
 // ================================
@@ -1294,26 +983,6 @@ app.get('/health', async (request, reply) => {
       error: error.message
     });
   }
-});
-
-// ================================
-// Authentication Routes
-// ================================
-// Password registration and login were removed before the public release.
-// Sign-in is Clerk only (see apps/web), and these routes were unauthenticated,
-// unused by the web app, and able to mint an account with any email address,
-// including the ADMIN_EMAIL one, which handed out admin rights. The legacy
-// @fastify/jwt verification below is kept for tokens issued out of band.
-app.get('/auth/me', async (request, reply) => {
-  const userId = (request as any).user.userId;
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-    select: { id: true, email: true, createdAt: true }
-  });
-  if (!user) {
-    return reply.status(404).send({ error: 'User not found' });
-  }
-  return user;
 });
 
 // ================================
@@ -1763,11 +1432,11 @@ app.post('/projects/:projectId/classes/import', async (request, reply) => {
 // ================================
 // Project-scope guards
 // ================================
-// Owning the asset is not enough: a class or tag id that arrives in a request
+// Finding the asset is not enough: a class or tag id that arrives in a request
 // body must also live in the same project as the thing it is being attached to.
-// Without this a caller can point their own data at another project's (or
-// another user's) class or tag. Duplicate ids are collapsed so a repeated but
-// valid id still passes the count check.
+// Without this a request can point one project's data at another project's class
+// or tag. Duplicate ids are collapsed so a repeated but valid id still passes
+// the count check.
 async function classesBelongToProjects(classIds: string[], projectIds: string[]): Promise<boolean> {
   const ids = [...new Set(classIds)];
   if (ids.length === 0) return true;
@@ -2560,10 +2229,10 @@ app.delete('/projects/:projectId/annotations', async (request, reply) => {
 // ================================
 // Job Routes
 // ================================
-// Resolve job ownership without a schema change. Jobs have no owner column, so we
-// prove the requester owns the job's related data via params: an explicit userId
-// (export jobs), a projectId (slice_video / export), and/or assetIds (preview /
-// batch). Returns true only when ownership is positively established.
+// Resolve a job back to its data without a schema change. Jobs have no owner
+// column, so we match the job's params against the local user's rows: an explicit
+// userId (export jobs), a projectId (slice_video / export), and/or assetIds
+// (preview / batch). Returns true only when the link is positively established.
 async function requesterOwnsJob(userId: string | undefined, params: unknown): Promise<boolean> {
   if (!userId) return false;
   if (!params || typeof params !== 'object') return false;
@@ -2606,10 +2275,10 @@ app.get('/jobs/:id', async (request, reply) => {
     return reply.status(404).send({ error: 'Job not found' });
   }
 
-  // Ownership check (the Job model has no owner column, so we resolve ownership
-  // through the related data carried in job.params: projectId and/or assetIds,
-  // mirroring the userId check in /exports/:jobId/status). If we cannot prove the
-  // requester owns the job's data, return 404 to avoid leaking job existence.
+  // The Job model has no owner column, so we resolve the job through the related
+  // data carried in job.params: projectId and/or assetIds, mirroring the userId
+  // check in /exports/:jobId/status. If the job cannot be tied back to real data,
+  // return 404 rather than leaking that the id exists.
   if (!(await requesterOwnsJob(userId, dbJob.params))) {
     return reply.status(404).send({ error: 'Job not found' });
   }
@@ -2659,11 +2328,10 @@ app.get('/jobs/:id', async (request, reply) => {
   };
 });
 
-// Validate that every supplied assetId belongs to a project owned by the caller,
-// and that every supplied class id lives in one of those same projects. The
-// worker matches a detection by class name and writes classMatch.id straight into
-// annotation.classId, so an unchecked id attaches the caller's detections to
-// another project's class.
+// Validate that every supplied assetId exists and that every supplied class id
+// lives in the same project as those assets. The worker matches a detection by
+// class name and writes classMatch.id straight into annotation.classId, so an
+// unchecked id attaches this batch's detections to another project's class.
 // Returns null when valid, or an error message when validation should reject.
 async function validateJobTargets(userId: string, assetIds: unknown, classes: unknown): Promise<string | null> {
   if (!Array.isArray(assetIds) || assetIds.length === 0) {
@@ -2678,7 +2346,7 @@ async function validateJobTargets(userId: string, assetIds: unknown, classes: un
     select: { projectId: true }
   });
   if (owned.length !== ids.length) {
-    return 'One or more assets do not belong to you';
+    return 'One or more assets were not found';
   }
 
   if (classes === undefined) {
@@ -2709,7 +2377,7 @@ app.post('/jobs/preview', async (request, reply) => {
   const userId = (request as any).user.userId;
   const body = request.body as { assetIds?: unknown; classes?: unknown };
 
-  // IDOR guard: only enqueue inference for assets and classes the caller owns.
+  // Cross-project guard: assets and classes must all belong to one project.
   const ownershipError = await validateJobTargets(userId, body.assetIds, body.classes);
   if (ownershipError) {
     return reply.status(403).send({ error: ownershipError });
@@ -2734,7 +2402,7 @@ app.post('/jobs/batch', async (request, reply) => {
   const userId = (request as any).user.userId;
   const body = request.body as { assetIds?: unknown; classes?: unknown };
 
-  // IDOR guard: only enqueue inference for assets and classes the caller owns.
+  // Cross-project guard: assets and classes must all belong to one project.
   const ownershipError = await validateJobTargets(userId, body.assetIds, body.classes);
   if (ownershipError) {
     return reply.status(403).send({ error: ownershipError });

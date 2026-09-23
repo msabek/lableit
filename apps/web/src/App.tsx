@@ -1,20 +1,14 @@
 import React, { Suspense, lazy } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useNavigate, useParams, useLocation } from 'react-router-dom';
-import { SignedIn, SignedOut, useAuth } from '@clerk/clerk-react';
 import './index.css';
-import ClerkTokenProvider from './components/ClerkTokenProvider';
 import { SettingsProvider } from './contexts/SettingsContext';
-import { ThemeDropdown } from './components/ThemeToggle';
 import Credit from './components/Credit';
-import { AccessGuard } from './components/AccessGate';
 
 // Route-level code splitting: each top-level page is loaded on demand so the
-// anonymous landing page never pulls the labeling/canvas/inference bundles.
+// landing page never pulls the labeling/canvas/inference bundles.
 const LandingPage = lazy(() => import('./landing/LandingPage'));
-const Auth = lazy(() => import('./auth'));
 const Projects = lazy(() => import('./projects'));
 const LabelingInterface = lazy(() => import('./labeling'));
-const AdminAccessRequests = lazy(() => import('./components/AdminAccessRequests'));
 
 // Shared fallback shown while a lazily-loaded route chunk is fetched.
 function RouteFallback() {
@@ -95,83 +89,25 @@ function LabelingWrapper() {
   );
 }
 
-// Protected route wrapper
-function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  return (
-    <>
-      <SignedIn>
-        {/* Gate the app behind admin approval: unapproved accounts see the
-            access-request / pending screen instead of the app shell. */}
-        <AccessGuard>{children}</AccessGuard>
-      </SignedIn>
-      <SignedOut>
-        <Navigate to="/auth/sign-in" replace />
-      </SignedOut>
-    </>
-  );
-}
-
-// App routes
+// App routes. There is no authentication: Lableit runs locally and every route
+// is open to whoever opens the app.
 function AppRoutes() {
   return (
     <Suspense fallback={<RouteFallback />}>
     <Routes>
-      {/* Landing page - public */}
       <Route path="/" element={<LandingPage />} />
-      
-      {/* Auth routes */}
-      <Route path="/auth/sign-in/*" element={<Auth mode="sign-in" />} />
-      <Route path="/auth/sign-up/*" element={<Auth mode="sign-up" />} />
-      
-      {/* Protected routes */}
-      <Route 
-        path="/projects" 
-        element={
-          <ProtectedRoute>
-            <Projects />
-          </ProtectedRoute>
-        } 
-      />
-      <Route
-        path="/labeling/:projectId"
-        element={
-          <ProtectedRoute>
-            <LabelingWrapper />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/admin"
-        element={
-          <ProtectedRoute>
-            <AdminAccessRequests />
-          </ProtectedRoute>
-        }
-      />
+      <Route path="/projects" element={<Projects />} />
+      <Route path="/labeling/:projectId" element={<LabelingWrapper />} />
 
       {/* Default redirect for unknown routes */}
-      <Route path="*" element={<DefaultRedirect />} />
+      <Route path="*" element={<Navigate to="/projects" replace />} />
     </Routes>
     </Suspense>
   );
 }
 
-function DefaultRedirect() {
-  return (
-    <>
-      <SignedIn>
-        <Navigate to="/projects" replace />
-      </SignedIn>
-      <SignedOut>
-        <Navigate to="/auth/sign-in" replace />
-      </SignedOut>
-    </>
-  );
-}
-
 function AppContent() {
   const location = useLocation();
-  const hideDockOn = location.pathname === '/projects' || location.pathname.startsWith('/labeling/');
 
   return (
     <>
@@ -179,13 +115,6 @@ function AppContent() {
       {/* Global attribution. Landing ('/') already carries its own richer
           credit footer, so skip it there to avoid a duplicate line. */}
       {location.pathname !== '/' && <Credit />}
-      <SignedIn>
-        {!hideDockOn && (
-          <div className="fixed bottom-5 right-5 z-50">
-            <ThemeDropdown className="shadow-glow" />
-          </div>
-        )}
-      </SignedIn>
     </>
   );
 }
@@ -193,13 +122,11 @@ function AppContent() {
 export default function App() {
   return (
     <ErrorBoundary>
-      <ClerkTokenProvider>
-        <SettingsProvider>
-          <BrowserRouter>
-            <AppContent />
-          </BrowserRouter>
-        </SettingsProvider>
-      </ClerkTokenProvider>
+      <SettingsProvider>
+        <BrowserRouter>
+          <AppContent />
+        </BrowserRouter>
+      </SettingsProvider>
     </ErrorBoundary>
   );
 }

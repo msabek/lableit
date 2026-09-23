@@ -1,45 +1,39 @@
 # Lableit User Guide
 
-This guide walks through the end-to-end annotation workflow in Lableit: signing
-in, creating a project, defining classes, uploading media, slicing video into
-frames, running SAM3 text-prompt detection, reviewing and adjusting annotations,
-tuning per-class thresholds, tagging, and exporting your dataset.
+This guide walks through the end-to-end annotation workflow in Lableit: creating
+a project, defining classes, uploading media, slicing video into frames, running
+SAM3 text-prompt detection, reviewing and adjusting annotations, tuning
+per-class thresholds, tagging, and exporting your dataset.
+
+> **No sign-in:** Lableit has no accounts and no login. Open the app and you are
+> already in, and everything you create belongs to that single local
+> installation. This also means the app has no access control of its own, so
+> keep it on your own machine or behind a proxy or VPN that does the
+> authenticating. See [DEPLOYMENT.md](../DEPLOYMENT.md).
 
 > **GPU note:** Automatic SAM3 detection requires an NVIDIA CUDA GPU. If no GPU
-> is available, Lableit runs in **limited mode**: you can still sign in, manage
-> projects, upload media, draw annotations by hand, tag assets, and export.
-> Automatic detection is simply unavailable. See
+> is available, Lableit runs in **limited mode**: you can still manage projects,
+> upload media, draw annotations by hand, tag assets, and export. Automatic
+> detection is simply unavailable. See
 > [TROUBLESHOOTING.md](./TROUBLESHOOTING.md).
 
 ---
 
-## 1. Sign in
-
-Lableit uses **Clerk** for authentication.
-
-1. Open the web app (locally `http://localhost:3000`).
-2. On the landing page, choose **Sign in** / **Sign up**.
-3. Authenticate with email/password or **Google OAuth** (if enabled by the
-   operator).
-4. On first sign-in, Lableit automatically provisions your user account.
-
-After signing in you land on the **Projects dashboard**.
-
----
-
-## 2. Create a project
+## 1. Open the app and create a project
 
 A project is the top-level container for your media, classes, and annotations.
 
-1. On the dashboard, click **New Project** (or the create button).
-2. Enter a project **name** (1-100 characters).
-3. The project opens. From the dashboard you can search projects and switch
+1. Open the web app (locally `http://localhost:3000`). You land on the
+   **Projects dashboard**; there is nothing to sign in to.
+2. Click **New Project** (or the create button).
+3. Enter a project **name** (1-100 characters).
+4. The project opens. From the dashboard you can search projects and switch
    between grid and list views; clicking a project expands a full-width detail
    view with stats (assets, classes, labeled count) and asset thumbnails.
 
 ---
 
-## 3. Define classes
+## 2. Define classes
 
 Classes are the object categories you want to detect/annotate. Each class has a
 **name**, a **color**, and a per-class **confidence threshold**.
@@ -63,7 +57,7 @@ name classes the way you would describe the object (e.g. `person`, `car`,
 
 ---
 
-## 4. Upload images and videos
+## 3. Upload images and videos
 
 1. Open the project's labeling page.
 2. **Upload** by clicking the upload control or **drag-and-drop** files onto the
@@ -77,11 +71,11 @@ name classes the way you would describe the object (e.g. `person`, `car`,
 5. **Videos** are uploaded but are **not** turned into assets yet — a video must
    be sliced into frames first (next step).
 
-You can apply tags during upload (see §8) and bulk-delete assets later.
+You can apply tags during upload (see §7) and bulk-delete assets later.
 
 ---
 
-## 5. Slice video into frames
+## 4. Slice video into frames
 
 Videos must be sliced into still frames (using **ffmpeg**) before they can be
 annotated.
@@ -101,7 +95,7 @@ Tags selected for slicing are applied to every extracted frame.
 
 ---
 
-## 6. Run SAM3 text-prompt detection
+## 5. Run SAM3 text-prompt detection
 
 This is the automatic-annotation step (requires a GPU; see the note at the top).
 
@@ -127,7 +121,7 @@ aborts with a clear message instead of producing empty results.
 
 ---
 
-## 7. Review and adjust on the canvas
+## 6. Review and adjust on the canvas
 
 Open an asset to review its annotations on the interactive **Annotation
 Canvas**.
@@ -147,7 +141,7 @@ multi-select for bulk operations, and see annotation-count badges.
 
 ---
 
-## 8. Per-class thresholds and tagging
+## 7. Per-class thresholds and tagging
 
 **Per-class thresholds**
 - Each class has a confidence threshold (0.0-1.0). During detection, a
@@ -165,7 +159,7 @@ multi-select for bulk operations, and see annotation-count badges.
 
 ---
 
-## 9. Export your dataset
+## 8. Export your dataset
 
 1. Open the **Export** panel from the labeling page.
 2. Choose an **export format** (see [EXPORT_FORMATS.md](./EXPORT_FORMATS.md) for

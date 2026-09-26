@@ -1,0 +1,14 @@
+# Nixpacks configuration for API service
+# Used when deploying without Docker
+
+[phases.setup]
+nixPkgs = ['nodejs_20', 'bun']
+
+[phases.install]
+cmds = ['bun install']
+
+[phases.build]
+cmds = ['bunx prisma generate']
+
+[start]
+cmd = 'bun run start'

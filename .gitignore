@@ -1,0 +1,70 @@
+# Node/Bun
+node_modules
+bun.lockb
+
+# Builds
+.next
+dist
+build
+coverage
+
+# Environment
+.env
+.env.*
+!.env.example
+!.env.railway.example
+!.env.production
+
+# Python
+.venv
+__pycache__
+*.pyc
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE/Editor
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Logs
+*.log
+npm-debug.log*
+
+# Large model files + downloaded model metadata (download separately via download_models.py)
+*.pt
+*.pth
+*.bin
+*.onnx
+*.safetensors
+apps/inference/models
+
+# Inference runtime config + settings (generated at first model download; may contain absolute paths)
+apps/inference/model_config.json
+apps/inference/settings.json
+!apps/inference/model_config.example.json
+
+# Export / temp files (generated during runtime), keep the dirs, ignore contents
+apps/api/exports/*
+!apps/api/exports/.gitkeep
+apps/api/temp/*
+!apps/api/temp/.gitkeep
+
+# Local dev stack data (native Postgres/Redis/MinIO created by setup; not for git)
+.devstack
+
+# Local demo/scratch media used for testing (not redistributed)
+apps/web/public/lableit_demo.jpg
+
+# Temporary files
+*.tmp
+*.bak
+*.old
+# Redis dump (generated)
+dump.rdb
+
+# Local test evidence (screenshots/recordings, never committed)
+.evidence/

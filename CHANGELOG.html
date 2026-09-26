@@ -1,0 +1,363 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lableit Visual Changelog</title>
+<style>
+  :root { --bg:#f8fafc; --card:#fff; --text:#0f172a; --muted:#64748b; --line:#e2e8f0; --accent:#4f46e5; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#0b1020; --card:#111827; --text:#e5e7eb; --muted:#94a3b8; --line:#1f2937; --accent:#818cf8; } }
+  body { margin:0; background:var(--bg); color:var(--text); font:15px/1.55 system-ui, -apple-system, Segoe UI, sans-serif; }
+  main { max-width:1100px; margin:0 auto; padding:32px 16px 64px; }
+  h1 { margin:0 0 4px; } .sub { color:var(--muted); margin:0 0 32px; }
+  article { background:var(--card); border:1px solid var(--line); border-radius:14px; padding:24px; margin-bottom:28px; }
+  h2 { margin:0 0 4px; font-size:20px; } time { color:var(--muted); font-size:13px; }
+  ul { padding-left:20px; } a { color:var(--accent); }
+  .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:14px; margin:14px 0; }
+  figure { margin:0; border:1px solid var(--line); border-radius:10px; overflow:hidden; background:var(--bg); }
+  figure img { display:block; width:100%; height:auto; }
+  figcaption { font-size:13px; color:var(--muted); padding:8px 10px; }
+  .pair { display:grid; grid-template-columns:1fr 1fr; gap:14px; } @media (max-width:700px){ .pair { grid-template-columns:1fr; } }
+  h3 { font-size:15px; margin:18px 0 6px; }
+  .toc { background:var(--card); border:1px solid var(--line); border-radius:14px; padding:16px 24px; margin-bottom:28px; }
+  .toc ol { margin:8px 0; padding-left:20px; } .toc li { margin:3px 0; }
+  .toc span { color:var(--muted); font-size:12px; margin-left:6px; }
+  .toc p { margin:8px 0 0; color:var(--muted); font-size:13px; }
+  .status { border-left:3px solid var(--accent); padding:2px 0 2px 14px; margin:14px 0; }
+  .status p { margin:6px 0; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Lableit visual changelog</h1>
+  <p class="sub">Newest first. Screenshots live in <code>.evidence/</code> (kept local, not in git), so they may be missing on a fresh clone.</p>
+
+  <nav class="toc">
+    <strong>On this page</strong>
+    <ol>
+      <li><a href="#fresh-start">Project history condensed into one starting version</a> <span>2026-09-26</span></li>
+      <li><a href="#verify-no-sign-in">No sign-in confirmed on a real run, and 169 detections in one photo</a> <span>2026-09-25</span></li>
+      <li><a href="#first-run">The one-click launcher now actually works on a fresh clone</a> <span>2026-09-23</span></li>
+      <li><a href="#no-auth">Sign-in removed: clone it, run it, start labeling</a> <span>2026-09-23</span></li>
+      <li><a href="#release-blockers">Two release blockers found by the pre-publication security review</a> <span>2026-09-23</span></li>
+      <li><a href="#hardening">Authorization gaps closed, dead controls removed</a> <span>2026-09-23</span></li>
+      <li><a href="#readme">README rebuilt as the front door, and the claims behind it checked</a> <span>2026-09-22</span></li>
+      <li><a href="#app-screens">Signed-in screens photographed, and two bugs they exposed</a> <span>2026-09-21</span></li>
+      <li><a href="#theme-default">Light theme is now the default</a> <span>2026-09-21</span></li>
+      <li><a href="#iht-logo">IHT Lab logo replaces the University of Alberta logo</a> <span>2026-09-21</span></li>
+      <li><a href="#cleanup-tests">Dev-data cleanup and tests that skip without a database</a> <span>2026-09-21</span></li>
+      <li><a href="#lint">Lint works again: one shared ESLint config</a> <span>2026-09-21</span></li>
+      <li><a href="#release-1-0-0">1.0.0: public academic release, full system test</a> <span>2026-09-18</span></li>
+    </ol>
+    <p>Everything above is part of the <strong>1.0.0 public academic release</strong> (released 2026-09-21).</p>
+  </nav>
+
+  <article>
+    <h2 id="fresh-start">Project history condensed into one starting version</h2>
+    <time datetime="2026-09-26">2026-09-26</time>
+    <ul>
+      <li><strong>What:</strong> now that the repository is public, its development history was condensed into a single starting version, "Lableit 1.0.0", so new contributors begin from one clean point.</li>
+      <li><strong>Release:</strong> the v1.0.0 tag and GitHub release now point at that version.</li>
+      <li>No visual surface: the files themselves are unchanged.</li>
+    </ul>
+    <h3>References</h3>
+    <ul>
+      <li>Files: <a href="CHANGELOG.md">CHANGELOG.md</a>, <a href="CHANGELOG.html">CHANGELOG.html</a></li>
+      <li>Repository: <a href="https://github.com/msabek/lableit">github.com/msabek/lableit</a></li>
+    </ul>
+  </article>
+
+  <article>
+    <h2 id="verify-no-sign-in">No sign-in confirmed on a real run, and 169 detections in one photo</h2>
+    <time datetime="2026-09-25">2026-09-25</time>
+    <ul>
+      <li><strong>Checked:</strong> with the whole app running on a Mac, the landing page has no sign-in or sign-up anywhere, and "Open Lableit" goes straight to the projects dashboard.</li>
+      <li><strong>Detection demo:</strong> the text prompts "hard hat" and "safety vest" on one public-domain construction photo (1800 x 1200) saved 169 detections in about 10 seconds.</li>
+      <li><strong>Found on the way:</strong> on a machine short on memory, the model slows down sharply; the full-size photo with masks ran past the 5-minute timeout, while half size with boxes only finished in seconds.</li>
+      <li><strong>Tidy-up:</strong> consistent punctuation across the docs, notices, landing hero, project wizard, page description, logo label and build-file comments; simpler ignore lists.</li>
+    </ul>
+    <div class="pair">
+      <figure><img src=".evidence/2026-09-25/01-landing-no-sign-in.png" alt="Landing page with Open Lableit and no sign-in"><figcaption>Landing page: no sign-in, only "Open Lableit"</figcaption></figure>
+      <figure><img src=".evidence/2026-09-25/02-projects-no-sign-in.png" alt="Projects dashboard reached directly"><figcaption>Straight into the projects dashboard</figcaption></figure>
+    </div>
+    <div class="grid">
+      <figure><img src=".evidence/2026-09-25/04-detections-169.png" alt="Construction crowd with 169 detected hard hats and safety vests"><figcaption>169 detections from two text prompts</figcaption></figure>
+    </div>
+    <h3>References</h3>
+    <ul>
+      <li>Files: <a href="CHANGELOG.md">CHANGELOG.md</a>, <a href="docs/">docs folder</a>, <a href="CONTRIBUTING.md">CONTRIBUTING.md</a>, <a href="NOTICE">NOTICE</a>, <a href="THIRD-PARTY-LICENSES.md">THIRD-PARTY-LICENSES.md</a>, <a href="apps/web/index.html">apps/web/index.html</a>, <a href="assets/logo.svg">assets/logo.svg</a>, <a href="run.command">run.command</a></li>
+      <li>Photo: public domain, US Department of Labor, via Wikimedia Commons</li>
+    </ul>
+  </article>
+
+  <article>
+    <h2 id="first-run">The one-click launcher now actually works on a fresh clone</h2>
+    <time datetime="2026-09-23">2026-09-23</time>
+    <ul>
+      <li><strong>The problem:</strong> the macOS launcher the README advertises could not work for anyone who had just downloaded the project. It never installed dependencies, never set up the database, and gave up on a missing storage binary. And it printed a green "Lableit is running" and opened the browser <strong>even when nothing had started</strong>, hiding the failures in a log file.</li>
+      <li><strong>Now:</strong> first run creates the settings file, installs dependencies, creates the local database with its user, applies the schema, then starts everything. If something fails it says which service and shows the last lines of its log. The browser only opens when the app is really up, and everything is stopped on any exit, not just Ctrl+C.</li>
+      <li><strong>Tested three ways on a clean slate:</strong> a full successful start, an honest failure when the storage service would not run, and a shutdown that left no ports listening.</li>
+      <li>Also: Windows was installing a different, unpinned version of the SAM3 model; the model-download command in the README could not work outside the Python environment; and four documents told people to set a setting no code reads.</li>
+    </ul>
+    <div class="grid">
+      <figure><img src=".evidence/2026-09-23/fresh-run/01-fresh-clone-running.jpg" alt="Lableit running after a single launcher run on a clean machine state"><figcaption>One command, from nothing to a running app</figcaption></figure>
+    </div>
+    <h3>Evidence</h3>
+    <ul>
+      <li>Successful first run: <a href=".evidence/2026-09-23/fresh-run/02-launcher-success.log">02-launcher-success.log</a></li>
+      <li>Honest failure and clean shutdown: <a href=".evidence/2026-09-23/fresh-run/03-launcher-honest-failure.log">03-launcher-honest-failure.log</a></li>
+    </ul>
+    <h3>References</h3>
+    <ul>
+      <li>Files: <a href="run.command">run.command</a>, <a href="run.bat">run.bat</a>, <a href="README.md">README.md</a>, <a href="apps/api/src/index.ts">apps/api/src/index.ts</a>, <a href="packages/shared/src/index.ts">packages/shared/src/index.ts</a>, <a href="RAILWAY_DEPLOYMENT.md">RAILWAY_DEPLOYMENT.md</a>, <a href="structure.md">structure.md</a></li>
+    </ul>
+  </article>
+
+  <article>
+    <h2 id="no-auth">Sign-in removed: clone it, run it, start labeling</h2>
+    <time datetime="2026-09-23">2026-09-23</time>
+    <ul>
+      <li><strong>Why:</strong> Lableit is being released as a repository people download and run themselves. Making them create an account with a hosted login service, paste two API keys and then wait for an admin to approve them was a wall in front of a research tool. It is all gone: no accounts, no login, no tokens, no approval step.</li>
+      <li><strong>What replaced it:</strong> everything belongs to one built-in local user that is created automatically. The ownership columns stayed exactly as they were, so nothing in the data layer had to be rewritten, and a future fork could put real accounts back on the same hook.</li>
+      <li><strong>Said plainly in the docs:</strong> anyone who can reach the app can read, change and delete everything in it. Run it on your own machine, or behind your own VPN or proxy. The README and SECURITY both lead with that.</li>
+      <li><strong>Kept:</strong> the checks that still protect a single user from a bad request, including the export download tokens, project scoping, the video-slicing path check and the frame-interval validation.</li>
+    </ul>
+    <div class="pair">
+      <figure><img src=".evidence/2026-09-23/no-auth/03-landing-no-signin.jpg" alt="Landing page with an Open Lableit button instead of Sign In"><figcaption>The landing page opens the app directly, no sign-in</figcaption></figure>
+      <figure><img src=".evidence/2026-09-23/no-auth/04-projects-restored.jpg" alt="Projects dashboard reached with no login at all"><figcaption>Straight into the dashboard, no login, no approval screen</figcaption></figure>
+    </div>
+    <h3>Proof</h3>
+    <p>The API was started with the Clerk key, the JWT secret and the admin email all unset, then called with no credentials at all: <a href=".evidence/2026-09-23/no-auth/02-api-no-token.txt">02-api-no-token.txt</a>. Health 200, projects 200, create 200, and 404 from every removed route. Further transcripts from the API work: <a href=".evidence/2026-09-23/no-auth-api/">.evidence/2026-09-23/no-auth-api/</a>.</p>
+    <h3>References</h3>
+    <ul>
+      <li>Files: <a href="apps/api/src/index.ts">apps/api/src/index.ts</a>, <a href="apps/web/src/App.tsx">App.tsx</a>, <a href="apps/web/src/main.tsx">main.tsx</a>, <a href="apps/web/src/api.ts">api.ts</a>, <a href="README.md">README.md</a>, <a href="SECURITY.md">SECURITY.md</a>, <a href="docs/API.md">docs/API.md</a>; deleted: <code>auth.tsx</code>, <code>AccessGate.tsx</code>, <code>AdminAccessRequests.tsx</code>, <code>ClerkTokenProvider.tsx</code></li>
+    </ul>
+  </article>
+
+  <article>
+    <h2 id="release-blockers">Two release blockers found by the pre-publication security review</h2>
+    <time datetime="2026-09-23">2026-09-23</time>
+    <ul>
+      <li><strong>Anyone could have made themselves the admin.</strong> An old password sign-up route, unused by the app but still open to the internet, let a stranger register using the admin's own email address. The server then treated them as the admin: every applicant's email, institution and phone, and the power to approve or reject anyone. Changing one letter to a capital defeated the "email already taken" check, so it worked even with the real admin in place, and the fake admin could not be removed from inside the app. Both legacy routes are deleted, and admin now additionally requires a Google-verified identity.</li>
+      <li><strong>The video frame interval was passed to ffmpeg unchecked.</strong> It is placed directly into the command the server runs, so a crafted value could add extra instructions, for example rendering a server configuration file onto the extracted frames, which land in the requester's own project where they can be viewed. It is now validated as a number at the request and again in the worker.</li>
+      <li>Both were found by an independent security review of the branch and each was confirmed by a second, adversarial check before being fixed.</li>
+    </ul>
+    <h3>References</h3>
+    <ul>
+      <li>File: <a href="apps/api/src/index.ts">apps/api/src/index.ts</a>; docs updated in <a href="docs/API.md">docs/API.md</a> and <a href="README.md">README.md</a>; dead client helpers removed from <a href="apps/web/src/api.ts">apps/web/src/api.ts</a></li>
+      <li>Verification: <a href=".evidence/2026-09-23/security-fix-verify/">.evidence/2026-09-23/security-fix-verify/</a></li>
+    </ul>
+  </article>
+
+  <article>
+    <h2 id="hardening">Authorization gaps closed, dead controls removed</h2>
+    <time datetime="2026-09-23">2026-09-23</time>
+    <ul>
+      <li><strong>Five authorization gaps fixed.</strong> Owning one thing was letting a request reach another project's, or another account's, data: a class id attached to someone else's annotation, unchecked tags on upload, and most sharply, a video-slice request that could name <em>any</em> storage key, which the worker downloads and then deletes. Each was proven with a real request first, then re-tested after the fix. A denied account could also re-open its own access request forever, undoing the admin's decision; it now cannot.</li>
+      <li><strong>945 lines of dead UI removed.</strong> Undo and redo that could never record anything, a filter menu nothing read, and a 339-line export panel that could not be opened. The shortcut list now shows only the keys that work, and the sidebar button that opens it actually opens it.</li>
+      <li><strong>A real performance bug found on the way:</strong> dragging one box fired an API write per mouse-move. Thirty moves, thirty requests, and only about three of them applied, because each waited on its own response. It is now one request per drag, and the whole movement is saved.</li>
+    </ul>
+    <div class="grid">
+      <figure><img src=".evidence/2026-09-23/ui-cleanup/01-labeling-no-undo-redo-no-filterpresets.png" alt="Labeling toolbar without the dead undo, redo and filter controls"><figcaption>The toolbar, with the controls that did nothing removed</figcaption></figure>
+      <figure><img src=".evidence/2026-09-23/ui-cleanup/05-sidebar-shortcuts-button-opens-accurate-list.png" alt="Shortcuts list showing only the shortcuts that work"><figcaption>The shortcut list now matches the app</figcaption></figure>
+      <figure><img src=".evidence/2026-09-23/ui-cleanup/04-escape-in-export-wizard-stays-in-project.png" alt="Escape pressed inside the export wizard, still in the project"><figcaption>Escape inside a modal no longer throws you out of the project</figcaption></figure>
+      <figure><img src=".evidence/2026-09-23/ui-cleanup/06-after-drag-box-moved.png" alt="Box moved after a drag that produced a single API write"><figcaption>One drag, one save, full travel persisted</figcaption></figure>
+    </div>
+    <h3>Evidence</h3>
+    <ul>
+      <li>Before and after request transcripts per gap: <a href=".evidence/2026-09-23/api-security/">.evidence/2026-09-23/api-security/</a>, including a runnable <code>probe.sh</code></li>
+      <li>Drag measurement: <a href=".evidence/2026-09-23/ui-cleanup/06-drag-request-count.txt">06-drag-request-count.txt</a></li>
+    </ul>
+    <h3>References</h3>
+    <ul>
+      <li>Files: <a href="apps/api/src/index.ts">apps/api/src/index.ts</a>, <a href="apps/web/src/labeling.tsx">labeling.tsx</a>, <a href="apps/web/src/components/AnnotationCanvas.tsx">AnnotationCanvas.tsx</a>, <a href="apps/web/src/hooks/useAssetAnnotation.ts">useAssetAnnotation.ts</a>, <a href="apps/web/src/components/ui/KeyboardShortcuts.tsx">KeyboardShortcuts.tsx</a>, <a href="apps/web/src/components/ui/Sidebar.tsx">Sidebar.tsx</a>; deleted: <code>ExportPanel.tsx</code>, <code>FilterPresets.tsx</code>, <code>useUndoRedo.ts</code></li>
+    </ul>
+  </article>
+
+  <article>
+    <h2 id="readme">README rebuilt as the front door, and the claims behind it checked</h2>
+    <time datetime="2026-09-22">2026-09-22</time>
+    <ul>
+      <li><strong>README:</strong> rewritten around what the system actually does. A picture-led walkthrough of the five workflow steps, capability tables, the access-control story, keyboard shortcuts, and the setup, configuration and deployment sections refreshed. All screenshots are current in-app captures; the old set predated the creation wizard and the light theme.</li>
+      <li><strong>CIVAD spelled out:</strong> the <strong>Construction Industry Vision Alberta Dataset</strong>, over 50 classes and more than 86,905 images, with the ISARC 2025 citation and the co-authors credited by name.</li>
+      <li><strong>Claims checked against the code:</strong> the export dialog described <code>png_masks</code> as producing PNG images (it produces a colour map and metadata JSON), and its "Include images" checkbox did nothing. Both now tell the truth.</li>
+      <li><strong>Production bug found on the way:</strong> the api and worker containers did not share the exports folder, so every export download would have failed on a self-hosted deployment. They now share a volume.</li>
+      <li><strong>Docs:</strong> the four access-control and admin routes were missing from the API reference. Added, along with the approval gate's behaviour.</li>
+      <li><strong>Second accuracy pass:</strong> a fresh read of the code caught four more wrong statements, two of them in the new README: bf16 autocast is off by default on CUDA, and the macOS one-click launcher does not use Docker (it needs Homebrew Postgres 16, Redis and a MinIO binary). Also corrected: the security note now lists the deliberately public status routes, and the export wizard's PNG-masks preview no longer claims to write PNG files.</li>
+    </ul>
+    <h3>The new README, in the shots it now uses</h3>
+    <div class="grid">
+      <figure><img src=".evidence/2026-09-21/app/46-detection.png" alt="SAM3 detection on the review canvas"><figcaption>Hero: one prompt, eleven objects found</figcaption></figure>
+      <figure><img src=".evidence/2026-09-21/app/45-labeling-empty.png" alt="Labeling workspace with model settings and inference health"><figcaption>The workspace, showing device and model settings</figcaption></figure>
+      <figure><img src=".evidence/2026-09-21/app/47-export.png" alt="Export dialog with eight formats"><figcaption>All 8 export formats</figcaption></figure>
+      <figure><img src=".evidence/2026-09-21/app/40-access-gate.png" alt="Access request form"><figcaption>The access gate</figcaption></figure>
+    </div>
+    <h3>References</h3>
+    <ul>
+      <li>Files: <a href="README.md">README.md</a>, <a href="docs/API.md">docs/API.md</a>, <a href="docker-compose.prod.yml">docker-compose.prod.yml</a>, <a href="apps/api/src/index.ts">apps/api/src/index.ts</a>, <a href="apps/api/src/exportService.ts">exportService.ts</a>, <a href="apps/web/src/components/ExportWizard.tsx">ExportWizard.tsx</a>, <code>assets/screenshots/*.jpg</code></li>
+      <li>CIVAD: <a href="https://doi.org/10.22260/ISARC2025/0124">doi.org/10.22260/ISARC2025/0124</a> (ISARC 2025, pages 956-963)</li>
+    </ul>
+  </article>
+
+  <article>
+    <h2 id="app-screens">Signed-in screens photographed, and two bugs they exposed</h2>
+    <time datetime="2026-09-21">2026-09-21</time>
+    <ul>
+      <li><strong>What happened:</strong> the signed-in part of the app had never been walked through in a browser, because sign-in offers Google only. With the owner's approval a throwaway test user was created in the project's own Clerk development instance, signed in with a one-time link, used for the walkthrough, and then deleted.</li>
+      <li><strong>Bug 1, fixed:</strong> the theme menu in the floating dock opened downwards, so on the admin page its whole panel sat below the bottom of the screen and could not be reached. It now flips upwards when there is no room below.</li>
+      <li><strong>Bug 2, fixed:</strong> the finished-export screen said "Step 4 of 3". It now says "Done".</li>
+      <li><strong>Contact:</strong> the public contact address in the permissions and security files is now Sabek@ualberta.ca instead of a personal Gmail.</li>
+    </ul>
+    <h3>The app, for real</h3>
+    <div class="grid">
+      <figure><img src=".evidence/2026-09-21/app/46-detection.png" alt="Labeling canvas with SAM3 masks and boxes"><figcaption>Real SAM3 detection: 1 car, 4 wheels, 6 windows, with masks and confidence</figcaption></figure>
+      <figure><img src=".evidence/2026-09-21/app/42-projects.png" alt="Projects dashboard"><figcaption>Projects dashboard</figcaption></figure>
+      <figure><img src=".evidence/2026-09-21/app/44-wizard-classes.png" alt="Creation wizard, classes step"><figcaption>Creation wizard: classes</figcaption></figure>
+      <figure><img src=".evidence/2026-09-21/app/47-export.png" alt="Export dialog with 8 formats"><figcaption>Export dialog, all 8 formats</figcaption></figure>
+      <figure><img src=".evidence/2026-09-21/app/40-access-gate.png" alt="Access request form"><figcaption>Access gate for a new account</figcaption></figure>
+      <figure><img src=".evidence/2026-09-21/app/41-admin.png" alt="Admin page with pending requests"><figcaption>Admin page with pending requests</figcaption></figure>
+    </div>
+    <h3>The two fixes, verified</h3>
+    <div class="pair">
+      <figure><img src=".evidence/2026-09-21/app/50-theme-dock-upwards.png" alt="Theme menu opening upwards and fully visible"><figcaption>Theme menu now opens upwards and is fully on screen (panel 638 to 834, viewport 900)</figcaption></figure>
+      <figure><img src=".evidence/2026-09-21/app/51-export-done-label.png" alt="Export finished screen reading Done"><figcaption>Finished export now reads "Done", not "Step 4 of 3"</figcaption></figure>
+    </div>
+    <h3>References</h3>
+    <ul>
+      <li>Files: <a href="apps/web/src/components/ThemeToggle.tsx">ThemeToggle.tsx</a>, <a href="apps/web/src/components/ExportWizard.tsx">ExportWizard.tsx</a>, <a href="PERMISSIONS.md">PERMISSIONS.md</a>, <a href="SECURITY.md">SECURITY.md</a></li>
+      <li>Measurements: <a href=".evidence/2026-09-21/app/50-51-ui-fix-measurements.txt">50-51-ui-fix-measurements.txt</a>; screenshots in <a href=".evidence/2026-09-21/app/">.evidence/2026-09-21/app/</a></li>
+    </ul>
+  </article>
+
+  <article>
+    <h2 id="theme-default">Light theme is now the default</h2>
+    <time datetime="2026-09-21">2026-09-21</time>
+    <ul>
+      <li><strong>What changed:</strong> the app used to follow the visitor's device setting, so anyone on a dark-mode laptop saw the dark UI first. It now opens in the light theme. The Light / Dark / System toggle still works as before.</li>
+      <li><strong>Existing visitors:</strong> a one-time reset moves browsers still carrying the old "system" default to light. A theme the visitor picks after that is kept, and a deliberate "dark" choice is never overwritten.</li>
+      <li><strong>Bug caught while testing:</strong> the reset first ran inside React's state initializer, which React calls twice in development, so it cancelled itself out and the page stayed dark. Moved to run once at page load.</li>
+    </ul>
+    <div class="grid">
+      <figure><img src=".evidence/2026-09-21/32-default-light-on-dark-device.png" alt="Landing page in light theme on a device set to dark mode"><figcaption>Fresh visitor on a dark-mode device: light theme</figcaption></figure>
+    </div>
+    <p>Verified three cases in a browser emulating a dark-mode device: new visitor (light), returning visitor carrying the old "system" default (light), visitor who chose dark (stays dark).</p>
+    <h3>References</h3>
+    <ul>
+      <li>File: <a href="apps/web/src/contexts/SettingsContext.tsx">apps/web/src/contexts/SettingsContext.tsx</a></li>
+    </ul>
+  </article>
+
+  <article>
+    <h2 id="iht-logo">IHT Lab logo replaces the University of Alberta logo</h2>
+    <time datetime="2026-09-21">2026-09-21</time>
+    <ul>
+      <li><strong>Why:</strong> using a university's logo publicly usually needs the university's permission. The landing page now credits the lab whose work this is.</li>
+      <li><strong>What changed:</strong> the attribution row shows the IHT Lab wordmark (the orange "#" mark plus "Infrastructure and Human Tech Lab"), drawn locally as an SVG and linked to iht-lab.com. The department and university stay in plain text. <code>ualberta-logo.svg</code> deleted.</li>
+      <li><strong>Colour note:</strong> the logo is loaded as an image, so <code>currentColor</code> would not follow the page theme. Fixed colours were chosen that read on both light and dark backgrounds, verified below.</li>
+    </ul>
+    <div class="pair">
+      <figure><img src=".evidence/2026-09-21/30-iht-logo-light.png" alt="IHT Lab logo in the landing attribution row, light mode"><figcaption>Light mode</figcaption></figure>
+      <figure><img src=".evidence/2026-09-21/31-iht-logo-dark.png" alt="IHT Lab logo in the landing attribution row, dark mode"><figcaption>Dark mode</figcaption></figure>
+    </div>
+    <h3>References</h3>
+    <ul>
+      <li>Files: <a href="apps/web/src/landing/assets/iht-lab-logo.svg">apps/web/src/landing/assets/iht-lab-logo.svg</a> (new), <a href="apps/web/src/landing/sections/HeroSection.tsx">HeroSection.tsx</a>, <a href="structure.md">structure.md</a>; <code>apps/web/src/landing/assets/ualberta-logo.svg</code> removed.</li>
+      <li>Source of the lab wordmark: <a href="https://iht-lab.com">iht-lab.com</a></li>
+    </ul>
+  </article>
+
+  <article>
+    <h2 id="cleanup-tests">Dev-data cleanup and tests that skip without a database</h2>
+    <time datetime="2026-09-21">2026-09-21</time>
+    <ul>
+      <li><strong>Local dev database cleaned:</strong> removed the three leftover test accounts (<code>lableit-e2e+local</code>, <code>lableit-pending+local</code>, <code>lableit-admin+clerk_test</code>), the "E2E Street Demo" project and everything it owned - 4 assets, 1 class, 1 annotation and 6 jobs - plus the 8 matching objects in MinIO and the stale files under <code>apps/api/exports/</code>. The real account and its two projects were left untouched.</li>
+      <li><strong><code>bun test</code> no longer looks broken on a fresh clone:</strong> the 7 database-backed benchmarks in <code>apps/api/src/tests/benchmarks.test.ts</code> used to fail with "DATABASE_URL not found" when no database was configured. They now skip cleanly and print one line saying why. With a database configured they run exactly as before, and none of the assertions were weakened.</li>
+    </ul>
+
+    <h3>Test results (captured output)</h3>
+    <ul>
+      <li>No database configured: 11 pass, 7 skip, 0 fail, exit code 0 - <a href=".evidence/2026-09-21/bun-test-skip.txt">bun-test-skip.txt</a></li>
+      <li>Dev database running: 18 pass, 0 fail, exit code 0 - <a href=".evidence/2026-09-21/bun-test-with-db.txt">bun-test-with-db.txt</a></li>
+      <li>Before/after row counts for the database cleanup - <a href=".evidence/2026-09-21/db-cleanup.txt">db-cleanup.txt</a></li>
+    </ul>
+    <p class="sub">No visual surface: this change touches test data and a test file only, so the evidence is captured terminal output rather than screenshots.</p>
+
+    <h3>References</h3>
+    <ul>
+      <li><a href="apps/api/src/tests/benchmarks.test.ts">apps/api/src/tests/benchmarks.test.ts</a> (only file changed)</li>
+      <li><a href="apps/api/prisma/schema.prisma">apps/api/prisma/schema.prisma</a> - cascade rules that made the project delete safe</li>
+      <li>Not committed: left uncommitted deliberately at the task owner's request.</li>
+    </ul>
+  </article>
+
+  <article>
+    <h2 id="lint">Lint works again: one shared ESLint config for the whole repo</h2>
+    <time datetime="2026-09-21">2026-09-21</time>
+    <ul>
+      <li><strong>What was broken:</strong> <code>bun run lint</code> failed everywhere. The API had a lint command but no linter installed, so it downloaded a newer ESLint that refused the old settings format. The web app had an old ESLint and no settings file at all. The root command also crashed on <code>packages/shared</code>, which has no lint script.</li>
+      <li><strong>What changed:</strong> a single <code>eslint.config.mjs</code> at the repo root now covers both apps. ESLint 9 plus <code>typescript-eslint</code> are installed once at the root instead of per app. Rules are deliberately relaxed, so the linter flags real leftovers (unused imports and variables) as warnings rather than blocking the build.</li>
+      <li><strong>Result:</strong> <code>bun run lint</code> exits cleanly at the root and in each app. 55 advisory warnings, 0 errors. No application code was rewritten.</li>
+    </ul>
+
+    <h3>No visual surface</h3>
+    <p>This is tooling only, nothing on screen changed. Evidence is captured terminal output: <a href=".evidence/2026-09-21/lint-fix-verification.txt">.evidence/2026-09-21/lint-fix-verification.txt</a> (lint, both type checks, and a frozen-lockfile install, all passing).</p>
+
+    <h3>References</h3>
+    <ul>
+      <li>Files: <a href="eslint.config.mjs">eslint.config.mjs</a> (new), <a href="package.json">package.json</a>, <a href="apps/api/package.json">apps/api/package.json</a>, <a href="apps/web/package.json">apps/web/package.json</a>, <a href="CONTRIBUTING.md">CONTRIBUTING.md</a>, <a href="THIRD-PARTY-LICENSES.md">THIRD-PARTY-LICENSES.md</a>, <code>bun.lock</code></li>
+      <li>Known stale note: <a href="CHANGELOG.md">CHANGELOG.md</a> (1.0.0) still describes the old root command <code>bun run --workspaces lint</code>.</li>
+    </ul>
+  </article>
+
+  <article>
+    <h2 id="release-1-0-0">1.0.0: public academic release, full system test</h2>
+    <time datetime="2026-09-18">2026-09-18</time>
+    <ul>
+      <li><strong>License:</strong> now academic use only; any other use needs written permission (<code>LICENSE</code>, new <code>PERMISSIONS.md</code>). Credits to Mohamed Sabek, IHT Lab, University of Alberta, and the CIVAD dataset added to README, NOTICE, and the landing page.</li>
+      <li><strong>Landing page honesty:</strong> removed invented numbers and features (200+ enterprise teams, 99% accuracy, HIPAA, GeoTIFF, and others). The "Try it" demo is now labelled as a preview with random example boxes.</li>
+      <li><strong>Deployment:</strong> fixed Railway builds, migrations, worker start, and missing sign-in/admin settings. There is no longer a built-in default admin email. Blank project renames are rejected.</li>
+    </ul>
+
+    <div class="status">
+      <p><strong>Released 2026-09-21.</strong> The entries above are follow-up fixes that are part of this release.</p>
+      <p><strong>Verified:</strong> type checks, lint, web tests (15/15), production build, Python compile, database schema vs migrations, and the production compose config. End to end through the API on Apple Silicon: access gate, admin approval, project and upload, SAM3 text-prompt detection (1 car and 4 wheels in 22.5 s), COCO and YOLO exports with real annotations, class delete, project rename, video slicing. In the browser: the landing page and the light-theme default.</p>
+      <p><strong>Not verified:</strong> the signed-in app screens (dashboard, creation wizard, labeling canvas, export dialog, admin page) were exercised through the API only, not clicked through in a browser, because sign-in offers Google only and no test login path was available.</p>
+      <p><strong>Not legal advice:</strong> the license text has not been reviewed by a lawyer, and university IP policy may apply to research work. Review both before relying on it.</p>
+    </div>
+
+    <h3>Before and after: the "Try it" demo</h3>
+    <div class="pair">
+      <figure><img src=".evidence/2026-09-18/14-try-demo-simulated-boxes.png" alt="Before: demo shows Person 94% on a truck photo"><figcaption>Before: random "Person" boxes on a truck photo, presented as real AI</figcaption></figure>
+      <figure><img src=".evidence/2026-09-18/22-demo-preview-after.png" alt="After: Interface Preview with example boxes placed at random"><figcaption>After: clearly labelled preview with example boxes</figcaption></figure>
+    </div>
+
+    <h3>Before and after: landing page claims</h3>
+    <div class="pair">
+      <figure><img src=".evidence/2026-09-18/01-landing-hero.png" alt="Before: hero with Enterprise Ready and No credit card"><figcaption>Before: "Enterprise Ready", "No credit card required"</figcaption></figure>
+      <figure><img src=".evidence/2026-09-18/20-landing-hero-after.png" alt="After: hero with Free for academic use"><figcaption>After: "Free for academic use" (the attribution row was changed again on 2026-09-21, see the newer entry)</figcaption></figure>
+    </div>
+    <div class="grid">
+      <figure><img src=".evidence/2026-09-18/21-usecases-stats-after.png" alt="Stats row after"><figcaption>Stats row now shows real facts (8 formats, SAM3, images + video, free)</figcaption></figure>
+      <figure><img src=".evidence/2026-09-18/24-features-stats-after.png" alt="Feature stats after"><figcaption>Feature stats: no more "10x" / "99%"</figcaption></figure>
+      <figure><img src=".evidence/2026-09-18/25-usecases-after.png" alt="Use cases after"><figcaption>Use-case chips list real capabilities</figcaption></figure>
+      <figure><img src=".evidence/2026-09-18/23-cta-footer-after.png" alt="CTA and footer after"><figcaption>Credit with CIVAD, real GitHub + License links</figcaption></figure>
+      <figure><img src=".evidence/2026-09-18/04-sign-in.png" alt="Sign-in page"><figcaption>Sign-in (Google) tested live</figcaption></figure>
+    </div>
+
+    <h3>Test results (captured output)</h3>
+    <ul>
+      <li>Type checks api/web/shared clean, web tests 15/15, production build OK, Python compiles, schema matches migrations: <a href=".evidence/2026-09-18/static/">.evidence/2026-09-18/static/</a></li>
+      <li>End-to-end through the API: access gate, admin approve, project + upload, SAM3 detection (1 car + 4 wheels, 22.5 s on Apple GPU), COCO/YOLO exports with real annotations, video slicing: <a href=".evidence/2026-09-18/10-api-e2e-run.txt">10-api-e2e-run.txt</a>, <a href=".evidence/2026-09-18/11-export-contents.txt">11-export-contents.txt</a>, <a href=".evidence/2026-09-18/12-api-e2e-part2.txt">12-api-e2e-part2.txt</a></li>
+      <li>Fix checks: blank rename rejected, missing admin warning: <a href=".evidence/2026-09-18/verify/">.evidence/2026-09-18/verify/</a></li>
+    </ul>
+
+    <h3>References</h3>
+    <ul>
+      <li>Files: <a href="LICENSE">LICENSE</a>, <a href="PERMISSIONS.md">PERMISSIONS.md</a>, <a href="NOTICE">NOTICE</a>, <a href="README.md">README.md</a>, <a href="CITATION.cff">CITATION.cff</a>, <a href="DEPLOYMENT.md">DEPLOYMENT.md</a>, <a href="RAILWAY_DEPLOYMENT.md">RAILWAY_DEPLOYMENT.md</a>, <a href="docker-compose.prod.yml">docker-compose.prod.yml</a>, <a href="apps/api/src/index.ts">apps/api/src/index.ts</a>, <a href="apps/web/src/landing/sections/">landing sections</a>, <a href="run.command">run.command</a></li>
+      <li>Details: <a href="CHANGELOG.md">CHANGELOG.md</a> (1.0.0).</li>
+      <li>Repository: <a href="https://github.com/msabek/lableit">github.com/msabek/lableit</a></li>
+    </ul>
+  </article>
+</main>
+</body>
+</html>

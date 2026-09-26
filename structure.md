@@ -1,0 +1,236 @@
+Repo layout
+- run.bat: menu to start/stop infra, API, web, inference, deps, and migrations (auto-checks/starts Docker Desktop)
+  - Preserves CUDA-enabled PyTorch wheel selection when SAM3 is installed from GitHub to avoid CPU-only regression on GPU hosts
+  - Repairs stale absolute paths in `apps/inference/model_config.json` before SAM3 setup/start
+- infra/: docker-compose.yml (Postgres on 5433, Redis on 6380, MinIO on 9000/9001) for local infra
+- apps/
+  - api/ (Bun 1.3 + Fastify 5 + BullMQ worker mode, Prisma, AWS SDK v3 S3 client) - loads .env from the monorepo root, then its own local .env
+    - Production startup now fails fast on missing required env vars (`DATABASE_URL`, `REDIS_URL`, `INFERENCE_URL`, `S3_*`)
+    - Docker startup runs `prisma migrate deploy` before launching API
+    - Railway build/deploy uses app-local Docker context (`apps/api`) and local `Dockerfile` path
+    - src/index.ts: Main API routes including SAM3 inference proxy endpoints
+      - DELETE /projects/:projectId/annotations - Clear all annotations from project
+      - POST /assets/urls - Batch fetch signed URLs for multiple assets
+      - GET /assets/:id/url - Returns both url and thumbnailUrl
+      - POST /inference/text, /inference/points - SAM3 detection proxy endpoints
+    - src/exportService.ts: All 8 export formats (COCO, YOLO, VOC, PNG masks, CreateML, TFRecord, LabelMe)
+      - Now includes actual images in exports (downloaded from S3)
+      - ZIP archives are created in-process with `yazl` instead of shell commands
+      - Standard directory conventions: images/, JPEGImages/, etc.
+      - YOLO data.yaml uses relative paths for portability
+    - Thumbnail generation: 300x300 JPEG thumbnails created on upload (using Sharp)
+    - Security:
+      - No authentication: there are no accounts and no login, and every route is
+        open to whoever can reach the port. Run it locally, on a private network,
+        or behind a proxy that authenticates users for it
+      - Input sanitization and file type validation
+      - Export downloads use single-use, time-limited tokens (1-hour expiry); this
+        is the only token in the system
+      - Input validation for classes (name length, color format, threshold range)
+    - Error handling: Proper cleanup, comprehensive error responses
+    - Database: Simplified schema (Projects contain assets directly, no datasets)
+      - Composite indexes for better query performance
+      - Unique constraint on class names within projects
+    - Worker isolation: production API does not process jobs unless `RUN_WORKER=true`; worker service sets `WORKER_MODE=true`
+    - Inference proxy: Timeout (60s) and retry (3 attempts) logic for resilience
+    - Batch inference timeout: per-asset worker calls use `INFERENCE_BATCH_TIMEOUT_MS` (default 300000)
+    - Batch inference fail-fast: aborts remaining assets when inference returns fatal SAM3 unavailable (503) errors
+    - Signed URLs: Assets sent to inference use signed S3 URLs (1-hour expiry)
+    - CSV Import/Export: Bulk class management via CSV files (with transaction safety)
+    - Parallel S3 operations: Bulk deletes process 10 files concurrently
+  - web/ (Bun 1.3 + Vite 8 + React SPA) - runs on port 3000
+    - Railway build/deploy uses app-local Docker context (`apps/web`) and local `Dockerfile` path
+    - Startup script generates `runtime-config.js` and injects it into `index.html` so runtime env values are available before the app bundle loads
+      - Includes `VITE_API_URL`
+    - Docker image now uses `nginx.railway.conf` template and runtime substitution for `PORT` + `API_URL`
+    - Glassmorphism UI with semi-transparent panels and gradient effects
+    - src/main.tsx: React root render (no auth provider)
+    - src/App.tsx: Route configuration with ErrorBoundary; routes are `/` (landing), `/projects`, `/labeling/:projectId`, and a catch-all redirect to `/projects`. No sign-in, gate or admin routes
+    - src/projects.tsx: Redesigned dashboard with class management, search, grid/list views
+      - Full-width project detail view expands when clicking a project
+      - Asset preview thumbnails with lazy-loaded signed URLs (8-column grid in detail view)
+      - Clicking any asset or "Assets" heading opens labeling page
+      - Stats cards showing assets, classes, and labeled count
+      - Asset totals normalized from either `assets[]` or `_count.assets` payloads for accurate counters
+      - "Clear All Annotations" button to remove all labels from project
+      - "Start Labeling" button in header (Smart Auto-Labeling on main list only)
+    - src/labeling.tsx: Main annotation interface with SAM3 integration
+      - "Clear All Annotations" button in header for quick cleanup
+      - Export button for dataset download
+      - Modal preview with previous/next asset navigation and keyboard shortcuts
+      - Sidebar logo click can navigate back to projects/home
+    - src/components/labeling/AssetGrid.tsx: paginates large asset sets and prefetches signed URLs only for the visible page
+    - src/components/ExportWizard.tsx: Export dialog: choose one of 8 formats, preview, then export
+      - Real-time progress bar with percentage and status messages
+      - Descriptive filenames: YYYY-MM-DD_HHMM_format_Nimages.zip
+    - src/contexts/SettingsContext.tsx: Theme and settings state management (dark/light/system + palette themes: indigo/ocean/sunset/forest)
+    - src/components/BuildFlow.tsx: 4-step annotation wizard (Upload > Prompt > Review > Export)
+      - Color picker for prompt labels
+      - Fixed suggested class labels click handler
+    - src/components/labeling/ControlPanel.tsx: Model settings with color picker
+      - Predefined color palette (20 colors)
+      - Custom color input with hex support
+      - Conditionally shows video frame interval (only when videos present)
+      - Add/delete class functionality with inline form
+      - Class threshold sliders with delete button
+      - Inference mode selection (boxes only, boxes+masks, masks only)
+    - src/components/VideoSliceDialog.tsx: Video frame slicing configuration
+      - Preset interval buttons (1, 2, 5, 10 seconds)
+      - Custom slider (0.5-30 seconds)
+      - Numeric input for precise control
+      - Automatic video duration detection
+      - Estimated frame count display
+      - Warning for large frame counts (>100)
+    - src/components/ConfirmationModal.tsx: Reusable confirmation dialog
+      - Danger, warning, info type variants
+      - Success animation on completion
+      - Optional "type to confirm" feature
+      - Processing state with spinner
+    - src/components/labeling/AssetGrid.tsx: Asset grid with thumbnails and filtering
+      - Lazy-loaded image thumbnails from signed S3 URLs
+      - Multi-select mode for bulk asset operations
+      - Checkbox overlay for selection in selection mode
+      - Select All / Deselect All functionality
+      - Filter by annotation status (All/Labeled/Unlabeled)
+      - Visual annotation count badges
+    - src/components/AnnotationCanvas.tsx: Interactive canvas with box drawing
+      - Improved bounding box visibility (thicker strokes, subtle fill)
+      - Keyboard shortcuts help dialog (? button)
+      - ARIA labels for accessibility (role="img", aria-label)
+    - src/hooks/useAssetAnnotation.ts: Asset annotation state management
+      - Exports Detection interface with proper types
+      - Handles Prisma JSON field variations for box data
+      - Request-id race guards prevent stale async annotation/image payloads from applying after asset switch
+    - src/labeling.tsx: Main labeling interface
+      - Working drag-and-drop file upload (onDragOver, onDrop handlers)
+    - src/hooks/useJobPolling.ts: Job status polling with progress tracking
+      - Exposes progress percentage and status messages
+      - Used for inference, export, and video slicing jobs
+    - src/components/AnnotationCanvas.tsx: Interactive canvas with box drawing, selection, mask rendering
+      - Resets image loading state on source change to avoid missing-image flashes during asset navigation
+    - src/components/ThemeToggle.tsx: Theme mode + color style selector component
+    - src/components/ServiceStatusIndicator.tsx: Connection status display with health checks
+    - src/components/SettingsPanel.tsx: Comprehensive settings UI (Model, Inference, Display, Export, Storage)
+    - src/components/InferenceStatus.tsx: Unified status indicator (compact/detailed/banner variants)
+    - src/api.ts: API client with retry logic, error handling, service status (sends no auth header; the API requires none)
+      - URL caching with 50-minute expiry to reduce API calls
+      - Batch URL fetching via getBatchUrls()
+    - src/landing/: Interactive landing page with GSAP vertical section animations
+      - LandingPage.tsx: Main page with ScrollTrigger section reveals
+      - sections/HeroSection.tsx: Hero with animated badge, feature pills, and University of Alberta attribution row
+      - sections/FeaturesSection.tsx: 6 feature cards with stats
+      - sections/DemoCarousel.tsx: 4-step demo with interactive mockups
+      - sections/ExportShowcase.tsx: Export format selector with samples
+      - sections/CTASection.tsx: Call to action with benefits and creator/lab attribution
+      - assets/iht-lab-logo.svg: IHT Lab wordmark used in the landing attribution row (links to iht-lab.com)
+    - Theme: CSS variables for dark/light modes, system preference detection, and multi-palette color themes
+    - Glassmorphism: glass-panel, glass-card, glass-button, gradient borders
+  - inference/ (FastAPI SAM3 runner) - uses .venv for Python deps, runs on port 8001
+    - Docker image uses `uv` for dependency installation and includes `git` for Git-based Python dependencies
+    - Railway build/deploy uses app-local Docker context (`apps/inference`) and local `Dockerfile` path
+    - main.py: SAM3 integration with text-prompt and point/box prompt inference
+      - ModelState class for thread-safe model management
+      - Robust import logic with multiple fallback paths
+      - Checkpoint validation before loading
+      - Settings management (preload, thresholds, timeouts)
+      - SAM3 API: set_image() -> set_text_prompt() returns state with masks/boxes/scores
+      - Uses set_confidence_threshold() for efficient filtering
+      - CUDA OOM error handling: Gracefully returns 507 status with helpful message
+      - GPU memory monitoring: Clears cache when usage exceeds 85%
+      - Periodic cache cleanup: Every 10 inferences to prevent fragmentation
+      - Auto-repairs stale checkpoint paths in `model_config.json` when old folder versions are detected
+      - Model-load retry cooldown (`MODEL_LOAD_RETRY_COOLDOWN_SECONDS`, default 120s) to prevent repeated failed loads
+      - `POST /models/sam3/load` performs forced load retry even during cooldown
+    - download_models.py: Model download with retry logic and progress tracking
+      - ModelScope as primary source (no auth required)
+      - HuggingFace as fallback source
+      - Integrity validation after download
+    - Endpoints: /infer/text, /infer/points, /infer/upload, /models/status, /settings
+    - Memory management: Model caching, automatic cleanup, GPU monitoring, OOM recovery
+- packages/
+  - shared/ (types, schemas)
+- docs/: supplemental documentation (USER_GUIDE.md, API.md, EXPORT_FORMATS.md, TROUBLESHOOTING.md)
+- docker-compose.prod.yml: Production deployment with health checks, resource limits, GPU support
+
+Default ports:
+- Web: http://localhost:3000 (Vite dev server)
+- API: http://localhost:3001
+- Inference: http://localhost:8001
+- MinIO Console: http://localhost:9001
+- PostgreSQL: localhost:5433 (changed from 5432 to avoid Windows PostgreSQL conflict)
+- Redis: localhost:6380
+
+Authentication:
+- None. Lableit is an open-source tool meant to be downloaded and run locally for
+  academic use, so authentication was removed before release.
+- No login, no accounts, no admin-approval gate, no session tokens
+- Every API route is open to whoever can reach the port; all data belongs to one
+  implicit local user
+- The only token left is the single-use export download token (1-hour expiry)
+- Consequence for deployment: a public URL would expose every route and all data.
+  Run it on localhost, on a private network/VPN, or behind an authenticating
+  proxy covering both the web and API services (see DEPLOYMENT.md)
+
+Theme System:
+- Three modes: light, dark, system (follows OS preference)
+- CSS variables for consistent theming
+- Tailwind CSS dark mode class strategy
+- Theme persisted in localStorage
+
+Database Schema:
+- User: id, email, plus vestigial columns (password, externalId, accessStatus, institution, phone, useCase, requestedAt, decidedAt) kept only so existing databases still migrate; nothing reads them now that there is no authentication
+- Project: id, name, ownerId, assets[], classes[] (indexed by ownerId)
+- Asset: id, projectId, uri (unique), width, height, sourceType, annotations[] (indexed by projectId, sourceType)
+- ClassDef: id, projectId, name, color, threshold (unique on [projectId, name], indexed by projectId)
+- Annotation: id, assetId, classId, confidence, geometryRle, geometryPolygon, box, type, source
+  - Indexes: assetId, classId, type, source, [assetId, classId] composite
+- Job: id, kind, status, params, result, createdAt, updatedAt
+  - Indexes: status, kind, createdAt, [status, kind] composite
+
+SAM3 Requirements:
+- Python 3.11 (canonical)
+- CUDA GPU required (SAM3 has hardcoded CUDA dependencies)
+- When no GPU: service runs in limited mode, manual annotation still works
+- Install SAM3/dependencies from pinned `apps/inference/requirements.txt`
+- SAM3 GitHub dependency is pinned to commit `c97c893969003d3e6803fd5d679f21e515aef5ce`
+- Inference functions run under `torch.inference_mode()` and the loaded SAM3 model is switched to eval mode
+- Install dependencies: uv pip install -r apps/inference/requirements.txt
+- Model download sources: ModelScope (primary), HuggingFace (fallback)
+- Download via: POST /models/sam3/download or run download_models.py directly
+
+FFmpeg Requirements (for video slicing):
+- FFmpeg is required for slicing videos into frames
+- Installation methods:
+  - winget: `winget install Gyan.FFmpeg` (recommended for Windows 10/11)
+  - Chocolatey: `choco install ffmpeg`
+  - Manual: Download from https://ffmpeg.org/download.html
+- Use menu option [F] in run.bat to install FFmpeg
+- If installed manually, add to PATH or set FFMPEG_PATH environment variable
+- The system will auto-detect FFmpeg in common installation locations
+
+Environment Variables (optional):
+- VITE_API_URL: API base URL for the frontend (injected at container start via runtime-config.js)
+- INFERENCE_TIMEOUT_MS: Timeout for inference requests (default: 60000)
+- INFERENCE_BATCH_TIMEOUT_MS: Timeout for per-asset batch inference calls (default: 300000)
+- INFERENCE_MAX_RETRIES: Max retry attempts (default: 3)
+- WORKER_MODE: Set to true for standalone worker process; disables HTTP listener
+- RUN_WORKER: Set to true to embed a worker in production API, false to disable dev embedded worker
+- RUN_HTTP_SERVER: Set to false to disable HTTP listener
+- MODEL_LOAD_RETRY_COOLDOWN_SECONDS: Cooldown after model-load failure (default: 120)
+- HF_TOKEN: HuggingFace token for fallback downloads
+- FFMPEG_PATH: Path to ffmpeg executable (auto-detected if in PATH)
+
+Railway Deployment:
+- railway.toml: Configuration files in each service directory (apps/api, apps/web, apps/inference)
+- .env.railway.example: Template for Railway environment variables
+- RAILWAY_DEPLOYMENT.md: Comprehensive deployment guide
+- Key Railway Features:
+  - PostgreSQL plugin: ${{Postgres.DATABASE_URL}}
+  - Redis plugin: ${{Redis.REDIS_URL}}
+  - Private networking: http://service.railway.internal:PORT
+  - Dynamic PORT via environment variable
+- Dockerfiles updated for Railway compatibility:
+  - Dynamic PORT support in all services
+  - nginx.railway.conf for web service with envsubst
+  - Health checks compatible with Railway monitoring
+- Note: Railway does not support GPUs. SAM3 requires CUDA, so on Railway the inference service runs in limited/unavailable mode (no automatic detection); manual annotation, project management, and export still work. For automatic detection, point INFERENCE_URL at an external CUDA GPU service.

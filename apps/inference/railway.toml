@@ -1,0 +1,12 @@
+# Lableit Inference Service - Railway Configuration
+# Deploy from apps/inference directory
+
+[build]
+builder = "dockerfile"
+dockerfilePath = "Dockerfile"
+
+[deploy]
+healthcheckPath = "/health"
+healthcheckTimeout = 60
+restartPolicyType = "on_failure"
+restartPolicyMaxRetries = 3

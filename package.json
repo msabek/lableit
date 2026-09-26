@@ -1,0 +1,31 @@
+{
+  "name": "lableit",
+  "private": true,
+  "version": "1.0.0",
+  "description": "SAM3-powered vision annotation platform for images and videos.",
+  "author": "Mohamed Sabek",
+  "license": "SEE LICENSE IN LICENSE",
+  "packageManager": "bun@1.3.12",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:api": "cd apps/api && bun run dev",
+    "dev:inference": "cd apps/inference && uvicorn main:app --reload --host 0.0.0.0 --port 8001",
+    "dev:web": "cd apps/web && bun run dev",
+    "lint": "eslint apps packages"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9",
+    "eslint": "^9",
+    "prisma": "5.19.1",
+    "typescript-eslint": "^8.70.1"
+  },
+  "dependencies": {
+    "@prisma/client": "5.19.1"
+  },
+  "overrides": {
+    "follow-redirects": "1.16.0"
+  }
+}

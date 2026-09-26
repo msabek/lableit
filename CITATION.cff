@@ -1,0 +1,36 @@
+cff-version: 1.2.0
+message: "If you use Lableit in your research, please cite it as below. If you use the SAM3 model through Lableit, please also cite the SAM 3 paper listed under references."
+title: "Lableit: a SAM3-powered vision annotation platform"
+type: software
+authors:
+  - family-names: "Sabek"
+    given-names: "Mohamed"
+    affiliation: "IHT Lab, Department of Civil and Environmental Engineering, University of Alberta"
+version: "1.0.0"
+date-released: "2026-09-21"
+repository-code: "https://github.com/msabek/lableit"
+license-url: "https://github.com/msabek/lableit/blob/main/LICENSE"
+keywords:
+  - "image annotation"
+  - "video annotation"
+  - "computer vision"
+  - "segmentation"
+  - "SAM3"
+  - "dataset export"
+references:
+  - type: article
+    title: "SAM 3: Segment Anything with Concepts"
+    authors:
+      - family-names: "Carion"
+        given-names: "Nicolas"
+      - name: "et al."
+    year: 2025
+    identifiers:
+      - type: other
+        value: "arXiv:2511.16719"
+        description: "arXiv preprint identifier"
+    url: "https://arxiv.org/abs/2511.16719"
+    notes: >-
+      SAM3 is governed by Meta's SAM License. Lableit does not redistribute SAM3
+      weights; users download them and accept Meta's license themselves. Citing
+      this paper satisfies the acknowledgement requested by the SAM License.

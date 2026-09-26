@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 76" role="img" aria-label="IHT Lab, Infrastructure and Human Tech Lab">
+  <title>IHT Lab</title>
+  <!-- Lab mark: the "#" from the IHT Lab wordmark (iht-lab.com), brand orange -->
+  <g transform="translate(0,6) scale(0.35)" fill="#ED9139">
+    <path d="M41.4 56.4H66l5.6-30.9h31.7l-5.6 30.9h19.6l5.6-30.9h31.7L149 56.4h19v32.9h-24.8l-3.7 21.6h19v32.7h-24.8l-5.4 30.9H96.7l5.4-30.9H82.5l-5.4 30.9H45.4l5.4-30.9H32v-32.7h24.6l3.7-21.6H41.4V56.4zm46.9 54.5h19.6l3.6-21.6H91.9l-3.6 21.6z"/>
+  </g>
+  <text x="64" y="40" font-family="system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif"
+        font-size="34" font-weight="500" fill="#64748b">IHT Lab</text>
+  <text x="65" y="60" font-family="system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif"
+        font-size="13" font-weight="400" fill="#64748b" opacity="0.75">Infrastructure and Human Tech Lab</text>
+</svg>

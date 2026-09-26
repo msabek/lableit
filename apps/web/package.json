@@ -1,0 +1,38 @@
+{
+  "name": "@lableit/web",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "license": "SEE LICENSE IN LICENSE",
+  "engines": {
+    "node": ">=20.19",
+    "bun": ">=1.2"
+  },
+  "scripts": {
+    "dev": "bunx vite",
+    "build": "bunx vite build",
+    "preview": "bunx vite preview",
+    "lint": "eslint src"
+  },
+  "dependencies": {
+    "@gsap/react": "^2.1.2",
+    "axios": "^1.15.2",
+    "gsap": "^3.14.2",
+    "lucide-react": "^1.12.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-router-dom": "^7.11.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.9.0",
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "@vitejs/plugin-react": "^6.0.1",
+    "autoprefixer": "^10.4.22",
+    "postcss": "^8.5.12",
+    "tailwindcss": "^3.4.19",
+    "typescript": "^5.6.3",
+    "vite": "^8.0.10",
+    "vitest": "4.1.4"
+  }
+}

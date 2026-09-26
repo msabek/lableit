@@ -1,0 +1,106 @@
+# Lableit Academic Research License 1.0
+
+Copyright (c) 2024-2026 Mohamed Sabek. All rights reserved except as granted below.
+
+Lableit was developed by Mohamed Sabek during his research at the IHT Lab,
+Department of Civil and Environmental Engineering, University of Alberta,
+Edmonton, Canada.
+
+> **In short.** You may use, study, modify, and share Lableit **for academic
+> purposes only**. **Any other use** (commercial, industrial, government
+> operational, consulting, or any use that is not academic) **requires prior
+> written permission** from the copyright holder. See
+> [`PERMISSIONS.md`](./PERMISSIONS.md) for how to ask. This summary is for
+> convenience; the terms below govern.
+
+## 1. Definitions
+
+- **"Software"** means the Lableit source code, documentation, and other files
+  in this repository that are owned by the Licensor. It does not include
+  third-party components (see Section 8).
+- **"Licensor"** means Mohamed Sabek.
+- **"You"** means the individual or institution exercising rights under this
+  license.
+- **"Academic Purpose"** means non-commercial teaching, learning, and
+  scientific research carried out by students, faculty, and researchers at
+  universities, colleges, or non-profit research institutes, where the results
+  are intended for publication, teaching, or open scholarly exchange, and are
+  not sold, licensed for a fee, or used to provide a product or service to a
+  commercial party.
+
+## 2. Grant of rights
+
+Subject to the conditions of this license, the Licensor grants You a
+worldwide, royalty-free, non-exclusive, non-transferable license to use, copy,
+run, study, and modify the Software, and to share copies of it (with or
+without Your modifications), **solely for Academic Purposes**.
+
+## 3. Conditions
+
+1. **Academic use only.** You may not use the Software, or any work based on
+   it, for any purpose other than an Academic Purpose without the Licensor's
+   prior written permission.
+2. **Keep the notices.** Every copy or modified version You share must include
+   this license file, the [`NOTICE`](./NOTICE) file, and the copyright line
+   above, unchanged.
+3. **Same terms for shared copies.** Anyone who receives the Software or a
+   modified version from You receives it only under this license. You may not
+   offer it under different terms.
+4. **Mark your changes.** Modified versions must state clearly that they were
+   changed and must not suggest they are endorsed by the Licensor, the IHT Lab,
+   or the University of Alberta.
+5. **Cite it.** If You use the Software in work that leads to a publication,
+   thesis, report, or dataset, You must cite it as described in
+   [`CITATION.cff`](./CITATION.cff).
+
+## 4. Uses that require permission
+
+Without prior written permission from the Licensor, You may **not**, for
+example:
+
+- use the Software inside, or for the benefit of, a for-profit company;
+- use the Software, or annotations or datasets made with it, in a product,
+  service, paid deliverable, or client engagement;
+- offer the Software, or a modified version, as a hosted or online service to
+  others, other than within Your own academic research group or course;
+- sell, sublicense, or redistribute the Software as part of any non-academic
+  offering.
+
+To request permission, follow [`PERMISSIONS.md`](./PERMISSIONS.md). Permission
+is granted only in writing and only for the scope stated in it.
+
+## 5. Patents
+
+The Licensor grants You a license, limited to Academic Purposes, under any
+patent claims the Licensor can license that You would otherwise infringe by
+using the Software as permitted here.
+
+## 6. Termination
+
+If You break any term of this license, Your rights under it end
+automatically. If You stop the violation and it is Your first one, Your rights
+are restored if You come into compliance within 30 days of learning of it.
+
+## 7. No warranty and no liability
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT. IN NO EVENT SHALL THE
+LICENSOR, THE IHT LAB, OR THE UNIVERSITY OF ALBERTA BE LIABLE FOR ANY CLAIM,
+DAMAGES, OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT, OR
+OTHERWISE, ARISING FROM, OUT OF, OR IN CONNECTION WITH THE SOFTWARE OR THE USE
+OR OTHER DEALINGS IN THE SOFTWARE.
+
+## 8. Third-party components
+
+This license covers only the Licensor's own code. It does **not** cover the
+SAM3 model weights or the `sam3` software package, which are governed by
+Meta's separate **SAM License**, nor any other third-party dependency. You must
+comply with those licenses yourself. See [`NOTICE`](./NOTICE) and
+[`THIRD-PARTY-LICENSES.md`](./THIRD-PARTY-LICENSES.md).
+
+## 9. Other terms
+
+The Licensor keeps all rights not expressly granted here. This license is
+governed by the laws of the Province of Alberta and the federal laws of Canada
+that apply there.
